@@ -1,0 +1,41 @@
+energy:
+  adzuna_country: es
+  queries:
+    - "energy market analyst"
+    - "energy consultant"
+    - "power market modelling"
+    - "energy advisory"
+    - "electricity market analysis"
+    - "renewables consultant"
+  scoring_guidance: |
+    Target: energy consulting / market analysis / advisory roles at
+    Associate or Senior Associate level (candidate is stepping up from
+    Analyst). Firms like ERM, Aurora Energy Research, AFRY, Baringa,
+    Wood Mackenzie, NERA, Compass Lexecon, Frontier Economics, DNV.
+    NOT the target: deal-execution M&A roles — score those down heavily.
+    Candidate's edge: deep Spanish power market knowledge ([redacted] 2023-2030,
+    CNMC regulation, OMIE prices), energy market research, valuation / DCF /
+    scenario modelling, BloombergNEF.
+    Geography: role must be based in Spain (no relocation) OR explicitly
+    workable remotely from Spain. Flag anything else as a location mismatch.
+
+ai:
+  adzuna_country: us
+  queries:
+    - "junior AI engineer remote"
+    - "entry level machine learning engineer remote"
+    - "AI engineer remote"
+    - "applied AI engineer remote"
+    - "LLM engineer remote"
+  scoring_guidance: |
+    Candidate is a career switcher from investment banking (energy) into AI.
+    No professional AI experience — score projects, hackathons and
+    certifications as genuine evidence of capability; do NOT zero out for
+    lack of professional AI experience.
+    Preference ranking (preferences, not hard filters):
+    1) Small US companies building their own AI products (agents, LLM apps)
+       — remote only, since candidate has no US work authorization and
+       cannot relocate; a non-remote US role is a hard location mismatch flag.
+    2) Banking- or energy-related companies — a plus (domain edge).
+    3) European consulting companies (AI/data teams) — valid but less
+       favoured; candidate holds EU work authorization.

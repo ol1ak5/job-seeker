@@ -1,0 +1,7 @@
+# Companies whose ATS boards are checked directly on every run.
+# Seeded in Task 11 (live verification). Schema per entry:
+#   - company: Display Name
+#     ats: greenhouse | lever | ashby
+#     board_token: token-in-board-url
+#     tracks: [energy] | [ai] | [energy, ai]
+[]
