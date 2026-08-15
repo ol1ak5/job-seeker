@@ -17,7 +17,7 @@ def profile_to_text(profile: dict, track: str) -> str:
     lines: list[str] = []
     c = profile["contact"]
     lines.append(f"# {c['name']} — {profile['headline'][track]}")
-    lines.append(f"{c['location']} | {c['email']} | {c['linkedin']} | {c['github']}")
+    lines.append(f"{c['location']} | {c['phone']} | {c['email']} | {c['linkedin']} | {c['github']}")
 
     lines.append("\n## Work Experience")
     for job in profile["experience"]:

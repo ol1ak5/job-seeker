@@ -5,6 +5,7 @@ def test_load_profile():
     p = load_profile()
     assert p["contact"]["name"] == "Olga Aksenova"
     assert {"energy", "ai"} <= set(p["headline"])
+    assert p["contact"]["phone"]
 
 
 def test_energy_view_has_transactions_no_projects():
@@ -15,6 +16,7 @@ def test_energy_view_has_transactions_no_projects():
     assert "[redacted]" in text                  # finance cert kept
     assert "CS50" not in text                  # ai-only course filtered out
     assert "[redacted]" in text                     # energy bullet variant used
+    assert "[redacted]" in text
 
 
 def test_ai_view_has_projects_no_transactions():
