@@ -47,6 +47,8 @@ def test_next_manual_id_increments(tmp_path):
     assert next_manual_id("energy", TODAY, tmp_path) == "energy-0815-m01"
     (tmp_path / "energy-0815-m01.json").write_text("{}")
     assert next_manual_id("energy", TODAY, tmp_path) == "energy-0815-m02"
+    (tmp_path / "energy-0815-m03.json").write_text("{}")
+    assert next_manual_id("energy", TODAY, tmp_path) == "energy-0815-m04"
 
 
 def test_run_match_caches_and_scores(tmp_path):

@@ -41,9 +41,14 @@ def fetch_vacancy_url(url: str, client: httpx.Client | None = None) -> Vacancy:
 def next_manual_id(track: str, today: datetime.date,
                    cache_dir: pathlib.Path) -> str:
     stamp = today.strftime("%m%d")
-    existing = (list(cache_dir.glob(f"{track}-{stamp}-m*.json"))
-                if cache_dir.exists() else [])
-    return f"{track}-{stamp}-m{len(existing) + 1:02d}"
+    pattern = re.compile(rf"{re.escape(track)}-{stamp}-m(\d+)\.json$")
+    highest = 0
+    if cache_dir.exists():
+        for path in cache_dir.glob(f"{track}-{stamp}-m*.json"):
+            m = pattern.search(path.name)
+            if m:
+                highest = max(highest, int(m.group(1)))
+    return f"{track}-{stamp}-m{highest + 1:02d}"
 
 
 def run_match(track: str, vacancy: Vacancy, scorer, profile_path: str,
