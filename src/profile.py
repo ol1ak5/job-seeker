@@ -2,29 +2,48 @@ import re
 
 import yaml
 
+from src.config import TrackConfig
+
 
 def load_profile(path: str = "profile/master_profile.yaml") -> dict:
     with open(path) as f:
         return yaml.safe_load(f)
 
 
-def _bullet_text(bullet: dict, track: str) -> str:
-    text = bullet[track].replace("{metric}", bullet.get("metric") or "")
+def _variant_text(item: dict, track_name: str) -> str:
+    variants = item.get("variants") or {}
+    text = variants.get(track_name) or item.get("default")
+    if not text:
+        raise SystemExit(
+            f"Profile has no text variant for track '{track_name}' and no "
+            f"'default'. Available variants: {sorted(variants)}. "
+            f"Add a variant or a default in the profile YAML.")
+    return text
+
+
+def _clean(text: str) -> str:
     return re.sub(r"\s{2,}", " ", text).strip()
 
 
-def profile_to_text(profile: dict, track: str) -> str:
+def _bullet_text(bullet: dict, track_name: str) -> str:
+    text = _variant_text(bullet, track_name).replace(
+        "{metric}", bullet.get("metric") or "")
+    return _clean(text)
+
+
+def profile_to_text(profile: dict, track: TrackConfig) -> str:
+    name = track.name
     lines: list[str] = []
     c = profile["contact"]
-    lines.append(f"# {c['name']} — {profile['headline'][track]}")
+    lines.append(f"# {c['name']} — {_clean(_variant_text(profile['headline'], name))}")
     lines.append(f"{c['location']} | {c['phone']} | {c['email']} | {c['linkedin']} | {c['github']}")
 
     lines.append("\n## Work Experience")
     for job in profile["experience"]:
         lines.append(f"\n### {job['title']} | {job['company']} ({job['dates']})")
         for b in job["bullets"]:
-            lines.append(f"- {_bullet_text(b, track)}")
-        if track == "energy":
+            lines.append(f"- {_bullet_text(b, name)}")
+        if track.include_transactions:
             for t in job.get("transactions", []):
                 lines.append(f"- Selected transaction: {t['name']} ({t['date']})")
                 for tb in t["bullets"]:
@@ -48,16 +67,15 @@ def profile_to_text(profile: dict, track: str) -> str:
 
     lines.append("\n## Certifications")
     for cert in profile["certifications"]:
-        if track in cert["tracks"]:
+        if name in cert["tracks"]:
             lines.append(f"- {cert['name']} | {cert['issuer']} | {cert['date']} ({cert['group']})")
 
-    if track == "ai":
+    if track.include_projects:
         lines.append("\n## Projects & Hackathons")
         for p in profile["projects"]:
             lines.append(f"\n### {p['name']} ({p['date']}) — {p['link']}")
             for b in p["bullets"]:
-                clean = re.sub(r"\s{2,}", " ", b).strip()
-                lines.append(f"- {clean}")
+                lines.append(f"- {_clean(b)}")
             lines.append(f"- Built with: {', '.join(p['built_with'])}")
 
     return "\n".join(lines)

@@ -1,13 +1,5 @@
 from langchain_core.prompts import ChatPromptTemplate
 
-SECTION_ORDER = {
-    "energy": "Contact line, Headline, Work Experience (with Selected "
-              "Transactions), Languages, Skills, Education, Certifications",
-    "ai": "Contact line, Headline, Work Experience, Languages, Skills, "
-          "Education, Certifications (grouped: Professional certifications / "
-          "Courses / Hackathons), Projects & Hackathons",
-}
-
 ADAPT_PROMPT = ChatPromptTemplate.from_messages([
     ("system",
      "You are an expert CV writer. Produce a complete, ready-to-send CV in "

@@ -1,5 +1,9 @@
 import click
 
+from src.config import load_tracks
+
+TRACK_CHOICES = sorted(load_tracks())
+
 
 @click.group()
 def cli():
@@ -7,7 +11,7 @@ def cli():
 
 
 @cli.command("search-and-score")
-@click.option("--track", type=click.Choice(["energy", "ai"]), required=True)
+@click.option("--track", type=click.Choice(TRACK_CHOICES), required=True)
 @click.option("--days", default=14, show_default=True)
 @click.option("--limit", default=30, show_default=True)
 def search_and_score(track: str, days: int, limit: int):

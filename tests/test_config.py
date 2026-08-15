@@ -19,6 +19,10 @@ def test_load_tracks_has_both_tracks():
     assert tracks["ai"].adzuna_country == "us"
     assert "M&A" in tracks["energy"].scoring_guidance
     assert len(tracks["energy"].queries) >= 4
+    assert tracks["energy"].include_transactions is True
+    assert tracks["energy"].include_projects is False
+    assert tracks["ai"].include_projects is True
+    assert "Projects" in tracks["ai"].cv_sections
 
 
 def test_load_watchlist_parses():

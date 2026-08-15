@@ -2,8 +2,9 @@ import datetime
 import pathlib
 import re
 
+from src.config import load_tracks
 from src.profile import load_profile, profile_to_text
-from src.prompts.adapt_cv import ADAPT_PROMPT, SECTION_ORDER
+from src.prompts.adapt_cv import ADAPT_PROMPT
 from src.writers import load_cached_vacancy
 
 
@@ -15,8 +16,12 @@ def run_adapt_cv(vacancy_id: str, llm=None,
                  out_dir: pathlib.Path = pathlib.Path("output"),
                  today: datetime.date | None = None) -> pathlib.Path:
     track = vacancy_id.split("-", 1)[0]
-    if track not in ("energy", "ai"):
-        raise SystemExit(f"Cannot infer track from id '{vacancy_id}'.")
+    tracks = load_tracks()
+    if track not in tracks:
+        raise SystemExit(
+            f"Cannot infer a known track from id '{vacancy_id}'. "
+            f"Known tracks: {sorted(tracks)}.")
+    cfg = tracks[track]
     vacancy = load_cached_vacancy(vacancy_id, out_dir / "cache")
 
     if llm is None:
@@ -27,9 +32,9 @@ def run_adapt_cv(vacancy_id: str, llm=None,
                                      google_api_key=load_settings().google_api_key)
 
     messages = ADAPT_PROMPT.format_messages(
-        profile=profile_to_text(load_profile(), track),
+        profile=profile_to_text(load_profile(), cfg),
         track=track,
-        section_order=SECTION_ORDER[track],
+        section_order=cfg.cv_sections,
         title=vacancy.title,
         company=vacancy.company,
         description=vacancy.description[:12000],

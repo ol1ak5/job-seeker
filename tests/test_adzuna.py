@@ -8,7 +8,7 @@ from src.sources.adzuna import search_adzuna
 
 CFG = TrackConfig(name="energy", adzuna_country="es",
                   queries=["energy market analyst", "energy consultant"],
-                  scoring_guidance="g")
+                  scoring_guidance="g", cv_sections="s")
 SETTINGS = Settings(adzuna_app_id="id", adzuna_app_key="key", google_api_key="g")
 
 FAKE_RESULT = {

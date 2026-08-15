@@ -18,6 +18,11 @@ energy:
     scenario modelling, BloombergNEF.
     Geography: role must be based in Spain (no relocation) OR explicitly
     workable remotely from Spain. Flag anything else as a location mismatch.
+  include_transactions: true
+  include_projects: false
+  cv_sections: >-
+    Contact line, Headline, Work Experience (with Selected Transactions),
+    Languages, Skills, Education, Certifications
 
 ai:
   adzuna_country: us
@@ -39,3 +44,9 @@ ai:
     2) Banking- or energy-related companies — a plus (domain edge).
     3) European consulting companies (AI/data teams) — valid but less
        favoured; candidate holds EU work authorization.
+  include_transactions: false
+  include_projects: true
+  cv_sections: >-
+    Contact line, Headline, Work Experience, Languages, Skills, Education,
+    Certifications (grouped: Professional certifications / Courses /
+    Hackathons), Projects & Hackathons

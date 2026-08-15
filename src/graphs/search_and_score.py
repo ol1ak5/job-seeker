@@ -67,7 +67,7 @@ def dedupe_filter(state: SearchState) -> dict:
 
 def score_match(state: SearchState) -> dict:
     cfg = load_tracks()[state["track"]]
-    profile_text = profile_to_text(load_profile(), state["track"])
+    profile_text = profile_to_text(load_profile(), cfg)
     scored = [
         ScoredVacancy(
             vacancy=v,
