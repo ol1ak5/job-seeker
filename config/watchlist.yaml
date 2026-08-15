@@ -4,4 +4,27 @@
 #     ats: greenhouse | lever | ashby
 #     board_token: token-in-board-url
 #     tracks: [energy] | [ai] | [energy, ai]
-[]
+- company: Baringa
+  ats: greenhouse
+  board_token: baringa
+  tracks: [energy]
+- company: Anthropic
+  ats: greenhouse
+  board_token: anthropic
+  tracks: [ai]
+- company: Perplexity
+  ats: ashby
+  board_token: perplexity
+  tracks: [ai]
+- company: LangChain
+  ats: ashby
+  board_token: langchain
+  tracks: [ai]
+- company: ElevenLabs
+  ats: ashby
+  board_token: elevenlabs
+  tracks: [ai]
+- company: Cohere
+  ats: ashby
+  board_token: cohere
+  tracks: [ai]
