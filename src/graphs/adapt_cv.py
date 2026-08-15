@@ -14,7 +14,8 @@ def _slug(text: str) -> str:
 
 def run_adapt_cv(vacancy_id: str, llm=None,
                  out_dir: pathlib.Path = pathlib.Path("output"),
-                 today: datetime.date | None = None) -> pathlib.Path:
+                 today: datetime.date | None = None,
+                 profile_path: str = "profile/master_profile.yaml") -> pathlib.Path:
     track = vacancy_id.split("-", 1)[0]
     tracks = load_tracks()
     if track not in tracks:
@@ -32,7 +33,7 @@ def run_adapt_cv(vacancy_id: str, llm=None,
                                      google_api_key=load_settings().google_api_key)
 
     messages = ADAPT_PROMPT.format_messages(
-        profile=profile_to_text(load_profile(), cfg),
+        profile=profile_to_text(load_profile(profile_path), cfg),
         track=track,
         section_order=cfg.cv_sections,
         title=vacancy.title,

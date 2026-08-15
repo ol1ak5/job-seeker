@@ -29,3 +29,16 @@ def test_run_adapt_cv_writes_file(tmp_path):
                        today=datetime.date(2026, 8, 15))
     assert out == tmp_path / "cvs" / "2026-08-15_ai_acme-corp.md"
     assert "Tailored CV body" in out.read_text()
+
+
+def test_run_adapt_cv_accepts_profile_path(tmp_path):
+    import shutil
+    alt = tmp_path / "alt.yaml"
+    shutil.copy("profile/master_profile.yaml", alt)
+    v = Vacancy(id="ai-0815-02", title="AI Engineer", company="Beta",
+                url="u", source="lever", description="Build agents")
+    cache_vacancy(v, tmp_path / "cache")
+    out = run_adapt_cv("ai-0815-02", llm=FakeLLM(), out_dir=tmp_path,
+                       today=datetime.date(2026, 8, 15),
+                       profile_path=str(alt))
+    assert out.exists()

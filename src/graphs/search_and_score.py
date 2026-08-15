@@ -27,6 +27,7 @@ class SearchState(TypedDict):
     vacancies: list[Vacancy]
     scored: list[ScoredVacancy]
     md_path: pathlib.Path
+    profile_path: str
 
 
 def _collect_vacancies(track: str, days: int, limit: int, client,
@@ -67,7 +68,7 @@ def dedupe_filter(state: SearchState) -> dict:
 
 def score_match(state: SearchState) -> dict:
     cfg = load_tracks()[state["track"]]
-    profile_text = profile_to_text(load_profile(), cfg)
+    profile_text = profile_to_text(load_profile(state["profile_path"]), cfg)
     scored = [
         ScoredVacancy(
             vacancy=v,
@@ -105,11 +106,12 @@ def build_graph():
 def run_search(track: str, days: int, limit: int, scorer,
                out_dir: pathlib.Path = pathlib.Path("output"),
                today: datetime.date | None = None,
-               client=None) -> pathlib.Path:
+               client=None, profile_path: str = "profile/master_profile.yaml") -> pathlib.Path:
     result = build_graph().invoke({
         "track": track, "days": days, "limit": limit,
         "today": today or datetime.date.today(),
         "out_dir": out_dir, "scorer": scorer, "client": client,
         "errors": [], "vacancies": [], "scored": [],
+        "profile_path": profile_path,
     })
     return result["md_path"]
