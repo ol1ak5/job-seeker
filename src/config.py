@@ -23,7 +23,7 @@ class WatchlistEntry(BaseModel):
 
 def load_tracks(path: str = "config/tracks.yaml") -> dict[str, TrackConfig]:
     with open(path) as f:
-        raw = yaml.safe_load(f)
+        raw = yaml.safe_load(f) or {}
     return {name: TrackConfig(name=name, **cfg) for name, cfg in raw.items()}
 
 

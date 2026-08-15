@@ -4,7 +4,16 @@ import click
 
 from src.config import load_tracks
 
-TRACK_CHOICES = sorted(load_tracks())
+def _track_choices() -> list[str]:
+    try:
+        return sorted(load_tracks())
+    except FileNotFoundError:
+        raise SystemExit(
+            "config/tracks.yaml not found — run jobseeker from the project "
+            "root directory (the folder containing config/ and profile/).")
+
+
+TRACK_CHOICES = _track_choices()
 
 
 def resolve_profile(name: str) -> tuple[str, pathlib.Path]:

@@ -44,3 +44,11 @@ def test_ashby():
     (v,) = fetch_board(entry("ashby"), client_returning(ASHBY))
     assert v.title == "Founding Engineer" and v.remote is True
     assert v.posted.isoformat() == "2026-08-11"
+
+
+def test_strip_html_removes_script_and_style_bodies():
+    from src.sources.ats_boards import _strip_html
+    raw = "<p>Real text</p><script>var x=1; if(a<b){go()}</script><style>.a{color:red}</style><p>More</p>"
+    out = _strip_html(raw)
+    assert "Real text" in out and "More" in out
+    assert "var x" not in out and "color:red" not in out

@@ -58,3 +58,21 @@ def test_run_match_caches_and_scores(tmp_path):
     assert out_v.id == "energy-0815-m01"
     assert (tmp_path / "cache" / "energy-0815-m01.json").exists()
     assert score == GOOD
+
+
+def test_match_cli_requires_exactly_one_input(tmp_path):
+    from click.testing import CliRunner
+
+    from src.cli import cli
+
+    runner = CliRunner()
+    neither = runner.invoke(cli, ["match", "--track", "ai"])
+    assert neither.exit_code != 0
+    assert "exactly one" in (str(neither.output) + str(neither.exception))
+
+    f = tmp_path / "jd.txt"
+    f.write_text("T\nC\nDesc")
+    both = runner.invoke(cli, ["match", "--track", "ai", "--file", str(f),
+                               "--url", "https://x.com"])
+    assert both.exit_code != 0
+    assert "exactly one" in (str(both.output) + str(both.exception))

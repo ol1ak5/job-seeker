@@ -30,7 +30,7 @@ def filter_seen(vacancies: list[Vacancy],
                 runs_dir: pathlib.Path) -> list[Vacancy]:
     seen: set[tuple[str, str]] = set()
     for path in sorted(pathlib.Path(runs_dir).glob("*.csv")):
-        with open(path, newline="") as f:
+        with open(path, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 seen.add(_key(row.get("title", ""), row.get("company", "")))
     return [v for v in vacancies if _key(v.title, v.company) not in seen]

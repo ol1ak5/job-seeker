@@ -15,7 +15,9 @@ URLS = {
 
 
 def _strip_html(text: str) -> str:
-    return re.sub(r"<[^>]+>", " ", html.unescape(text or "")).strip()
+    text = html.unescape(text or "")
+    text = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", text)
+    return re.sub(r"<[^>]+>", " ", text).strip()
 
 
 def _iso_date(raw: str | None) -> datetime.date | None:

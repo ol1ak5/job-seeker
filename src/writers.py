@@ -15,7 +15,7 @@ def sort_scored(scored: list[ScoredVacancy]) -> list[ScoredVacancy]:
 
 def write_csv(scored: list[ScoredVacancy], path: pathlib.Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
         w.writeheader()
         for item in sort_scored(scored):
@@ -55,12 +55,12 @@ def write_md(scored: list[ScoredVacancy], path: pathlib.Path, track: str,
                 lines.append("\n**Flags:**")
                 lines += [f"- {fl}" for fl in item.score.flags]
         lines.append("")
-    path.write_text("\n".join(lines))
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def cache_vacancy(vacancy: Vacancy, cache_dir: pathlib.Path) -> None:
     cache_dir.mkdir(parents=True, exist_ok=True)
-    (cache_dir / f"{vacancy.id}.json").write_text(vacancy.model_dump_json(indent=2))
+    (cache_dir / f"{vacancy.id}.json").write_text(vacancy.model_dump_json(indent=2), encoding="utf-8")
 
 
 def load_cached_vacancy(vacancy_id: str, cache_dir: pathlib.Path) -> Vacancy:
@@ -69,4 +69,4 @@ def load_cached_vacancy(vacancy_id: str, cache_dir: pathlib.Path) -> Vacancy:
         raise SystemExit(
             f"No cached vacancy '{vacancy_id}' in {cache_dir}. "
             f"Run search-and-score first; ids appear in the run CSV.")
-    return Vacancy.model_validate_json(path.read_text())
+    return Vacancy.model_validate_json(path.read_text(encoding="utf-8"))
