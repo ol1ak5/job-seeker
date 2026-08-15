@@ -59,7 +59,7 @@ def dedupe_filter(state: SearchState) -> dict:
     runs_dir = state["out_dir"] / "runs"
     runs_dir.mkdir(parents=True, exist_ok=True)
     vacs = filter_seen(vacs, runs_dir)
-    vacs = assign_ids(vacs[: state["limit"]], state["track"], state["today"])
+    vacs = assign_ids(vacs, state["track"], state["today"])[: state["limit"]]
     for v in vacs:
         cache_vacancy(v, state["out_dir"] / "cache")
     return {"vacancies": vacs}
