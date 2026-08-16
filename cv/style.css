@@ -55,17 +55,13 @@ p { margin: 2pt 0; text-align: justify; }
 ul { margin: 2pt 0 4pt 0; padding-left: 14pt; }
 li { text-align: justify; margin: 1.5pt 0; break-inside: avoid; }
 
-/* dates inside list items (transactions, certifications) fly right */
-li em { float: right; }
+/* dates inside list items stay inline (after a | separator) */
 
 /* project headings: date in em flies right too */
 h3 em { float: right; font-weight: normal; font-size: 9.5pt; }
 
-/* languages line stretched edge-to-edge */
-#languages + p {
-  text-align: justify;
-  text-align-last: justify;
-}
+/* languages: plain line, normal spacing */
+#languages + p { text-align: left; }
 
 hr { display: none; }
 
