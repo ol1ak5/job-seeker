@@ -10,8 +10,6 @@ class TrackConfig(BaseModel):
     queries: list[str]
     scoring_guidance: str
     cv_sections: str
-    include_transactions: bool = False
-    include_projects: bool = False
 
 
 class WatchlistEntry(BaseModel):

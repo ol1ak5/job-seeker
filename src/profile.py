@@ -6,81 +6,141 @@ from src.config import TrackConfig
 
 
 def load_profile(path: str = "profile/master_profile.yaml") -> dict:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
+def _clean(text) -> str:
+    return re.sub(r"\s{2,}", " ", str(text)).strip()
+
+
+def _visible(item: dict, track_name: str) -> bool:
+    """No `tracks:` key means the item shows on every track."""
+    tracks = item.get("tracks")
+    return tracks is None or track_name in tracks
+
+
 def _variant_text(item: dict, track_name: str) -> str:
-    """Text for this track. An explicitly empty variant means "skip on this track"."""
+    """Text for this track. Explicit empty variant means omit; missing both is an error."""
     variants = item.get("variants") or {}
     if track_name in variants:
         return variants[track_name] or ""
     text = item.get("default")
-    if not text:
+    if text is None:
         raise SystemExit(
-            f"Profile has no text variant for track '{track_name}' and no "
-            f"'default'. Available variants: {sorted(variants)}. "
-            f"Add a variant or a default in the profile YAML.")
+            f"Profile item has no text for track '{track_name}': add "
+            f"'variants.{track_name}' or a 'default'. Item keys: {sorted(item)}.")
     return text
 
 
-def _clean(text: str) -> str:
-    return re.sub(r"\s{2,}", " ", text).strip()
+def _item_text(item: dict, track_name: str) -> str:
+    if "variants" in item or "default" in item:
+        raw = _variant_text(item, track_name)
+    else:
+        raw = item.get("text", "")
+    if not raw:
+        return ""
+    return _clean(raw.replace("{metric}", item.get("metric") or ""))
 
 
-def _bullet_text(bullet: dict, track_name: str) -> str:
-    text = _variant_text(bullet, track_name).replace(
-        "{metric}", bullet.get("metric") or "")
-    return _clean(text)
+def _render_entries(items, track_name, out):
+    for item in items:
+        if not _visible(item, track_name):
+            continue
+        dates = item.get("dates")
+        out.append(f"\n### {_clean(item.get('heading', ''))}"
+                   + (f" ({dates})" if dates else ""))
+        if item.get("subheading"):
+            out.append(_clean(item["subheading"]))
+        for bullet in item.get("bullets", []):
+            if not _visible(bullet, track_name):
+                continue
+            text = _item_text(bullet, track_name)
+            if text:
+                out.append(f"- {text}")
+        for sub in item.get("subitems", []):
+            if not _visible(sub, track_name):
+                continue
+            sub_dates = sub.get("dates")
+            out.append(f"- {_clean(sub.get('heading', ''))}"
+                       + (f" ({sub_dates})" if sub_dates else ""))
+            for sub_bullet in sub.get("bullets", []):
+                if _visible(sub_bullet, track_name):
+                    text = _item_text(sub_bullet, track_name)
+                    if text:
+                        out.append(f"  - {text}")
+
+
+def _render_categories(items, track_name, out):
+    for item in items:
+        if _visible(item, track_name):
+            out.append(f"- {item['label']}: {', '.join(item['values'])}")
+
+
+def _render_inline(items, track_name, out):
+    values = []
+    for item in items:
+        if isinstance(item, str):
+            values.append(item)
+        elif _visible(item, track_name):
+            text = _item_text(item, track_name)
+            if text:
+                values.append(text)
+    out.append(" · ".join(values))
+
+
+def _render_list(items, track_name, out):
+    for item in items:
+        if isinstance(item, str):
+            out.append(f"- {item}")
+            continue
+        if not _visible(item, track_name):
+            continue
+        text = _item_text(item, track_name)
+        if not text:
+            continue
+        dates = item.get("dates")
+        out.append(f"- {text}" + (f" | {dates}" if dates else ""))
+
+
+def _render_text(items, track_name, out):
+    for item in items:
+        if isinstance(item, str):
+            out.append(_clean(item))
+            continue
+        if _visible(item, track_name):
+            text = _item_text(item, track_name)
+            if text:
+                out.append(text)
+
+
+RENDERERS = {
+    "entries": _render_entries,
+    "categories": _render_categories,
+    "inline": _render_inline,
+    "list": _render_list,
+    "text": _render_text,
+}
 
 
 def profile_to_text(profile: dict, track: TrackConfig) -> str:
     name = track.name
-    lines: list[str] = []
-    c = profile["contact"]
-    lines.append(f"# {c['name']} — {_clean(_variant_text(profile['headline'], name))}")
-    lines.append(f"{c['location']} | {c['phone']} | {c['email']} | {c['linkedin']} | {c['github']}")
+    out: list[str] = []
+    contact = profile["contact"]
+    out.append(f"# {contact['name']} — {_clean(_variant_text(profile['headline'], name))}")
+    details = [d if isinstance(d, str) else d.get("value", "")
+               for d in contact.get("details", [])]
+    out.append(" | ".join(d for d in details if d))
 
-    lines.append("\n## Work Experience")
-    for job in profile["experience"]:
-        lines.append(f"\n### {job['title']} | {job['company']} ({job['dates']})")
-        for b in job["bullets"]:
-            text = _bullet_text(b, name)
-            if text:                      # empty variant = bullet omitted on this track
-                lines.append(f"- {text}")
-        if track.include_transactions:
-            for t in job.get("transactions", []):
-                lines.append(f"- Selected transaction: {t['name']} ({t['date']})")
-                for tb in t["bullets"]:
-                    lines.append(f"  - {tb}")
+    for section in profile.get("sections", []):
+        if not _visible(section, name):
+            continue
+        stype = section.get("type", "list")
+        if stype not in RENDERERS:
+            raise SystemExit(
+                f"Unknown section type '{stype}' in section "
+                f"'{section.get('title')}'. Known types: {', '.join(sorted(RENDERERS))}.")
+        out.append(f"\n## {section['title']}")
+        RENDERERS[stype](section.get("items", []), name, out)
 
-    lines.append("\n## Skills")
-    s = profile["skills"]
-    lines.append(f"- Databases/Market Data: {', '.join(s['market_data'])}")
-    lines.append(f"- Languages: {', '.join(s['languages'])}")
-    lines.append(f"- Frameworks: {', '.join(s['frameworks'])}")
-    lines.append(f"- Developer Tools: {', '.join(s['developer_tools'])}")
-    lines.append(f"- Libraries: {', '.join(s['libraries'])}")
-    lines.append(f"- Office: {', '.join(s['office'])}")
-
-    lines.append("\n## Spoken Languages")
-    lines.append(", ".join(profile["spoken_languages"]))
-
-    lines.append("\n## Education")
-    for e in profile["education"]:
-        lines.append(f"- {e['degree']} | {e['school']} | GPA {e['gpa']}")
-
-    lines.append("\n## Certifications")
-    for cert in profile["certifications"]:
-        if name in cert["tracks"]:
-            lines.append(f"- {cert['name']} | {cert['issuer']} | {cert['date']} ({cert['group']})")
-
-    if track.include_projects:
-        lines.append("\n## Projects & Hackathons")
-        for p in profile["projects"]:
-            lines.append(f"\n### {p['name']} ({p['date']}) — {p['link']}")
-            for b in p["bullets"]:
-                lines.append(f"- {_clean(b)}")
-            lines.append(f"- Built with: {', '.join(p['built_with'])}")
-
-    return "\n".join(lines)
+    return "\n".join(out)
