@@ -23,7 +23,7 @@ h1 + p, h1 + p + p {
 }
 
 h1 + p { font-size: 12pt; }          /* headline — larger */
-h1 + p + p { font-size: 9.5pt; }     /* contact line */
+h1 + p + p { font-size: 10.5pt; }    /* contact line */
 
 /* ---------- section headers ---------- */
 h2 {
@@ -61,7 +61,10 @@ li { text-align: justify; margin: 1.5pt 0; break-inside: avoid; }
 h3 em { float: right; font-weight: normal; font-size: 9.5pt; }
 
 /* languages: plain line, normal spacing */
-#languages + p { text-align: left; }
+#languages + p {
+  text-align: justify;
+  text-align-last: justify;
+}
 
 hr { display: none; }
 

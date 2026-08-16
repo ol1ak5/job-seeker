@@ -44,3 +44,12 @@ def test_unknown_track_without_default_exits():
     with pytest.raises(SystemExit) as exc:
         profile_to_text(p, ghost)
     assert "marketing" in str(exc.value)
+
+
+def test_empty_variant_omits_bullet():
+    """A bullet with an explicitly empty variant is skipped on that track only."""
+    p = load_profile()
+    energy = profile_to_text(p, TRACKS["energy"])
+    ai = profile_to_text(p, TRACKS["ai"])
+    assert "internal committees" in energy      # moex-materials bullet: energy only
+    assert "internal committees" not in ai

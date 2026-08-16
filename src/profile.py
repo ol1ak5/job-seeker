@@ -11,8 +11,11 @@ def load_profile(path: str = "profile/master_profile.yaml") -> dict:
 
 
 def _variant_text(item: dict, track_name: str) -> str:
+    """Text for this track. An explicitly empty variant means "skip on this track"."""
     variants = item.get("variants") or {}
-    text = variants.get(track_name) or item.get("default")
+    if track_name in variants:
+        return variants[track_name] or ""
+    text = item.get("default")
     if not text:
         raise SystemExit(
             f"Profile has no text variant for track '{track_name}' and no "
@@ -42,7 +45,9 @@ def profile_to_text(profile: dict, track: TrackConfig) -> str:
     for job in profile["experience"]:
         lines.append(f"\n### {job['title']} | {job['company']} ({job['dates']})")
         for b in job["bullets"]:
-            lines.append(f"- {_bullet_text(b, name)}")
+            text = _bullet_text(b, name)
+            if text:                      # empty variant = bullet omitted on this track
+                lines.append(f"- {text}")
         if track.include_transactions:
             for t in job.get("transactions", []):
                 lines.append(f"- Selected transaction: {t['name']} ({t['date']})")
