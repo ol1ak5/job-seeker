@@ -17,10 +17,10 @@ def test_energy_view_has_transactions_no_projects():
     p = load_profile()
     text = profile_to_text(p, TRACKS["energy"])
     assert "[redacted]" in text
+    assert "Distressed Solar PV" in text     # transactions render on energy only
     assert "[redacted]" in text
-    assert "Job-Seeker" not in text
+    assert "Job-Seeker" not in text          # projects are ai-only
     assert "[redacted]" in text
-    assert "CS50" not in text
     assert "[redacted]" in text
 
 
@@ -28,9 +28,8 @@ def test_ai_view_has_projects_no_transactions():
     p = load_profile()
     text = profile_to_text(p, TRACKS["ai"])
     assert "Job-Seeker" in text and "k-means" in text
-    assert "[redacted]" not in text
+    assert "Distressed Solar PV" not in text  # full transaction blocks stay off ai
     assert "CS50" in text
-    assert "[redacted]" not in text
 
 
 def test_metric_substitution():

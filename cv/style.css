@@ -1,0 +1,53 @@
+/* CV print style: A4, clean sans-serif, justified text */
+@page { size: A4; margin: 13mm 16mm; }
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.35;
+  color: #1c1c1c;
+  margin: 0;
+}
+
+h1 {
+  text-align: center;
+  font-size: 19pt;
+  letter-spacing: 1.5px;
+  margin: 0 0 3pt 0;
+}
+
+/* headline + contact line, centered */
+h1 + p, h1 + p + p {
+  text-align: center;
+  margin: 0 0 3pt 0;
+}
+h1 + p { font-size: 10pt; }
+
+h2 {
+  font-size: 10.5pt;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 1pt;
+  margin: 9pt 0 4pt 0;
+  break-after: avoid;      /* заголовок не отрывается от содержимого */
+}
+
+h3 { break-after: avoid; }
+li { break-inside: avoid; }
+
+h3 {
+  font-size: 10pt;
+  margin: 7pt 0 2pt 0;
+}
+
+p { margin: 2pt 0; text-align: justify; }
+
+ul { margin: 2pt 0 4pt 0; padding-left: 14pt; }
+li { text-align: justify; margin: 1.5pt 0; }
+
+hr { display: none; }              /* section rules come from h2 borders */
+
+a { color: #0b5394; text-decoration: none; }
+
+em { color: #333; }
