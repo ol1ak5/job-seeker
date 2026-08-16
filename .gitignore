@@ -5,3 +5,6 @@ output/
 __pycache__/
 .superpowers/
 *.egg-info/
+
+# uv
+.venv/
