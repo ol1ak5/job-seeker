@@ -1,6 +1,6 @@
 #!/bin/bash
-# Пересобрать PDF из Markdown-резюме. Запуск:  ./cv/make_pdf.sh
-# Стиль (шрифты, отступы, выравнивание) — в cv/style.css
+# Rebuild the CV PDFs from Markdown. Run: ./cv/make_pdf.sh
+# Fonts, spacing and alignment live in cv/style.css
 set -e
 cd "$(dirname "$0")"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
