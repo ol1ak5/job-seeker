@@ -113,5 +113,35 @@ def match(track: str, file_: str | None, url: str | None, adapt: bool,
         click.echo(f"CV written: {cv_path}")
 
 
+@cli.command("import-cv")
+@click.option("--file", "file_", type=click.Path(exists=True), required=True,
+              help="CV file to import (.docx, .pdf, .txt, .md).")
+@click.option("--out", default=None,
+              help="Where to write the profile YAML (default: profile/<filename>.yaml).")
+@click.option("--tracks", default=None,
+              help="Comma-separated track names (default: all tracks in config).")
+def import_cv(file_: str, out: str | None, tracks: str | None):
+    """Turn any CV file into a profile YAML you can then edit by hand."""
+    import pathlib
+
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
+    from src.import_cv import build_profile, extract_text, write_profile
+    from src.settings import load_settings
+
+    src_path = pathlib.Path(file_)
+    track_names = ([t.strip() for t in tracks.split(",")] if tracks
+                   else list(TRACK_CHOICES))
+    out_path = pathlib.Path(out) if out else pathlib.Path("profile") / f"{src_path.stem}.yaml"
+
+    llm = ChatGoogleGenerativeAI(model="gemini-pro-latest",
+                                 google_api_key=load_settings().google_api_key)
+    profile = build_profile(extract_text(src_path), track_names, llm)
+    written = write_profile(profile, out_path)
+    click.echo(f"Profile written: {written}")
+    click.echo("Review it, fix anything the model got wrong, then use "
+               f"--profile {written.stem} with the other commands.")
+
+
 if __name__ == "__main__":
     cli()
