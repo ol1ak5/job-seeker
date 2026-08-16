@@ -132,10 +132,17 @@ def import_cv(file_: str, out: str | None, tracks: str | None):
     src_path = pathlib.Path(file_)
     track_names = ([t.strip() for t in tracks.split(",")] if tracks
                    else list(TRACK_CHOICES))
+    unknown = [t for t in track_names if t not in TRACK_CHOICES]
+    if unknown:
+        raise SystemExit(
+            f"Unknown track(s): {', '.join(unknown)}. "
+            f"Configured tracks: {', '.join(TRACK_CHOICES)}.")
     out_path = pathlib.Path(out) if out else pathlib.Path("profile") / f"{src_path.stem}.yaml"
+    if out_path.exists():
+        raise SystemExit(f"{out_path} already exists — choose another --out name.")
 
     llm = ChatGoogleGenerativeAI(model="gemini-pro-latest",
-                                 google_api_key=load_settings().google_api_key)
+                                 google_api_key=load_settings(required=("GOOGLE_API_KEY",)).google_api_key)
     profile = build_profile(extract_text(src_path), track_names, llm)
     written = write_profile(profile, out_path)
     click.echo(f"Profile written: {written}")

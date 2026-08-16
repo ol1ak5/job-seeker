@@ -72,3 +72,60 @@ def test_imported_profile_renders(tmp_path):
     from src.profile import profile_to_text
     text = profile_to_text(SAMPLE, load_tracks()["ai"])
     assert "Jane Roe" in text and "Ran the ward" in text
+
+
+def test_build_profile_parses_json_string():
+    import json
+
+    class JsonLLM:
+        def invoke(self, _messages):
+            class Reply:
+                content = "```json\n" + json.dumps(SAMPLE) + "\n```"
+            return Reply()
+
+    profile = build_profile("text", ["ai"], JsonLLM())
+    assert profile["contact"]["name"] == "Jane Roe"
+
+
+def test_build_profile_rejects_non_json():
+    class BadLLM:
+        def invoke(self, _messages):
+            class Reply:
+                content = "I am afraid I cannot do that"
+            return Reply()
+
+    with pytest.raises(SystemExit) as exc:
+        build_profile("text", ["ai"], BadLLM())
+    assert "JSON" in str(exc.value)
+
+
+def test_build_profile_rejects_incomplete_schema():
+    class ThinLLM:
+        def invoke(self, _messages):
+            return {"contact": {"name": "X"}}
+
+    with pytest.raises(SystemExit) as exc:
+        build_profile("text", ["ai"], ThinLLM())
+    assert "sections" in str(exc.value)
+
+
+def test_extract_text_empty_lists_formats(tmp_path):
+    f = tmp_path / "cv.txt"
+    f.write_text("  ", encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        extract_text(f)
+    assert ".docx" in str(exc.value) and ".pdf" in str(exc.value)
+
+
+def test_extract_text_docx_includes_tables(tmp_path):
+    import docx
+
+    document = docx.Document()
+    document.add_paragraph("Jane Roe")
+    table = document.add_table(rows=1, cols=2)
+    table.rows[0].cells[0].text = "Skills"
+    table.rows[0].cells[1].text = "Python, SQL"
+    path = tmp_path / "cv.docx"
+    document.save(str(path))
+    text = extract_text(path)
+    assert "Jane Roe" in text and "Python, SQL" in text

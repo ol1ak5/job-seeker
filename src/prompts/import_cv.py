@@ -18,6 +18,7 @@ IMPORT_PROMPT = ChatPromptTemplate.from_messages([
      "  * text     — paragraphs: items are plain strings\n"
      "Use the CV's own section titles and order. Put a job's location in "
      "subheading and its period in dates. If a section belongs to only some "
-     "tracks, add tracks: [..] to it."),
+     "tracks, add tracks: [..] to it."
+     " Return ONLY a single JSON object — no markdown fences, no commentary before or after."),
     ("human", "CV TEXT:\n{cv_text}\n\nProduce the profile now."),
 ])

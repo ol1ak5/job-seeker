@@ -1,4 +1,6 @@
+import json
 import pathlib
+import re
 
 import yaml
 
@@ -12,7 +14,12 @@ def extract_text(path: pathlib.Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".docx":
         import docx
-        text = "\n".join(p.text for p in docx.Document(str(path)).paragraphs)
+        document = docx.Document(str(path))
+        parts = [p.text for p in document.paragraphs]
+        for table in document.tables:
+            for row in table.rows:
+                parts.extend(cell.text for cell in row.cells)
+        text = "\n".join(parts)
     elif suffix == ".pdf":
         from pypdf import PdfReader
         text = "\n".join(page.extract_text() or "" for page in PdfReader(str(path)).pages)
@@ -24,15 +31,39 @@ def extract_text(path: pathlib.Path) -> str:
     if not text.strip():
         raise SystemExit(
             f"No text could be extracted from {path} (scanned image PDF?). "
-            f"Save the CV as .docx or paste it into a .txt file.")
+            f"Supported formats: {', '.join(SUPPORTED)}. Save the CV as .docx "
+            f"or paste its text into a .txt file.")
     return text
 
 
+def _parse_profile_json(raw) -> dict:
+    """Accept a dict (test fakes) or a JSON string, possibly fenced, from the model."""
+    if isinstance(raw, dict):
+        data = raw
+    else:
+        text = str(raw).strip()
+        fenced = re.search(r"```(?:json)?\s*(.*?)```", text, re.S)
+        if fenced:
+            text = fenced.group(1).strip()
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(
+                f"The model did not return valid JSON ({exc}). "
+                f"Try running import-cv again, or convert the CV to .txt first.")
+    if not isinstance(data, dict) or "contact" not in data or "sections" not in data:
+        raise SystemExit(
+            "The model's profile is missing 'contact' or 'sections'. "
+            "Try running import-cv again, or build the profile by hand from "
+            "profile/master_profile.yaml as an example.")
+    return data
+
+
 def build_profile(cv_text: str, tracks: list[str], llm) -> dict:
-    model = llm.with_structured_output(dict)
     messages = IMPORT_PROMPT.format_messages(
         cv_text=cv_text[:20000], tracks=", ".join(tracks))
-    return model.invoke(messages)
+    reply = llm.invoke(messages)
+    return _parse_profile_json(getattr(reply, "content", reply))
 
 
 def write_profile(profile: dict, path: pathlib.Path) -> pathlib.Path:
