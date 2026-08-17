@@ -84,3 +84,10 @@ def test_subitems_label_is_its_own_block():
     index = lines.index("**Selected Transactions & Research:**")
     assert lines[index - 1] == ""
     assert lines[index + 1] == ""
+
+
+def test_course_and_degree_names_are_bold():
+    """Master CVs bold the course/degree name and leave the issuer plain."""
+    text = profile_to_text(load_profile(), TRACKS["energy"])
+    assert "- **Data Science: Building Machine Learning Models** by HarvardX" in text
+    assert "- **Master's Degree in Financial Markets & Investment Banking** |" in text
