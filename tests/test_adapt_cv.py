@@ -79,3 +79,13 @@ def test_run_adapt_cv_accepts_profile_path(tmp_path):
                        today=datetime.date(2026, 8, 15),
                        profile_path=str(alt), cv_dir=tmp_path / "tailored")
     assert out.exists()
+
+
+def test_prompt_requires_name_heading_and_plain_hyphens():
+    msgs = ADAPT_PROMPT.format_messages(
+        profile="P", track="energy", section_order="S",
+        title="T", company="C", description="D")
+    joined = " ".join(m.content for m in msgs).lower()
+    assert "full name from the profile" in joined
+    assert "never use em dashes" in joined
+    assert "never the type of work" in joined
