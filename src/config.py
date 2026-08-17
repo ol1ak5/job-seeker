@@ -22,6 +22,7 @@ class TrackConfig(BaseModel):
     scoring_guidance: str
     cv_sections: str
     filters: TrackFilters = TrackFilters()
+    tavily_queries: list[str] = []
 
 
 class WatchlistEntry(BaseModel):

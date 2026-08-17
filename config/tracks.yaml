@@ -35,6 +35,10 @@ energy:
   cv_sections: >-
     Contact line, Headline, Work Experience (with Selected Transactions),
     Languages, Skills, Education, Certifications
+  tavily_queries:
+    - "energy analyst jobs Madrid Spain"
+    - "energy consultant vacancy Madrid renewables"
+    - "analista mercados energeticos empleo Madrid"
 
 ai:
   adzuna_country: us
@@ -74,3 +78,6 @@ ai:
     Contact line, Headline, Work Experience, Languages, Skills, Education,
     Certifications (grouped: Professional certifications / Courses /
     Hackathons), Projects & Hackathons
+  tavily_queries:
+    - "junior AI engineer remote job opening"
+    - "LLM engineer jobs Madrid Spain"

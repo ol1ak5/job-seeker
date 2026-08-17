@@ -47,6 +47,17 @@ def _collect_vacancies(track: str, days: int, limit: int, client,
             out += fetch_board(entry, client)
         except Exception as exc:
             errors.append(f"{entry.ats}/{entry.company}: {exc}")
+    settings = load_settings()
+    if settings.tavily_api_key:
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+
+            from src.sources.tavily_search import collect as collect_tavily
+            extractor = ChatGoogleGenerativeAI(
+                model="gemini-flash-latest", google_api_key=settings.google_api_key)
+            out += collect_tavily(cfg, settings.tavily_api_key, extractor, client)
+        except Exception as exc:
+            errors.append(f"tavily: {exc}")
     return out
 
 
