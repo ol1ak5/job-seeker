@@ -54,7 +54,7 @@ def test_next_manual_id_increments(tmp_path):
 def test_run_match_caches_and_scores(tmp_path):
     v = parse_vacancy_text("Energy Analyst\nAurora\nModel power prices.")
     out_v, score = run_match("energy", v, lambda p, g, vac: GOOD,
-                             "profile/master_profile.yaml", tmp_path, TODAY)
+                             "profile/example_profile.yaml", tmp_path, TODAY)
     assert out_v.id == "energy-0815-m01"
     assert (tmp_path / "cache" / "energy-0815-m01.json").exists()
     assert score == GOOD

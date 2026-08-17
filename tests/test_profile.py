@@ -4,41 +4,44 @@ from src.config import load_tracks
 from src.profile import load_profile, profile_to_text
 
 TRACKS = load_tracks()
+EXAMPLE_PROFILE = "profile/example_profile.yaml"
 
 
 def test_load_profile():
-    p = load_profile()
-    assert p["contact"]["name"] == "Olga Aksenova"
-    assert any("[redacted]" in str(d) for d in p["contact"]["details"])
+    p = load_profile(EXAMPLE_PROFILE)
+    assert p["contact"]["name"] == "Alex Rivera"
+    assert any("alex.rivera@example.com" in str(d) for d in p["contact"]["details"])
     assert {"energy", "ai"} <= set(p["headline"]["variants"])
     assert [s["title"] for s in p["sections"]][0] == "Work Experience"
 
 
 def test_energy_view():
-    text = profile_to_text(load_profile(), TRACKS["energy"])
-    assert "[redacted]" in text
-    assert "[redacted]" in text            # energy-only subitem
-    assert "[redacted]" in text
-    assert "Job-Seeker" not in text      # projects section is ai-only
-    assert "[redacted]" in text
-    assert "internal committees" in text  # energy-only bullet variant
+    text = profile_to_text(load_profile(EXAMPLE_PROFILE), TRACKS["energy"])
+    assert "Grid Study" in text          # tracks: [energy] subitem
+    assert "Delivered 20+ market research reports" in text  # {metric} substituted
     assert "{metric}" not in text
+    assert "Power Price Forecaster" not in text      # projects section is ai-only
 
 
 def test_ai_view():
-    text = profile_to_text(load_profile(), TRACKS["ai"])
-    assert "Job-Seeker" in text and "k-means" in text
-    assert "[redacted]" not in text
-    assert "internal committees" not in text
-    assert "Built with:" in text
+    text = profile_to_text(load_profile(EXAMPLE_PROFILE), TRACKS["ai"])
+    assert "Power Price Forecaster" in text and "Built with:" in text
+    assert "Grid Study" not in text      # energy-only subitem excluded
+
+
+def test_ai_only_bullet_omitted_on_energy_track():
+    """id `internal-tools` has variants.ai text and variants.energy: '' -> omitted on energy."""
+    energy_text = profile_to_text(load_profile(EXAMPLE_PROFILE), TRACKS["energy"])
+    ai_text = profile_to_text(load_profile(EXAMPLE_PROFILE), TRACKS["ai"])
+    assert "cutting a two-day manual process to under an hour" not in energy_text
+    assert "cutting a two-day manual process to under an hour" in ai_text
 
 
 def test_all_skill_categories_render():
-    text = profile_to_text(load_profile(), TRACKS["energy"])
+    text = profile_to_text(load_profile(EXAMPLE_PROFILE), TRACKS["energy"])
     for label in ["Databases/Market Data", "Languages", "Frameworks",
-                  "Developer Tools", "Libraries", "Office"]:
+                  "Libraries", "Office"]:
         assert f"- **{label}:**" in text   # master CVs use bold labels
-    assert "CNMV" in text
 
 
 def test_custom_section_needs_no_code_change():
@@ -79,15 +82,15 @@ def test_missing_variant_exits():
 
 def test_subitems_label_is_its_own_block():
     """Without blank lines around it the label glues onto the previous bullet."""
-    text = profile_to_text(load_profile(), TRACKS["energy"])
+    text = profile_to_text(load_profile(EXAMPLE_PROFILE), TRACKS["energy"])
     lines = text.splitlines()
-    index = lines.index("**Selected Transactions & Research:**")
+    index = lines.index("**Selected Projects:**")
     assert lines[index - 1] == ""
     assert lines[index + 1] == ""
 
 
 def test_course_and_degree_names_are_bold():
     """Master CVs bold the course/degree name and leave the issuer plain."""
-    text = profile_to_text(load_profile(), TRACKS["energy"])
-    assert "- **Data Science: Building Machine Learning Models** by HarvardX" in text
-    assert "- **Master's Degree in Financial Markets & Investment Banking** |" in text
+    text = profile_to_text(load_profile(EXAMPLE_PROFILE), TRACKS["energy"])
+    assert "- **Machine Learning Specialization** by DeepLearning.AI" in text
+    assert "- **MSc in Energy Economics** |" in text

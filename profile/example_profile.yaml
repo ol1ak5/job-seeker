@@ -1,0 +1,131 @@
+# Example profile - copy this to profile/master_profile.yaml and edit it.
+#
+# Everything here is fictional. The file is the single source of truth for CV
+# generation: the sections below are rendered, in order, into the CV. Markdown
+# inside the strings (bold, italics) is preserved, so format text here exactly
+# as it should appear in the finished CV.
+#
+# Section types:
+#   entries    - jobs, projects: heading / subheading / dates / bullets / subitems
+#   categories - skills: label + values
+#   inline     - one line joined by dots, e.g. spoken languages
+#   list       - certifications, education: text + optional dates
+#   text       - free paragraphs, e.g. a summary
+#
+# Per-track control:
+#   tracks: [energy]        on a section, item or bullet -> shown only on that track
+#   variants: {energy: ..., ai: ...}   -> different wording per track
+#   variants: {ai: ""}      -> omitted on that track
+#   default: ...            -> used by every track without its own variant
+#   {metric} inside a text  -> replaced by the item's `metric` value
+
+contact:
+  name: Alex Rivera
+  details:
+    - "Lisbon, Portugal"
+    - "alex.rivera@example.com"
+    - "https://www.linkedin.com/in/example"
+    - "https://github.com/example"
+
+headline:
+  variants:
+    energy: "Energy Analyst with 4 years of experience in power markets"
+    ai: "Energy Analyst moving into AI engineering"
+
+sections:
+  - title: Work Experience
+    type: entries
+    items:
+      - heading: "Market Analyst | Iberia Power Advisory"
+        subheading: "Lisbon, Portugal"
+        dates: "Mar 2023 - Present"
+        bullets:
+          - id: research
+            metric: "20+"
+            variants:
+              energy: >-
+                Delivered {metric} market research reports on Iberian power
+                prices, turning regulatory change into client recommendations
+              ai: >-
+                Delivered {metric} data-driven market reports, automating the
+                data pipeline behind them in Python
+            tags: [research, energy-markets]
+          - id: modelling
+            metric: "12"
+            default: >-
+                Built {metric} valuation models for generation assets, covering
+                merchant and contracted revenue scenarios
+            tags: [modelling]
+          - id: internal-tools
+            metric: ""
+            variants:
+              ai: >-
+                Automated a recurring reporting task in Python, cutting a
+                two-day manual process to under an hour
+              energy: ""
+            tags: [automation]
+        subitems_label: "Selected Projects:"
+        subitems:
+          - heading: "**Grid Study** | Screened 5,000+ connection requests for viability"
+            dates: "November 2025"
+            tracks: [energy]
+            bullets: []
+
+      - heading: "Junior Analyst | Atlantic Utilities"
+        subheading: "Porto, Portugal"
+        dates: "Sept 2021 - Feb 2023"
+        bullets:
+          - id: reporting
+            metric: "50+"
+            default: >-
+                Prepared {metric} monthly performance reports for regulated
+                network assets
+            tags: [reporting]
+
+  - title: Languages
+    type: inline
+    items:
+      - "Portuguese (native)"
+      - "English (fluent)"
+      - "Spanish (intermediate)"
+
+  - title: Skills
+    type: categories
+    items:
+      - label: "Databases/Market Data"
+        values: [Bloomberg, Refinitiv, ENTSO-E, OMIE]
+      - label: "Languages"
+        values: [Python, SQL]
+      - label: "Frameworks"
+        values: [LangChain, Streamlit]
+      - label: "Libraries"
+        values: [Pandas, Scikit-learn, Matplotlib]
+      - label: "Office"
+        values: [Excel, PowerPoint, Word]
+
+  - title: Education
+    type: list
+    items:
+      - text: "**MSc in Energy Economics** | University of Lisbon | GPA: 17/20"
+      - text: "**BSc in Economics** | University of Porto | GPA: 16/20"
+
+  - title: Certifications & Courses
+    type: list
+    items:
+      - text: "**Machine Learning Specialization** by DeepLearning.AI"
+        dates: "June 2026"
+      - text: "**Energy Markets Fundamentals** by Example Institute"
+        dates: "March 2024"
+
+  - title: Projects
+    type: entries
+    tracks: [ai]
+    items:
+      - heading: "Power Price Forecaster"
+        subheading: "https://github.com/example/price-forecaster"
+        dates: "2026-05"
+        bullets:
+          - text: >-
+              Built a day-ahead price forecasting model on public ENTSO-E data,
+              beating the naive baseline by 18% on MAPE
+          - text: "Built with: Python, Pandas, Scikit-learn, Streamlit"

@@ -49,8 +49,9 @@ def test_run_adapt_cv_writes_to_tailored_dir(tmp_path):
     cache_vacancy(v, tmp_path / "cache")
     cv_dir = tmp_path / "tailored"
     out = run_adapt_cv("ai-0815-01", llm=FakeLLM(), out_dir=tmp_path,
-                       today=datetime.date(2026, 8, 15), cv_dir=cv_dir)
-    assert out == cv_dir / "20260815_Acme-Corp_AI-Engineer_OlgaAksenova.md"
+                       today=datetime.date(2026, 8, 15), cv_dir=cv_dir,
+                       profile_path="profile/example_profile.yaml")
+    assert out == cv_dir / "20260815_Acme-Corp_AI-Engineer_AlexRivera.md"
     assert "Tailored CV body" in out.read_text(encoding="utf-8")
 
 
@@ -63,7 +64,8 @@ def test_run_adapt_cv_never_touches_master_cvs(tmp_path):
                 url="u", source="jsearch", description="Model power prices")
     cache_vacancy(v, tmp_path / "cache")
     run_adapt_cv("energy-0815-09", llm=FakeLLM(), out_dir=tmp_path,
-                 today=datetime.date(2026, 8, 15), cv_dir=tmp_path / "tailored")
+                 today=datetime.date(2026, 8, 15), cv_dir=tmp_path / "tailored",
+                 profile_path="profile/example_profile.yaml")
     for path, content in masters.items():
         assert path.read_bytes() == content
 
@@ -71,7 +73,7 @@ def test_run_adapt_cv_never_touches_master_cvs(tmp_path):
 def test_run_adapt_cv_accepts_profile_path(tmp_path):
     import shutil
     alt = tmp_path / "alt.yaml"
-    shutil.copy("profile/master_profile.yaml", alt)
+    shutil.copy("profile/example_profile.yaml", alt)
     v = Vacancy(id="ai-0815-02", title="AI Engineer", company="Beta",
                 url="u", source="lever", description="Build agents")
     cache_vacancy(v, tmp_path / "cache")
