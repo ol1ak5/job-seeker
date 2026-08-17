@@ -4,6 +4,7 @@ import re
 
 import yaml
 
+from src.llm_text import message_text
 from src.prompts.import_cv import IMPORT_PROMPT
 
 SUPPORTED = (".docx", ".pdf", ".txt", ".md")
@@ -63,7 +64,10 @@ def build_profile(cv_text: str, tracks: list[str], llm) -> dict:
     messages = IMPORT_PROMPT.format_messages(
         cv_text=cv_text[:20000], tracks=", ".join(tracks))
     reply = llm.invoke(messages)
-    return _parse_profile_json(getattr(reply, "content", reply))
+    raw = getattr(reply, "content", reply)
+    # a dict is already the parsed profile (tests, and models that
+    # return structured output directly); anything else is text
+    return _parse_profile_json(raw if isinstance(raw, dict) else message_text(reply))
 
 
 def write_profile(profile: dict, path: pathlib.Path) -> pathlib.Path:

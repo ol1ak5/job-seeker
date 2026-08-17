@@ -3,6 +3,7 @@ import pathlib
 import re
 
 from src.config import load_tracks
+from src.llm_text import message_text
 from src.profile import load_profile, profile_to_text
 from src.prompts.adapt_cv import ADAPT_PROMPT
 from src.writers import load_cached_vacancy
@@ -59,7 +60,7 @@ def run_adapt_cv(vacancy_id: str, llm=None,
         company=vacancy.company,
         description=vacancy.description[:12000],
     )
-    cv_markdown = llm.invoke(messages).content
+    cv_markdown = message_text(llm.invoke(messages))
 
     today = today or datetime.date.today()
     filename = tailored_filename(vacancy.company, vacancy.title,

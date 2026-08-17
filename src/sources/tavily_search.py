@@ -4,6 +4,7 @@ import re
 import httpx
 
 from src.config import TrackConfig
+from src.llm_text import message_text
 from src.models import Vacancy
 from src.prompts.extract_jobs import EXTRACT_JOBS_PROMPT
 
@@ -52,7 +53,7 @@ def extract_vacancies(pages: list[dict], llm) -> list[Vacancy]:
         messages = EXTRACT_JOBS_PROMPT.format_messages(
             url=page["url"], title=page["title"], content=page["content"])
         reply = llm.invoke(messages)
-        for item in _parse_jobs(getattr(reply, "content", reply)):
+        for item in _parse_jobs(message_text(reply)):
             if not isinstance(item, dict) or not item.get("title"):
                 continue
             vacancies.append(Vacancy(
