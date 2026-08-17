@@ -1,7 +1,7 @@
 #!/bin/bash
 # Rebuild CV PDFs from Markdown.
 #   ./cv/make_pdf.sh              -> rebuilds the master CVs in cv/master/
-#   ./cv/make_pdf.sh cv/tailored/20260817_Acme_Analyst_OlgaAksenova.md
+#   ./cv/make_pdf.sh cv/tailored/20260817_Acme_Analyst_YourName.md
 #                                 -> rebuilds only the files given
 # Fonts, spacing and alignment live in cv/style.css
 set -e
