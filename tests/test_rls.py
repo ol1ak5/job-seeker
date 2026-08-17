@@ -1,9 +1,14 @@
 import os
 
 import pytest
+from dotenv import load_dotenv
 
 from src.settings import load_settings
 from src.storage import connect, storage_configured
+
+# This is the one test that deliberately talks to the real project, so it reads
+# the developer's .env directly (tests/conftest.py exempts this file).
+load_dotenv()
 
 pytestmark = pytest.mark.skipif(
     not os.getenv("SUPABASE_TEST_EMAIL"),
