@@ -48,22 +48,26 @@ def _render_entries(items, track_name, out):
         if not _visible(item, track_name):
             continue
         dates = item.get("dates")
-        out.append(f"\n### {_clean(item.get('heading', ''))}"
-                   + (f" ({dates})" if dates else ""))
-        if item.get("subheading"):
-            out.append(_clean(item["subheading"]))
+        out.append(f"\n### {_clean(item.get('heading', ''))}")
+        place = _clean(item.get("subheading", ""))
+        if place or dates:
+            line = " ".join(part for part in
+                            (f"*{place}*" if place else "", f"*{dates}*" if dates else "")
+                            if part)
+            out.append(line)
         for bullet in item.get("bullets", []):
             if not _visible(bullet, track_name):
                 continue
             text = _item_text(bullet, track_name)
             if text:
                 out.append(f"- {text}")
-        for sub in item.get("subitems", []):
-            if not _visible(sub, track_name):
-                continue
+        visible_subs = [s for s in item.get("subitems", []) if _visible(s, track_name)]
+        if visible_subs and item.get("subitems_label"):
+            out.append(f"**{item['subitems_label']}**")
+        for sub in visible_subs:
             sub_dates = sub.get("dates")
             out.append(f"- {_clean(sub.get('heading', ''))}"
-                       + (f" ({sub_dates})" if sub_dates else ""))
+                       + (f" | *{sub_dates}*" if sub_dates else ""))
             for sub_bullet in sub.get("bullets", []):
                 if _visible(sub_bullet, track_name):
                     text = _item_text(sub_bullet, track_name)
@@ -74,7 +78,7 @@ def _render_entries(items, track_name, out):
 def _render_categories(items, track_name, out):
     for item in items:
         if _visible(item, track_name):
-            out.append(f"- {item['label']}: {', '.join(item['values'])}")
+            out.append(f"- **{item['label']}:** {', '.join(item['values'])}")
 
 
 def _render_inline(items, track_name, out):
@@ -100,7 +104,7 @@ def _render_list(items, track_name, out):
         if not text:
             continue
         dates = item.get("dates")
-        out.append(f"- {text}" + (f" | {dates}" if dates else ""))
+        out.append(f"- {text}" + (f" | *{dates}*" if dates else ""))
 
 
 def _render_text(items, track_name, out):
@@ -127,10 +131,11 @@ def profile_to_text(profile: dict, track: TrackConfig) -> str:
     name = track.name
     out: list[str] = []
     contact = profile["contact"]
-    out.append(f"# {contact['name']} — {_clean(_variant_text(profile['headline'], name))}")
+    out.append(f"# {contact['name']}")
+    out.append(f"**{_clean(_variant_text(profile['headline'], name))}**")
     details = [d if isinstance(d, str) else d.get("value", "")
                for d in contact.get("details", [])]
-    out.append(" | ".join(d for d in details if d))
+    out.append(" · ".join(d for d in details if d))
 
     for section in profile.get("sections", []):
         if not _visible(section, name):

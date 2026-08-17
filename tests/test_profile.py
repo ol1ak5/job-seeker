@@ -37,7 +37,7 @@ def test_all_skill_categories_render():
     text = profile_to_text(load_profile(), TRACKS["energy"])
     for label in ["Databases/Market Data", "Languages", "Frameworks",
                   "Developer Tools", "Libraries", "Office"]:
-        assert f"- {label}:" in text
+        assert f"- **{label}:**" in text   # master CVs use bold labels
     assert "CNMV" in text
 
 
@@ -54,7 +54,7 @@ def test_custom_section_needs_no_code_change():
         ],
     }
     text = profile_to_text(profile, TRACKS["energy"])
-    assert "## Publications" in text and "A Study of Time | 1963" in text
+    assert "## Publications" in text and "A Study of Time | *1963*" in text
     assert "## Volunteering" in text and "Saved Earth repeatedly" in text
 
 
