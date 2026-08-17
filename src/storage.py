@@ -1,0 +1,83 @@
+import datetime
+
+from src.models import ScoredVacancy
+from src.settings import Settings
+
+FIELDS = ("supabase_url", "supabase_anon_key", "supabase_email", "supabase_password")
+
+
+def storage_configured(settings: Settings) -> bool:
+    return all(getattr(settings, field) for field in FIELDS)
+
+
+def connect(settings: Settings, client_factory=None):
+    """Sign in to Supabase as a normal user, so RLS applies to the CLI too."""
+    if not storage_configured(settings):
+        return None
+    if client_factory is None:
+        from supabase import create_client
+
+        client_factory = create_client
+    client = client_factory(settings.supabase_url, settings.supabase_anon_key)
+    try:
+        client.auth.sign_in_with_password({
+            "email": settings.supabase_email,
+            "password": settings.supabase_password})
+    except Exception as exc:
+        raise SystemExit(
+            f"Could not sign in to Supabase as {settings.supabase_email}: {exc}. "
+            f"Check SUPABASE_EMAIL and SUPABASE_PASSWORD, and that the user is "
+            f"confirmed (Authentication -> Users -> Auto Confirm User).")
+    return client
+
+
+def save_run(client, user_id: str, track: str, days: int, limit: int,
+             dropped: dict, errors: list[str]) -> str:
+    result = client.table("runs").insert({
+        "user_id": user_id,
+        "track": track,
+        "status": "running",
+        "days": days,
+        "result_limit": limit,
+        "dropped": dropped or {},
+        "sources": {"errors": errors or []},
+    }).execute()
+    return result.data[0]["id"]
+
+
+def save_vacancies(client, user_id: str, run_id: str, track: str,
+                   scored: list[ScoredVacancy]) -> int:
+    rows = []
+    for item in scored:
+        v = item.vacancy
+        rows.append({
+            "user_id": user_id,
+            "run_id": run_id,
+            "ref": v.id,
+            "track": track,
+            "title": v.title,
+            "company": v.company,
+            "location": v.location,
+            "remote": v.remote,
+            "posted": v.posted.isoformat() if v.posted else None,
+            "salary": v.salary,
+            "url": v.url,
+            "source": v.source,
+            "description": v.description[:20000],
+            "score": item.score.score if item.score else None,
+            "verdict": item.score.verdict if item.score else None,
+            "matching_points": item.score.matching_points if item.score else [],
+            "gaps": item.score.gaps if item.score else [],
+            "flags": item.score.flags if item.score else [],
+        })
+    if not rows:
+        return 0
+    client.table("vacancies").upsert(rows, on_conflict="user_id,url").execute()
+    return len(rows)
+
+
+def finish_run(client, run_id: str, status: str = "done") -> None:
+    client.table("runs").update({
+        "status": status,
+        "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
+    }).eq("id", run_id).execute()
