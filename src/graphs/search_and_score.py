@@ -35,9 +35,10 @@ class SearchState(TypedDict):
 def _collect_vacancies(track: str, days: int, limit: int, client,
                        errors: list[str]) -> list[Vacancy]:
     cfg = load_tracks()[track]
+    settings = load_settings()
     out: list[Vacancy] = []
     try:
-        out += search_adzuna(cfg, load_settings(), days, limit, client)
+        out += search_adzuna(cfg, settings, days, limit, client)
     except Exception as exc:
         errors.append(f"adzuna: {exc}")
     for entry in load_watchlist():
@@ -47,7 +48,12 @@ def _collect_vacancies(track: str, days: int, limit: int, client,
             out += fetch_board(entry, client)
         except Exception as exc:
             errors.append(f"{entry.ats}/{entry.company}: {exc}")
-    settings = load_settings()
+    if settings.rapidapi_key:
+        try:
+            from src.sources.jsearch import search_jsearch
+            out += search_jsearch(cfg, settings.rapidapi_key, days, limit, client)
+        except Exception as exc:
+            errors.append(f"jsearch: {exc}")
     if settings.tavily_api_key:
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI

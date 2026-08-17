@@ -39,6 +39,12 @@ energy:
     - "energy analyst jobs Madrid Spain"
     - "energy consultant vacancy Madrid renewables"
     - "analista mercados energeticos empleo Madrid"
+  jsearch_country: es
+  jsearch_queries:
+    - "energy analyst Madrid Spain"
+    - "analista mercados energeticos"
+    - "consultor energia renovables Madrid"
+    - "energy consultant Madrid"
 
 ai:
   adzuna_country: us
@@ -81,3 +87,8 @@ ai:
   tavily_queries:
     - "junior AI engineer remote job opening"
     - "LLM engineer jobs Madrid Spain"
+  jsearch_country: us
+  jsearch_queries:
+    - "junior AI engineer remote"
+    - "LLM engineer remote"
+    - "machine learning engineer entry level remote"

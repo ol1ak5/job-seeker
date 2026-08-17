@@ -23,6 +23,8 @@ class TrackConfig(BaseModel):
     cv_sections: str
     filters: TrackFilters = TrackFilters()
     tavily_queries: list[str] = []
+    jsearch_queries: list[str] = []
+    jsearch_country: str = ""
 
 
 class WatchlistEntry(BaseModel):
