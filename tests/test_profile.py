@@ -75,3 +75,12 @@ def test_missing_variant_exits():
     with pytest.raises(SystemExit) as exc:
         profile_to_text(profile, TRACKS["energy"])
     assert "energy" in str(exc.value)
+
+
+def test_subitems_label_is_its_own_block():
+    """Without blank lines around it the label glues onto the previous bullet."""
+    text = profile_to_text(load_profile(), TRACKS["energy"])
+    lines = text.splitlines()
+    index = lines.index("**Selected Transactions & Research:**")
+    assert lines[index - 1] == ""
+    assert lines[index + 1] == ""

@@ -63,7 +63,11 @@ def _render_entries(items, track_name, out):
                 out.append(f"- {text}")
         visible_subs = [s for s in item.get("subitems", []) if _visible(s, track_name)]
         if visible_subs and item.get("subitems_label"):
+            # blank lines keep the label its own block in Markdown, otherwise it
+            # glues itself onto the previous bullet
+            out.append("")
             out.append(f"**{item['subitems_label']}**")
+            out.append("")
         for sub in visible_subs:
             sub_dates = sub.get("dates")
             out.append(f"- {_clean(sub.get('heading', ''))}"
