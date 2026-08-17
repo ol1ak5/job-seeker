@@ -32,11 +32,15 @@ def write_csv(scored: list[ScoredVacancy], path: pathlib.Path) -> None:
 
 
 def write_md(scored: list[ScoredVacancy], path: pathlib.Path, track: str,
-             errors: list[str]) -> None:
+             errors: list[str], dropped: dict[str, int] | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [f"# Run report — track `{track}`", ""]
     if errors:
         lines += ["## Source problems", *[f"- {e}" for e in errors], ""]
+    if dropped and any(dropped.values()):
+        parts = ", ".join(f"{reason}: {count}"
+                          for reason, count in dropped.items() if count)
+        lines += [f"Filtered out before scoring — {parts}", ""]
     lines.append(f"{len(scored)} vacancies. Sorted by score.\n")
     for item in sort_scored(scored):
         v = item.vacancy

@@ -6,6 +6,7 @@ from langgraph.graph import END, START, StateGraph
 
 from src.config import load_tracks, load_watchlist
 from src.dedupe import assign_ids, dedupe_in_run, filter_by_age, filter_seen
+from src.filters import apply_filters
 from src.models import ScoredVacancy, Vacancy
 from src.profile import load_profile, profile_to_text
 from src.scoring import score_with_retry
@@ -25,6 +26,7 @@ class SearchState(TypedDict):
     client: object
     errors: list[str]
     vacancies: list[Vacancy]
+    dropped: dict
     scored: list[ScoredVacancy]
     md_path: pathlib.Path
     profile_path: str
@@ -55,15 +57,17 @@ def search_jobs(state: SearchState) -> dict:
 
 
 def dedupe_filter(state: SearchState) -> dict:
+    cfg = load_tracks()[state["track"]]
     vacs = dedupe_in_run(state["vacancies"])
     vacs = filter_by_age(vacs, state["days"], state["today"])
     runs_dir = state["out_dir"] / "runs"
     runs_dir.mkdir(parents=True, exist_ok=True)
     vacs = filter_seen(vacs, runs_dir)
+    vacs, dropped = apply_filters(vacs, cfg.filters)
     vacs = assign_ids(vacs, state["track"], state["today"])[: state["limit"]]
     for v in vacs:
         cache_vacancy(v, state["out_dir"] / "cache")
-    return {"vacancies": vacs}
+    return {"vacancies": vacs, "dropped": dropped}
 
 
 def score_match(state: SearchState) -> dict:
@@ -85,7 +89,7 @@ def write_output(state: SearchState) -> dict:
     base = state["out_dir"] / "runs" / f"{stamp}_{state['track']}"
     write_csv(state["scored"], base.with_suffix(".csv"))
     write_md(state["scored"], base.with_suffix(".md"), state["track"],
-             state["errors"])
+             state["errors"], dropped=state.get("dropped"))
     return {"md_path": base.with_suffix(".md")}
 
 
@@ -111,7 +115,7 @@ def run_search(track: str, days: int, limit: int, scorer,
         "track": track, "days": days, "limit": limit,
         "today": today or datetime.date.today(),
         "out_dir": out_dir, "scorer": scorer, "client": client,
-        "errors": [], "vacancies": [], "scored": [],
+        "errors": [], "vacancies": [], "dropped": {}, "scored": [],
         "profile_path": profile_path,
     })
     return result["md_path"]

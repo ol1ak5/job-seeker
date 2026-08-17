@@ -7,6 +7,20 @@ energy:
     - "energy advisory"
     - "renewable market analysis"
     - "renewables consultant"
+    - "analista mercado energético"
+    - "consultor energía renovables"
+    - "analista energías renovables"
+  filters:
+    title_include: [analyst, associate, consultant, economist, specialist]
+    title_exclude: [director, "head of", vp, "vice president", manager, principal,
+                    chief, partner, lead, intern, internship, "working student"]
+    function_exclude: [sales, "account executive", "business development", recruiter,
+                       recruiting, marketing, "customer success", legal, accounting]
+    max_years_experience: 4
+    locations: [spain, madrid, españa, espana]
+    allow_remote: true
+    remote_terms: [remote, teletrabajo, "work from home", "remoto"]
+    max_per_company: 5
   scoring_guidance: |
     Target: energy consulting / market analysis / advisory roles at
     Associate or Senior Associate level (candidate is stepping up from
@@ -28,8 +42,22 @@ ai:
     - "junior AI engineer remote"
     - "entry level machine learning engineer remote"
     - "AI engineer remote"
-    - "applied AI engineer remote"
     - "LLM engineer remote"
+    - "machine learning engineer Madrid"
+    - "ingeniero inteligencia artificial Madrid"
+  filters:
+    title_include: [engineer, developer, scientist, analyst, "machine learning",
+                    "ai ", llm, mlops, research]
+    title_exclude: [director, "head of", vp, "vice president", principal, chief,
+                    partner, staff, "senior staff", manager]
+    function_exclude: [sales, "account executive", "business development", recruiter,
+                       recruiting, marketing, "customer success", "solutions architect",
+                       finance, legal]
+    max_years_experience: 4
+    locations: [madrid, spain, españa, espana]
+    allow_remote: true
+    remote_terms: [remote, "fully remote", teletrabajo, "work from home", remoto]
+    max_per_company: 5
   scoring_guidance: |
     Candidate is a career switcher from investment banking (energy) into AI.
     No professional AI experience — score projects, hackathons and

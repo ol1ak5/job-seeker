@@ -20,6 +20,9 @@ def test_load_tracks_has_both_tracks():
     assert "M&A" in tracks["energy"].scoring_guidance
     assert len(tracks["energy"].queries) >= 4
     assert "Projects" in tracks["ai"].cv_sections
+    assert tracks["energy"].filters.max_per_company == 5
+    assert tracks["energy"].filters.max_years_experience == 4
+    assert "director" in tracks["ai"].filters.title_exclude
 
 
 def test_load_watchlist_parses():

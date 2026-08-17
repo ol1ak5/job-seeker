@@ -13,10 +13,12 @@ def fake_scorer(profile_text, guidance, vacancy):
 def test_run_search_end_to_end(tmp_path, monkeypatch):
     vacs = [
         Vacancy(title="Energy Analyst", company="Aurora", url="u1",
-                source="adzuna", posted=datetime.date(2026, 8, 12), description="d"),
+                source="adzuna", location="Madrid, Spain",
+                posted=datetime.date(2026, 8, 12), description="d"),
         Vacancy(title="Energy Analyst", company="Aurora", url="dup",
-                source="greenhouse", description="d"),
+                source="greenhouse", location="Madrid, Spain", description="d"),
         Vacancy(title="Old Role", company="X", url="u2", source="adzuna",
+                location="Madrid, Spain",
                 posted=datetime.date(2026, 6, 1), description="d"),
     ]
     monkeypatch.setattr("src.graphs.search_and_score._collect_vacancies",
