@@ -1,4 +1,5 @@
-/* CV print style: A4, Times New Roman, justified text, dates flushed right */
+/* CV print style: A4, Times New Roman, justified text.
+   Job dates sit right of the location line; list dates stay inline after a | */
 @page { size: A4; margin: 13mm 16mm; }
 
 body {
@@ -55,12 +56,10 @@ p { margin: 2pt 0; text-align: justify; }
 ul { margin: 2pt 0 4pt 0; padding-left: 14pt; }
 li { text-align: justify; margin: 1.5pt 0; break-inside: avoid; }
 
-/* dates inside list items stay inline (after a | separator) */
-
 /* project headings: date in em flies right too */
 h3 em { float: right; font-weight: normal; font-size: 9.5pt; }
 
-/* languages: plain line, normal spacing */
+/* languages: single line stretched edge to edge */
 #languages + p {
   text-align: justify;
   text-align-last: justify;
