@@ -77,3 +77,16 @@ def test_apply_filters_counts_and_caps():
     assert [v.company for v in kept] == ["A", "A"]
     assert dropped == {"title": 1, "function": 1, "years": 1, "location": 1,
                        "company_cap": 1}
+
+
+def test_level_range_titles_are_kept():
+    """Consultancies advertise ranges: the upper bound must not disqualify."""
+    # mirrors the real energy track, where "consultant" is an accepted level
+    energy_like = F.model_copy(
+        update={"title_include": ["analyst", "associate", "consultant"]})
+    assert title_allowed("Consultants to Managers - Commodity Trading", energy_like)
+    assert title_allowed("Consultant to Manager - Energy Markets", energy_like)
+    assert title_allowed("Analysts to Associates, Power", energy_like)
+    # a genuine senior-only posting is still excluded
+    assert not title_allowed("Manager - Energy Networks", energy_like)
+    assert not title_allowed("Director, Commodities & Energy Trading", energy_like)

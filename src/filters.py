@@ -17,8 +17,17 @@ def _matches_any(text: str, needles: list[str]) -> bool:
     return any(needle.lower() in lowered for needle in needles)
 
 
+# Consultancies advertise level ranges: "Consultants to Managers - Commodity
+# Trading" is open from Consultant upwards, so the seniority word after "to"
+# must not disqualify the posting.
+LEVEL_RANGE = re.compile(
+    r"\b(analysts?|associates?|consultants?|engineers?)\s+(?:to|-|–|/)\s*\w", re.I)
+
+
 def title_allowed(title: str, f: TrackFilters) -> bool:
-    if _matches_any(title, f.title_exclude) or _matches_any(title, f.function_exclude):
+    if _matches_any(title, f.function_exclude):
+        return False
+    if _matches_any(title, f.title_exclude) and not LEVEL_RANGE.search(title):
         return False
     if f.title_include:
         return _matches_any(title, f.title_include)
