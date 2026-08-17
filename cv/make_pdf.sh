@@ -21,7 +21,7 @@ fi
 for f in "${FILES[@]}"; do
   out="${f%.md}.pdf"
   pandoc -s "$f" -o "/tmp/cv_build.html" --css=style.css --embed-resources \
-    --metadata pagetitle="Olga Aksenova — CV"
+    --metadata pagetitle="CV"
   "$CHROME" --headless --disable-gpu --no-pdf-header-footer \
     --print-to-pdf="$out" "/tmp/cv_build.html" 2>/dev/null
   echo "OK: $out"
