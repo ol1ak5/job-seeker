@@ -45,6 +45,7 @@ energy:
     - "analista mercados energeticos"
     - "consultor energia renovables Madrid"
     - "energy consultant Madrid"
+  master_cv: cv/master/CV_Energy.md
 
 ai:
   adzuna_country: us
@@ -92,3 +93,4 @@ ai:
     - "junior AI engineer remote"
     - "LLM engineer remote"
     - "machine learning engineer entry level remote"
+  master_cv: cv/master/CV_AI.md

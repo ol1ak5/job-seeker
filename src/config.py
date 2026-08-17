@@ -25,6 +25,7 @@ class TrackConfig(BaseModel):
     tavily_queries: list[str] = []
     jsearch_queries: list[str] = []
     jsearch_country: str = ""
+    master_cv: str = ""
 
 
 class WatchlistEntry(BaseModel):

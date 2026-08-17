@@ -150,5 +150,72 @@ def import_cv(file_: str, out: str | None, tracks: str | None):
                f"--profile {written.stem} with the other commands.")
 
 
+@cli.command("review")
+@click.option("--vacancy-id", required=True)
+@click.option("--pdf", is_flag=True, default=False,
+              help="Build the PDF after the review.")
+@click.option("--profile", default="master_profile", show_default=True)
+def review(vacancy_id: str, pdf: bool, profile: str):
+    """Walk through every change the model made and accept or reject each one."""
+    import pathlib
+    import subprocess
+
+    from src.config import load_tracks
+    from src.review import apply_decisions, build_hunks, find_tailored
+    from src.writers import load_cached_vacancy
+
+    profile_path, out_dir = resolve_profile(profile)
+    track = vacancy_id.split("-", 1)[0]
+    tracks = load_tracks()
+    if track not in tracks:
+        raise SystemExit(f"Unknown track in id '{vacancy_id}'.")
+    master_path = pathlib.Path(tracks[track].master_cv)
+    if not master_path.exists():
+        raise SystemExit(f"Master CV not found: {master_path}")
+
+    vacancy = load_cached_vacancy(vacancy_id, out_dir / "cache")
+    tailored_path = find_tailored(vacancy.company, vacancy.title,
+                                  pathlib.Path("cv/tailored"))
+    master_text = master_path.read_text(encoding="utf-8")
+    tailored_text = tailored_path.read_text(encoding="utf-8")
+    hunks = build_hunks(master_text, tailored_text)
+    if not hunks:
+        click.echo("No differences from the master CV.")
+        return
+
+    click.echo(f"{len(hunks)} change(s) against {master_path}\n")
+    decisions = []
+    for number, hunk in enumerate(hunks, start=1):
+        click.echo(f"--- Change {number}/{len(hunks)}  {hunk.section}")
+        for line in hunk.master_lines:
+            click.echo(click.style(f"  master   | {line}", fg="red"))
+        for line in hunk.tailored_lines:
+            click.echo(click.style(f"  tailored | {line}", fg="green"))
+        answer = click.prompt("  [y] keep tailored  [n] keep master  [e] edit",
+                              default="y", show_default=False)
+        answer = answer.strip().lower()
+        if answer.startswith("n"):
+            decisions.append(False)
+        elif answer.startswith("e"):
+            click.echo("  Enter the replacement text, end with an empty line:")
+            typed = []
+            while True:
+                line = input("  ")
+                if not line:
+                    break
+                typed.append(line)
+            decisions.append("\n".join(typed) if typed else False)
+        else:
+            decisions.append(True)
+        click.echo("")
+
+    tailored_path.write_text(
+        apply_decisions(master_text, tailored_text, decisions), encoding="utf-8")
+    click.echo(f"Saved: {tailored_path}")
+
+    if pdf:
+        subprocess.run(["./cv/make_pdf.sh", str(tailored_path)], check=True)
+
+
 if __name__ == "__main__":
     cli()
