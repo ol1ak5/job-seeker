@@ -4,7 +4,7 @@ import pytest
 
 from src.review import apply_decisions, build_hunks, find_tailored
 
-MASTER = """# Olga Aksenova
+MASTER = """# Alex Rivera
 
 ## Work Experience
 
@@ -19,7 +19,7 @@ MASTER = """# Olga Aksenova
 - **Languages:** Python, SQL, VBA
 """
 
-TAILORED = """# Olga Aksenova
+TAILORED = """# Alex Rivera
 
 ## Work Experience
 
@@ -77,9 +77,9 @@ def test_apply_decisions_wrong_count_exits():
 
 
 def test_find_tailored_picks_newest_match(tmp_path):
-    old = tmp_path / "20260101_greenyellow-com_Financial-Modelling-Analyst_OlgaAksenova.md"
-    new = tmp_path / "20260817_greenyellow-com_Financial-Modelling-Analyst_OlgaAksenova.md"
-    other = tmp_path / "20260817_acme_Data-Analyst_OlgaAksenova.md"
+    old = tmp_path / "20260101_greenyellow-com_Financial-Modelling-Analyst_AlexRivera.md"
+    new = tmp_path / "20260817_greenyellow-com_Financial-Modelling-Analyst_AlexRivera.md"
+    other = tmp_path / "20260817_acme_Data-Analyst_AlexRivera.md"
     for path in (old, new, other):
         path.write_text("x", encoding="utf-8")
     found = find_tailored("greenyellow.com", "Financial Modelling Analyst", tmp_path)

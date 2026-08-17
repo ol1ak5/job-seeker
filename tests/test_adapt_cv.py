@@ -10,7 +10,7 @@ from src.writers import cache_vacancy
 
 class FakeLLM:
     def invoke(self, messages):
-        return AIMessage(content="# Olga Aksenova\nTailored CV body")
+        return AIMessage(content="# Alex Rivera\nTailored CV body")
 
 
 def test_prompt_forbids_invention():
@@ -31,16 +31,16 @@ def test_prompt_asks_to_mirror_vacancy_vocabulary():
 
 def test_tailored_filename_format():
     name = tailored_filename("greenyellow.com", "Financial Modelling Analyst",
-                             "Olga Aksenova", datetime.date(2026, 8, 17))
+                             "Alex Rivera", datetime.date(2026, 8, 17))
     assert name == ("20260817_greenyellow-com_Financial-Modelling-Analyst"
-                    "_OlgaAksenova.md")
+                    "_AlexRivera.md")
 
 
 def test_tailored_filename_is_filesystem_safe():
     name = tailored_filename("A/B & Co.", "Analyst | Energy (Madrid)",
-                             "Olga Aksenova", datetime.date(2026, 1, 5))
+                             "Alex Rivera", datetime.date(2026, 1, 5))
     assert "/" not in name and "|" not in name and "&" not in name
-    assert name.startswith("20260105_") and name.endswith("_OlgaAksenova.md")
+    assert name.startswith("20260105_") and name.endswith("_AlexRivera.md")
 
 
 def test_run_adapt_cv_writes_to_tailored_dir(tmp_path):

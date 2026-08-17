@@ -1,13 +1,31 @@
-.env
-.DS_Store
-.remember/
+# --- private data: never published ---
+# Your own profile and CVs stay on your machine. Copy
+# profile/example_profile.yaml to profile/master_profile.yaml to start.
+profile/master_profile.yaml
+profile/*_profile.yaml
+!profile/example_profile.yaml
+cv/master/
+cv/tailored/
+cv/old/
 output/
-__pycache__/
-.superpowers/
-*.egg-info/
 
-# uv
+# secrets
+.env
+*.key
+
+# working notes and session state
+docs/superpowers/
+.remember/
+.superpowers/
+
+# python
+__pycache__/
+*.pyc
+*.egg-info/
 .venv/
-cv/*.pdf
+venv/
+.pytest_cache/
+
+# macOS / office temp files
+.DS_Store
 ~$*
-cv/tailored/*.pdf
