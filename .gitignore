@@ -10,3 +10,4 @@ __pycache__/
 .venv/
 cv/*.pdf
 ~$*
+cv/tailored/*.pdf
