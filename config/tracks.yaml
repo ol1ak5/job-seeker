@@ -17,7 +17,8 @@ energy:
     function_exclude: [sales, "account executive", "business development", recruiter,
                        recruiting, marketing, "customer success", legal, accounting]
     max_years_experience: 4
-    locations: [spain, madrid, españa, espana]
+    # Madrid only - country-wide terms would let Barcelona through
+    locations: [madrid]
     allow_remote: true
     remote_terms: [remote, teletrabajo, "work from home", "remoto"]
     max_per_company: 5
@@ -65,7 +66,8 @@ ai:
                        recruiting, marketing, "customer success", "solutions architect",
                        finance, legal]
     max_years_experience: 4
-    locations: [madrid, spain, españa, espana]
+    # Madrid only - country-wide terms would let Barcelona through
+    locations: [madrid]
     allow_remote: true
     remote_terms: [remote, "fully remote", teletrabajo, "work from home", remoto]
     max_per_company: 5
