@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { supabaseEnv } from "./lib/supabase/env";
+
 /**
  * Runs before every matched request.
  *
@@ -16,10 +18,9 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const { url, key } = supabaseEnv();
+
+  const supabase = createServerClient(url, key, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -33,9 +34,8 @@ export async function proxy(request: NextRequest) {
             response.cookies.set(name, value, options),
           );
         },
-      },
     },
-  );
+  });
 
   await supabase.auth.getUser();
 
