@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class TrackFilters(BaseModel):
     title_include: list[str] = []
+    domain_include: list[str] = []
     title_exclude: list[str] = []
     function_exclude: list[str] = []
     max_years_experience: int | None = None

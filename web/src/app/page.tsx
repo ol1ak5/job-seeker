@@ -1,5 +1,10 @@
 import SignOutButton from "@/components/SignOutButton";
-import VacancyTable, { type Vacancy } from "@/components/VacancyTable";
+import StatTiles from "@/components/StatTiles";
+import VacancyTable, {
+  FOLLOW_UP_AFTER_DAYS,
+  daysSince,
+  type Vacancy,
+} from "@/components/VacancyTable";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -22,39 +27,63 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  const { data: vacancies, error } = await supabase
+  const { data, error } = await supabase
     .from("vacancies")
     .select("*, applications(status, applied_at)")
     .order("score", { ascending: false, nullsFirst: false });
 
+  const vacancies = (data ?? []) as Vacancy[];
+  const statusOf = (v: Vacancy) => v.applications?.[0]?.status ?? "interested";
+
+  const stats = {
+    total: vacancies.length,
+    strong: vacancies.filter((v) => (v.score ?? 0) >= 80).length,
+    applied: vacancies.filter((v) => statusOf(v) === "applied").length,
+    followUps: vacancies.filter((v) => {
+      const waiting = daysSince(v.applications?.[0]?.applied_at ?? null);
+      return (
+        statusOf(v) === "applied" &&
+        waiting !== null &&
+        waiting >= FOLLOW_UP_AFTER_DAYS
+      );
+    }).length,
+  };
+
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">Job Seeker</h1>
-            <p className="text-sm text-slate-500">{user.email}</p>
+    <main className="min-h-screen">
+      <header className="border-b border-line bg-surface">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-base font-semibold tracking-tight text-ink">
+              Job Seeker
+            </h1>
+            <p className="hidden text-xs text-ink-faint sm:block">{user.email}</p>
           </div>
           <SignOutButton />
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {error && (
-          <p className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+          <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             Could not load vacancies: {error.message}
           </p>
         )}
 
-        {!error && (!vacancies || vacancies.length === 0) && (
-          <p className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-slate-500">
-            No vacancies yet. Run{" "}
-            <code className="font-mono">jobseeker search-and-score</code> to fill this in.
-          </p>
+        {!error && vacancies.length === 0 && (
+          <div className="rounded-lg border border-dashed border-line bg-surface p-10 text-center">
+            <p className="text-sm text-ink-soft">No vacancies yet.</p>
+            <p className="mt-2 font-mono text-xs text-ink-faint">
+              jobseeker search-and-score --track energy
+            </p>
+          </div>
         )}
 
-        {vacancies && vacancies.length > 0 && (
-          <VacancyTable vacancies={vacancies as Vacancy[]} userId={user.id} />
+        {vacancies.length > 0 && (
+          <>
+            <StatTiles {...stats} />
+            <VacancyTable vacancies={vacancies} userId={user.id} />
+          </>
         )}
       </div>
     </main>

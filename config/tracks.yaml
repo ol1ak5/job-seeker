@@ -12,10 +12,15 @@ energy:
     - "analista energías renovables"
   filters:
     title_include: [analyst, associate, consultant, economist, specialist]
+    # the vacancy must actually be about this field, not merely an analyst role
+    domain_include: [energy, power, electricity, renewable, solar, wind, grid,
+                     utilities, ppa, "energía", "eléctric", renovable, "energético"]
     title_exclude: [director, "head of", vp, "vice president", manager, principal,
                     chief, partner, lead, intern, internship, "working student"]
     function_exclude: [sales, "account executive", "business development", recruiter,
-                       recruiting, marketing, "customer success", legal, accounting]
+                       recruiting, recruitment, "talent acquisition", "hr ", "human resources",
+                       marketing, "customer success", legal, accounting, "cyber security",
+                       "information security", sap, erp, helpdesk, "service desk"]
     max_years_experience: 4
     # Madrid only - country-wide terms would let Barcelona through
     locations: [madrid]
@@ -60,11 +65,14 @@ ai:
   filters:
     title_include: [engineer, developer, scientist, analyst, "machine learning",
                     "ai ", llm, mlops, research]
+    domain_include: ["machine learning", "artificial intelligence", "ai ", llm,
+                     "deep learning", "data scien", nlp, "generative", pytorch,
+                     tensorflow, "language model"]
     title_exclude: [director, "head of", vp, "vice president", principal, chief,
                     partner, staff, "senior staff", manager]
     function_exclude: [sales, "account executive", "business development", recruiter,
-                       recruiting, marketing, "customer success", "solutions architect",
-                       finance, legal]
+                       recruiting, recruitment, "talent acquisition", "hr ", "human resources",
+                       marketing, "customer success", "solutions architect", finance, legal]
     max_years_experience: 4
     # Madrid only - country-wide terms would let Barcelona through
     locations: [madrid]

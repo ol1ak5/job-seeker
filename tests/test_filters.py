@@ -1,6 +1,6 @@
 from src.config import TrackFilters
-from src.filters import (apply_filters, location_allowed, min_years_required,
-                         title_allowed, years_allowed)
+from src.filters import (apply_filters, domain_allowed, location_allowed,
+                         min_years_required, title_allowed, years_allowed)
 from src.models import Vacancy
 
 F = TrackFilters(
@@ -75,8 +75,8 @@ def test_apply_filters_counts_and_caps():
     ]
     kept, dropped = apply_filters(vacancies, F)
     assert [v.company for v in kept] == ["A", "A"]
-    assert dropped == {"title": 1, "function": 1, "years": 1, "location": 1,
-                       "company_cap": 1}
+    assert dropped == {"title": 1, "function": 1, "domain": 0, "years": 1,
+                       "location": 1, "company_cap": 1}
 
 
 def test_level_range_titles_are_kept():
@@ -109,3 +109,29 @@ def test_location_multiple_cities_including_target_is_kept():
 
 def test_location_found_in_title_when_field_empty():
     assert location_allowed(vac(title="Analyst - Energy Projects (Madrid)", location=""), F)
+
+
+def test_domain_filter_rejects_off_topic_analyst_roles():
+    """Seniority and function checks alone pass any analyst in the right city."""
+    energy = F.model_copy(update={
+        "title_include": ["analyst", "consultant"],
+        "domain_include": ["energy", "power", "renewable"],
+    })
+    on_topic = vac(title="Energy Transactions Analyst",
+                   description="support energy transaction advisory")
+    off_topic = vac(title="Cyber Security Analyst",
+                    description="protect networks and infrastructure")
+    assert domain_allowed(on_topic, energy)
+    assert not domain_allowed(off_topic, energy)
+
+
+def test_domain_filter_reads_the_description_too():
+    """A generic title at an energy company is still on topic."""
+    energy = F.model_copy(update={"domain_include": ["renewable"]})
+    v = vac(title="Business Insights Analyst",
+            description="Join our renewable generation portfolio team")
+    assert domain_allowed(v, energy)
+
+
+def test_empty_domain_include_allows_everything():
+    assert domain_allowed(vac(title="Anything"), F)

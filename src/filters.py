@@ -34,6 +34,18 @@ def title_allowed(title: str, f: TrackFilters) -> bool:
     return True
 
 
+def domain_allowed(vacancy: Vacancy, f: TrackFilters) -> bool:
+    """Is this vacancy even about the right field?
+
+    Seniority and function filters both pass a "Cyber Security Analyst" in
+    Madrid - it is an analyst, it is not sales, it is in the right city. Only a
+    subject-matter check keeps the track on topic.
+    """
+    if not f.domain_include:
+        return True
+    return _matches_any(f"{vacancy.title} {vacancy.description}", f.domain_include)
+
+
 def min_years_required(text: str) -> int | None:
     """Lowest year requirement stated anywhere in the text, or None if unstated.
 
@@ -75,7 +87,8 @@ def location_allowed(vacancy: Vacancy, f: TrackFilters) -> bool:
 
 def apply_filters(vacancies: list[Vacancy],
                   f: TrackFilters) -> tuple[list[Vacancy], dict[str, int]]:
-    dropped = {"title": 0, "function": 0, "years": 0, "location": 0, "company_cap": 0}
+    dropped = {"title": 0, "function": 0, "domain": 0, "years": 0, "location": 0,
+               "company_cap": 0}
     kept: list[Vacancy] = []
     per_company: dict[str, int] = {}
     for vacancy in vacancies:
@@ -84,6 +97,9 @@ def apply_filters(vacancies: list[Vacancy],
             continue
         if not title_allowed(vacancy.title, f):
             dropped["title"] += 1
+            continue
+        if not domain_allowed(vacancy, f):
+            dropped["domain"] += 1
             continue
         if not years_allowed(vacancy.description, f):
             dropped["years"] += 1
