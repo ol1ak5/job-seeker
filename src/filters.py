@@ -56,6 +56,13 @@ def years_allowed(description: str, f: TrackFilters) -> bool:
 
 
 def location_allowed(vacancy: Vacancy, f: TrackFilters) -> bool:
+    """Wanted city named, remote, or location simply not stated.
+
+    An unstated location is not a mismatch, so it is kept and left for the
+    scorer to flag - the same rule the experience filter uses. Several of the
+    strongest vacancies found so far carry no location field at all. A location
+    that IS stated and names another city is a real mismatch and is dropped.
+    """
     if not f.locations:
         return True
     text = f"{vacancy.location} {vacancy.title}"
@@ -63,7 +70,7 @@ def location_allowed(vacancy: Vacancy, f: TrackFilters) -> bool:
         return True
     if f.allow_remote and (vacancy.remote or _matches_any(text, f.remote_terms)):
         return True
-    return False
+    return not vacancy.location.strip()
 
 
 def apply_filters(vacancies: list[Vacancy],

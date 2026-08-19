@@ -8,7 +8,7 @@ F = TrackFilters(
     title_exclude=["director", "head of", "vp", "manager", "principal", "chief"],
     function_exclude=["sales", "account executive", "recruiter", "marketing"],
     max_years_experience=4,
-    locations=["spain", "madrid"],
+    locations=["madrid"],   # mirrors the real config: city, not country
     allow_remote=True,
     remote_terms=["remote", "teletrabajo"],
     max_per_company=2,
@@ -90,3 +90,22 @@ def test_level_range_titles_are_kept():
     # a genuine senior-only posting is still excluded
     assert not title_allowed("Manager - Energy Networks", energy_like)
     assert not title_allowed("Director, Commodities & Energy Trading", energy_like)
+
+
+def test_location_unstated_is_kept():
+    """An empty location is unknown, not wrong: keep it and let the scorer flag it."""
+    assert location_allowed(vac(location=""), F)
+    assert location_allowed(vac(location="   "), F)
+
+
+def test_location_stated_elsewhere_is_dropped():
+    assert not location_allowed(vac(location="Barcelona, Spain"), F)
+    assert not location_allowed(vac(location="London, United Kingdom"), F)
+
+
+def test_location_multiple_cities_including_target_is_kept():
+    assert location_allowed(vac(location="Madrid or Stockholm, Multiple Countries"), F)
+
+
+def test_location_found_in_title_when_field_empty():
+    assert location_allowed(vac(title="Analyst - Energy Projects (Madrid)", location=""), F)
