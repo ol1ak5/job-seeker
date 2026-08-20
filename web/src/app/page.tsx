@@ -1,12 +1,9 @@
 import Landing from "@/components/Landing";
 import SignOutButton from "@/components/SignOutButton";
 import StatTiles from "@/components/StatTiles";
-import VacancyTable, {
-  FOLLOW_UP_AFTER_DAYS,
-  daysSince,
-  type Vacancy,
-} from "@/components/VacancyTable";
+import VacancyTable from "@/components/VacancyTable";
 import { createClient } from "@/lib/supabase/server";
+import { needsFollowUp, statusOf, type Vacancy } from "@/lib/vacancies";
 import Link from "next/link";
 
 /**
@@ -36,20 +33,14 @@ export default async function HomePage() {
     .order("score", { ascending: false, nullsFirst: false });
 
   const vacancies = (data ?? []) as Vacancy[];
-  const statusOf = (v: Vacancy) => v.applications?.[0]?.status ?? "interested";
 
   const stats = {
     total: vacancies.length,
     strong: vacancies.filter((v) => (v.score ?? 0) >= 80).length,
     applied: vacancies.filter((v) => statusOf(v) === "applied").length,
-    followUps: vacancies.filter((v) => {
-      const waiting = daysSince(v.applications?.[0]?.applied_at ?? null);
-      return (
-        statusOf(v) === "applied" &&
-        waiting !== null &&
-        waiting >= FOLLOW_UP_AFTER_DAYS
-      );
-    }).length,
+    followUps: vacancies.filter((v) =>
+      needsFollowUp(statusOf(v), v.applications?.[0]?.applied_at ?? null),
+    ).length,
   };
 
   return (

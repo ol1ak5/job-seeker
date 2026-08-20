@@ -1,23 +1,12 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import {
+  daysSince,
+  needsFollowUp as isOverdue,
+  type Vacancy,
+} from "@/lib/vacancies";
 import { useMemo, useState } from "react";
-
-export type Vacancy = {
-  id: string;
-  title: string;
-  company: string;
-  location: string | null;
-  url: string;
-  source: string;
-  posted: string | null;
-  score: number | null;
-  verdict: string | null;
-  matching_points: string[] | null;
-  gaps: string[] | null;
-  flags: string[] | null;
-  applications: { status: string; applied_at: string | null }[] | null;
-};
 
 const STATUSES = [
   "interested",
@@ -27,9 +16,6 @@ const STATUSES = [
   "rejected",
   "declined",
 ] as const;
-
-/** Days after applying with no status change before a follow-up is suggested. */
-export const FOLLOW_UP_AFTER_DAYS = 10;
 
 const STATUS_STYLE: Record<string, string> = {
   interested: "border-line text-ink-soft",
@@ -46,11 +32,6 @@ function scoreStyle(score: number | null) {
   if (score >= 60) return "bg-brand/10 text-brand";
   if (score >= 40) return "bg-amber-100 text-amber-900";
   return "bg-line-soft text-ink-faint";
-}
-
-export function daysSince(date: string | null): number | null {
-  if (!date) return null;
-  return Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
 }
 
 /** "12 Aug" reads faster in a column than "2026-08-12". */
@@ -181,10 +162,7 @@ export default function VacancyTable({
             {rows.map((v) => {
               const status = statuses[v.id];
               const waiting = daysSince(appliedAt[v.id]);
-              const needsFollowUp =
-                status === "applied" &&
-                waiting !== null &&
-                waiting >= FOLLOW_UP_AFTER_DAYS;
+              const overdue = isOverdue(status, appliedAt[v.id]);
               const isOpen = expanded === v.id;
 
               return (
@@ -208,7 +186,7 @@ export default function VacancyTable({
                     >
                       {v.title}
                     </button>
-                    {needsFollowUp && (
+                    {overdue && (
                       <span className="ml-2 whitespace-nowrap rounded bg-accent/10 px-1.5 py-0.5 font-mono text-xs text-accent">
                         follow up {waiting}d
                       </span>
