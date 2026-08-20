@@ -18,9 +18,11 @@ import { useState } from "react";
 export default function AddVacancy({
   userId,
   tracks,
+  active,
 }: {
   userId: string;
   tracks: string[];
+  active: string;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -31,7 +33,7 @@ export default function AddVacancy({
     location: "",
     url: "",
     description: "",
-    track: tracks[0] ?? "manual",
+    track: active || tracks[0] || "manual",
   });
   const router = useRouter();
 

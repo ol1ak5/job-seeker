@@ -11,6 +11,7 @@
 
 export type Vacancy = {
   id: string;
+  track: string;
   title: string;
   company: string;
   location: string | null;

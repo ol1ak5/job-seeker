@@ -47,14 +47,13 @@ function relativeTime(iso: string | null): string {
  * reads as a broken page.
  */
 export default function SearchButton({
-  tracks,
+  track,
   initialJob,
 }: {
-  tracks: string[];
+  track: string;
   initialJob: Job | null;
 }) {
   const [job, setJob] = useState<Job | null>(initialJob);
-  const [track, setTrack] = useState(tracks[0] ?? "");
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const router = useRouter();
@@ -102,28 +101,16 @@ export default function SearchButton({
   return (
     <div className="mb-4 rounded-lg border border-line bg-surface p-4">
       <div className="flex flex-wrap items-center gap-3">
-        {tracks.length > 1 && (
-          <select
-            value={track}
-            onChange={(e) => setTrack(e.target.value)}
-            disabled={busy}
-            aria-label="Which search to run"
-            className="cursor-pointer rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand disabled:opacity-50"
-          >
-            {tracks.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        )}
-
         <button
           onClick={start}
-          disabled={busy || starting || !tracks.length}
+          disabled={busy || starting || !track}
           className="cursor-pointer rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
         >
-          {busy ? "Searching..." : starting ? "Starting..." : "Search now"}
+          {busy
+            ? "Searching..."
+            : starting
+              ? "Starting..."
+              : `Search ${track}`}
         </button>
 
         {busy && (
@@ -133,7 +120,7 @@ export default function SearchButton({
           </p>
         )}
 
-        {!busy && !tracks.length && (
+        {!busy && !track && (
           <p className="text-sm text-ink-faint">
             Set up a search first, and upload your CV.
           </p>

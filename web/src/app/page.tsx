@@ -3,6 +3,7 @@ import Landing from "@/components/Landing";
 import SearchButton, { type Job } from "@/components/SearchButton";
 import SignOutButton from "@/components/SignOutButton";
 import StatTiles from "@/components/StatTiles";
+import TrackTabs from "@/components/TrackTabs";
 import VacancyTable from "@/components/VacancyTable";
 import { createClient } from "@/lib/supabase/server";
 import { needsFollowUp, statusOf, type Vacancy } from "@/lib/vacancies";
@@ -16,7 +17,11 @@ import Link from "next/link";
  * The tracker status lives in a separate table, pulled in through the foreign
  * key `applications.vacancy_id`, so one request returns both.
  */
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ track?: string }>;
+}) {
   const supabase = await createClient();
 
   const {
@@ -43,9 +48,20 @@ export default async function HomePage() {
         .limit(1),
     ]);
 
-  const vacancies = (data ?? []) as Vacancy[];
+  const all = (data ?? []) as Vacancy[];
   const tracks = (trackRows ?? []).map((t) => t.name as string);
   const latestJob = (jobRows?.[0] as Job) ?? null;
+
+  // Two tracks are two careers. Showing one at a time is what makes the
+  // numbers below mean anything: a strong match for energy and a strong match
+  // for AI are not four of the same thing.
+  const counts: Record<string, number> = {};
+  for (const v of all) counts[v.track] = (counts[v.track] ?? 0) + 1;
+
+  const wanted = (await searchParams).track;
+  const active =
+    wanted && tracks.includes(wanted) ? wanted : (tracks[0] ?? "");
+  const vacancies = tracks.length > 1 ? all.filter((v) => v.track === active) : all;
 
   const stats = {
     total: vacancies.length,
@@ -97,13 +113,15 @@ export default async function HomePage() {
           </p>
         )}
 
+        <TrackTabs tracks={tracks} active={active} counts={counts} />
+
         {vacancies.length > 0 && <StatTiles {...stats} />}
 
         {!error && (
-          <SearchButton tracks={tracks} initialJob={latestJob} />
+          <SearchButton track={active} initialJob={latestJob} />
         )}
 
-        {!error && <AddVacancy userId={user.id} tracks={tracks} />}
+        {!error && <AddVacancy userId={user.id} tracks={tracks} active={active} />}
 
         {!error && vacancies.length === 0 && (
           <div className="rounded-lg border border-dashed border-line bg-surface p-10 text-center">

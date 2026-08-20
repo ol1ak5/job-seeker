@@ -29,3 +29,9 @@ venv/
 # macOS / office temp files
 .DS_Store
 ~$*
+
+# Third-party tooling installed by `npx impeccable install`: 150 vendored files
+# that belong to that project, not this one, and are reinstalled by the same
+# command. settings.local.json holds machine-specific hook wiring.
+.claude/skills/
+.claude/settings.local.json
