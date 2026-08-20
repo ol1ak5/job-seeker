@@ -6,7 +6,8 @@ from langgraph.graph import END, START, StateGraph
 
 from src.config import load_tracks, load_watchlist
 from src.dedupe import assign_ids, dedupe_in_run, filter_by_age, filter_seen
-from src.filters import RELAXATIONS, apply_filters, relax
+from src.filters import (RELAXATIONS, apply_filters,
+                         authorisation_note, relax)
 from src.models import ScoredVacancy, Vacancy
 from src.profile import load_profile, profile_to_text
 from src.scoring import score_with_retry
@@ -133,14 +134,16 @@ def enough_found(state: SearchState) -> str:
 def score_match(state: SearchState) -> dict:
     cfg = load_tracks()[state["track"]]
     profile_text = profile_to_text(load_profile(state["profile_path"]), cfg)
-    scored = [
-        ScoredVacancy(
-            vacancy=v,
-            score=score_with_retry(state["scorer"], profile_text,
-                                   cfg.scoring_guidance, v),
-        )
-        for v in state["vacancies"]
-    ]
+    scored = []
+    for v in state["vacancies"]:
+        score = score_with_retry(state["scorer"], profile_text,
+                                 cfg.scoring_guidance, v)
+        # A paperwork warning the model may not have thought to raise. It goes
+        # first because it decides whether the rest is worth reading.
+        note = authorisation_note(v, cfg.filters)
+        if score and note and note not in score.flags:
+            score.flags.insert(0, note)
+        scored.append(ScoredVacancy(vacancy=v, score=score))
     return {"scored": scored}
 
 

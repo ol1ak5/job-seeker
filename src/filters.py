@@ -46,6 +46,65 @@ def domain_allowed(vacancy: Vacancy, f: TrackFilters) -> bool:
     return _matches_any(f"{vacancy.title} {vacancy.description}", f.domain_include)
 
 
+# Where a posting says you must already be allowed to work. The capture group
+# is the place; everything after it up to the first full stop is ignored.
+AUTHORISATION = (
+    r"(?:legally\s+)?authoris?z?ed\s+to\s+work\s+in\s+(?:the\s+)?([a-z .]{2,28})",
+    r"work\s+authoris?z?ation\s+(?:in|for)\s+(?:the\s+)?([a-z .]{2,28})",
+    r"(?:eligible|eligibility|right|permit)\s+to\s+work\s+in\s+(?:the\s+)?([a-z .]{2,28})",
+    r"must\s+(?:currently\s+)?(?:reside|live)\s+in\s+(?:the\s+)?([a-z .]{2,28})",
+)
+
+# "We cannot sponsor a visa" names no country: it means the country the job is
+# in, so it only matters where you could not already work.
+NO_SPONSORSHIP = re.compile(
+    r"(?:do(?:es)?\s+not|cannot|can't|unable\s+to|will\s+not|won't)\s+"
+    r"(?:be\s+able\s+to\s+)?(?:offer|provide|consider)?\s*"
+    r"(?:visa\s+|immigration\s+|work\s+)?sponsor", re.I)
+
+
+def _named_place(text: str) -> list[str]:
+    found = []
+    lowered = text.lower()
+    for pattern in AUTHORISATION:
+        for match in re.findall(pattern, lowered):
+            # "united states. applicants will" -> "united states"
+            found.append(re.split(r"[.,;]| and | or ", match.strip())[0].strip())
+    return [place for place in found if place]
+
+
+def authorisation_note(vacancy: Vacancy, f: TrackFilters) -> str | None:
+    """A warning about paperwork, not a verdict.
+
+    This deliberately does not drop anything. An employer who writes "must be
+    authorised to work in the US" will often still sponsor the right candidate,
+    and a stated requirement is an opening line in a conversation rather than a
+    locked door. Deciding that is the reader's job; noticing it is this one's.
+
+    Only the explicit wording is caught. Most postings never raise the subject
+    at all - of thirty on one real list, five mentioned it - so absence of a
+    note means nothing was said, not that nothing is required.
+    """
+    if not f.authorised_in:
+        return None
+
+    allowed = [place.lower() for place in f.authorised_in]
+
+    def permitted(place: str) -> bool:
+        return any(a in place or place in a for a in allowed)
+
+    for place in _named_place(vacancy.description):
+        if not permitted(place):
+            return f"Asks for the right to work in {place.title()}"
+
+    if NO_SPONSORSHIP.search(vacancy.description):
+        # No country named, so the job's own location is the one that matters.
+        where = vacancy.location.lower()
+        if where.strip() and not any(a in where for a in allowed):
+            return f"Says it does not sponsor visas, and is based in {vacancy.location}"
+    return None
+
+
 def min_years_required(text: str) -> int | None:
     """Lowest year requirement stated anywhere in the text, or None if unstated.
 
@@ -80,9 +139,48 @@ def location_allowed(vacancy: Vacancy, f: TrackFilters) -> bool:
     text = f"{vacancy.location} {vacancy.title}"
     if _matches_any(text, f.locations):
         return True
-    if f.allow_remote and (vacancy.remote or _matches_any(text, f.remote_terms)):
-        return True
+
+    # "Fully remote" is often stated in the body and nowhere else, so the body
+    # counts too. Being generous here is safe now that remote_reaches_you asks
+    # the harder question afterwards.
+    signal = f"{text} {vacancy.description[:2000]}"
+    if f.allow_remote and (vacancy.remote or _matches_any(signal, f.remote_terms)):
+        return remote_reaches_you(vacancy, f)
+
     return not vacancy.location.strip()
+
+
+# "Remote - Worldwide", "work from anywhere", "fully remote (global)". Only
+# these promise that where you sit is genuinely nobody's business.
+WORLDWIDE = re.compile(
+    r"\b(?:world\s?wide|globally|global(?:ly)?\s+remote|remote\s*[-–(:]?\s*global"
+    r"|anywhere|any\s+time\s*zone|international(?:ly)?\s+remote)\b", re.I)
+
+
+def remote_reaches_you(vacancy: Vacancy, f: TrackFilters) -> bool:
+    """Remote from where?
+
+    "AI Engineer - Remote" in Nebraska is remote for people who may already work
+    in the United States. Treating the word "remote" as if it erased geography
+    filled an entire list with roles that cannot legally be taken - and each one
+    cost a model call to discover that.
+
+    A remote posting is kept when it names no place at all, when the place it
+    names is somewhere the candidate may work, or when it says outright that it
+    does not care where you are.
+    """
+    # Nobody who has not said where they may work gets this filter imposed on
+    # them: without that answer the question cannot be asked, let alone judged.
+    if not f.authorised_in:
+        return True
+
+    where = vacancy.location.strip().lower()
+    if not where:
+        return True
+    if any(a.lower() in where for a in f.authorised_in):
+        return True
+    return bool(WORLDWIDE.search(f"{vacancy.location} {vacancy.title} "
+                                f"{vacancy.description[:2000]}"))
 
 
 # What each round of loosening gives up, in order.

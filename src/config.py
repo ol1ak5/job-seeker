@@ -11,6 +11,9 @@ class TrackFilters(BaseModel):
     function_exclude: list[str] = []
     max_years_experience: int | None = None
     locations: list[str] = []
+    # Countries or regions where the candidate may already work. Empty means
+    # the check is off; nothing is inferred from the CV.
+    authorised_in: list[str] = []
     allow_remote: bool = True
     remote_terms: list[str] = []
     max_per_company: int = 5

@@ -204,6 +204,17 @@ export default function TrackForm({
             />
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TagInput
+              id="authorised_in"
+              label="Where you may already work"
+              hint="A remote role pinned to somewhere else is not really open to you. Leave empty to skip the check."
+              values={filters.authorised_in}
+              placeholder="spain"
+              onChange={(authorised_in) => setFilters({ authorised_in })}
+            />
+          </div>
+
           <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
             <input
               type="checkbox"

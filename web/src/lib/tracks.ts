@@ -13,6 +13,7 @@ export type TrackFilters = {
   function_exclude: string[];
   max_years_experience: number | null;
   locations: string[];
+  authorised_in: string[];
   allow_remote: boolean;
   remote_terms: string[];
   max_per_company: number;
@@ -74,6 +75,7 @@ export function emptyTrack(): TrackData {
       function_exclude: [],
       max_years_experience: null,
       locations: [],
+      authorised_in: [],
       allow_remote: true,
       remote_terms: [...REMOTE_TERMS],
       max_per_company: 5,

@@ -24,6 +24,10 @@ energy:
     max_years_experience: 4
     # Madrid only - country-wide terms would let Barcelona through
     locations: [madrid]
+    # Where the candidate may already work. A posting pinned elsewhere is not
+    # rescued by the word "remote"; one that says it needs papers is kept and
+    # flagged, never dropped.
+    authorised_in: [spain, es, eu, "european union", europe, emea]
     allow_remote: true
     remote_terms: [remote, teletrabajo, "work from home", "remoto"]
     max_per_company: 5
@@ -76,6 +80,7 @@ ai:
     max_years_experience: 4
     # Madrid only - country-wide terms would let Barcelona through
     locations: [madrid]
+    authorised_in: [spain, es, eu, "european union", europe, emea]
     allow_remote: true
     remote_terms: [remote, "fully remote", teletrabajo, "work from home", remoto]
     max_per_company: 5

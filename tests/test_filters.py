@@ -192,3 +192,170 @@ def test_relaxing_keeps_more_of_the_same_vacancies():
     assert len(loose) == 3
     # nothing new is invented - the wider result contains the narrower one
     assert {v.company for v in strict} <= {v.company for v in loose}
+
+
+# ------------------------------------------------- work authorisation --
+
+AUTH = TrackFilters(authorised_in=["spain", "eu", "european union"])
+
+
+def test_a_posting_that_demands_authorisation_you_lack_is_flagged_not_dropped():
+    """A stated requirement is an opening line, not a locked door."""
+    from src.filters import apply_filters, authorisation_note
+
+    us = vac(title="AI Engineer", location="Nebraska, US",
+             description="Applicants must be authorized to work in the United States.")
+    note = authorisation_note(us, AUTH)
+    assert note and "United States" in note
+    kept, _ = apply_filters([us], AUTH)
+    assert kept == [us]          # still on the list, warning attached
+
+
+def test_the_phrasings_employers_actually_use():
+    from src.filters import authorisation_note
+
+    for wording in (
+        "must be legally authorized to work in the United States",
+        "work authorization in the US is required",
+        "candidates must be eligible to work in the UK",
+        "you will need the right to work in Canada",
+    ):
+        assert authorisation_note(vac(description=wording), AUTH), wording
+
+
+def test_a_place_you_may_work_raises_nothing():
+    from src.filters import authorisation_note
+
+    assert authorisation_note(
+        vac(description="You must have the right to work in Spain."), AUTH) is None
+
+
+def test_no_sponsorship_is_read_against_where_the_job_is():
+    """"We do not sponsor visas" only matters where you cannot already work."""
+    from src.filters import authorisation_note
+
+    us = vac(location="Austin, Texas, United States",
+             description="We are unable to sponsor visas at this time.")
+    local = vac(location="Madrid, Spain",
+                description="We do not offer visa sponsorship.")
+    assert authorisation_note(us, AUTH)
+    assert authorisation_note(local, AUTH) is None
+
+
+def test_silence_about_authorisation_is_not_a_warning():
+    from src.filters import authorisation_note
+
+    assert authorisation_note(vac(description="A great team."), AUTH) is None
+
+
+def test_without_the_setting_nothing_is_checked():
+    from src.filters import authorisation_note
+
+    assert authorisation_note(
+        vac(description="must be authorized to work in the US"),
+        TrackFilters()) is None
+
+
+# ------------------------------------------------- loosening instead of failing --
+
+ENERGY = F.model_copy(update={
+    "title_include": ["analyst", "consultant"],
+    "domain_include": ["energy", "renewable"],
+})
+
+
+def test_relax_level_zero_changes_nothing():
+    from src.filters import relax
+    assert relax(ENERGY, 0) == ENERGY
+
+
+def test_relax_gives_up_experience_and_title_words_first():
+    """A stated years requirement is a wish, not a wall."""
+    from src.filters import relax
+    loosened = relax(ENERGY, 1)
+    assert loosened.max_years_experience is None
+    assert loosened.title_include == []
+    # the subject is still enforced: the track is still about energy
+    assert loosened.domain_include == ENERGY.domain_include
+    assert loosened.function_exclude == ENERGY.function_exclude
+
+
+def test_the_subject_survives_every_level_but_the_last():
+    """Giving up the subject turns an energy search into a search for anything."""
+    from src.filters import RELAXATIONS, relax
+
+    assert relax(ENERGY, 1).domain_include == ENERGY.domain_include
+    assert relax(ENERGY, 2).domain_include == ENERGY.domain_include
+    assert relax(ENERGY, 2).title_exclude == []
+    assert relax(ENERGY, len(RELAXATIONS)).domain_include == []
+
+
+def test_the_wrong_kind_of_job_is_never_forgiven():
+    """Sales and recruitment are not a guess about wording; they are a no."""
+    from src.filters import RELAXATIONS, relax
+
+    for level in range(len(RELAXATIONS) + 1):
+        assert relax(ENERGY, level).function_exclude == ENERGY.function_exclude
+
+
+def test_relaxing_keeps_more_of_the_same_vacancies():
+    from src.filters import relax
+    vacancies = [
+        vac(title="Energy Analyst", company="A", description="2 years"),
+        vac(title="Energy Specialist", company="B", description="renewable"),   # title
+        vac(title="Energy Analyst", company="C", description="8+ years required"),
+    ]
+    strict, _ = apply_filters(vacancies, ENERGY)
+    loose, _ = apply_filters(vacancies, relax(ENERGY, 1))
+    assert len(strict) == 1
+    assert len(loose) == 3
+    # nothing new is invented - the wider result contains the narrower one
+    assert {v.company for v in strict} <= {v.company for v in loose}
+
+
+# ------------------------------------------------- remote from where --
+
+REMOTE_OK = TrackFilters(
+    locations=["madrid"],
+    authorised_in=["spain", "eu", "european union", "europe"],
+    allow_remote=True,
+    remote_terms=["remote", "teletrabajo", "work from home"],
+)
+
+
+def test_remote_pinned_to_a_country_you_cannot_work_in_is_dropped():
+    """The word remote does not erase geography."""
+    assert not location_allowed(
+        vac(title="AI Engineer - Remote", location="Nebraska, US"), REMOTE_OK)
+    assert not location_allowed(
+        vac(title="LLM Engineer (Remote)", location="Tumwater, Thurston County"),
+        REMOTE_OK)
+
+
+def test_remote_within_somewhere_you_may_work_is_kept():
+    assert location_allowed(
+        vac(title="Software Engineer, Integrations (Remote)", location="Europe"),
+        REMOTE_OK)
+    assert location_allowed(
+        vac(title="Analyst (remote)", location="Barcelona, Spain"), REMOTE_OK)
+
+
+def test_remote_that_says_it_means_anywhere_is_kept():
+    assert location_allowed(
+        vac(title="AI Engineer - Remote Worldwide", location="San Francisco"),
+        REMOTE_OK)
+    assert location_allowed(
+        vac(title="LLM Engineer", location="New York",
+            description="Fully remote, work from anywhere."), REMOTE_OK)
+
+
+def test_remote_with_no_stated_place_is_still_kept():
+    """Nothing stated is unknown, not wrong - the same rule as everywhere else."""
+    assert location_allowed(vac(title="Remote AI Engineer", location=""), REMOTE_OK)
+
+
+def test_without_authorisation_configured_remote_behaves_as_before():
+    """Nobody who has not answered the question gets a new filter imposed."""
+    old = REMOTE_OK.model_copy(update={"authorised_in": []})
+    assert location_allowed(vac(title="AI Engineer - Remote",
+                                location="Nebraska, US"), old)
