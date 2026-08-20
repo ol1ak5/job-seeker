@@ -38,6 +38,18 @@ export type DemoVacancy = {
  */
 const CACHE_SECONDS = 60 * 60 * 6;
 
+/**
+ * An environment variable that was pasted in by hand.
+ *
+ * A .env file lets a value be quoted, and every dotenv loader strips those
+ * quotes on the way out - so `KEY='abc'` works locally. A hosting dashboard
+ * does no such thing: it stores whatever was pasted, quotes included, and the
+ * API then rejects the credential with a bare 401 that says nothing about why.
+ */
+function credential(name: string): string {
+  return (process.env[name] ?? "").trim().replace(/^['"]|['"]$/g, "");
+}
+
 function salaryOf(item: Record<string, unknown>): string | null {
   const lo = item.salary_min as number | undefined;
   const hi = item.salary_max as number | undefined;
@@ -60,8 +72,8 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: "Unsupported country." }, { status: 400 });
   }
 
-  const appId = process.env.ADZUNA_APP_ID;
-  const appKey = process.env.ADZUNA_APP_KEY;
+  const appId = credential("ADZUNA_APP_ID");
+  const appKey = credential("ADZUNA_APP_KEY");
   if (!appId || !appKey) {
     return Response.json(
       { error: "Search is not configured on this deployment." },
@@ -102,14 +114,14 @@ export async function GET(request: NextRequest) {
     }
   } catch (exc) {
     const status = exc instanceof Error ? exc.message : "";
-    return Response.json(
-      {
-        error: /^\d+$/.test(status)
+    // 401 is never the visitor's fault: the deployment's credentials are wrong.
+    const error =
+      status === "401"
+        ? "Search is misconfigured on this deployment - the job board rejected its credentials."
+        : /^\d+$/.test(status)
           ? `The job board answered ${status}. Try again shortly.`
-          : "Could not reach the job board.",
-      },
-      { status: 502 },
-    );
+          : "Could not reach the job board.";
+    return Response.json({ error }, { status: 502 });
   }
 
   const vacancies: DemoVacancy[] = (payload.results ?? []).map((item, index) => ({
