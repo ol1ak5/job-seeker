@@ -61,4 +61,15 @@ def run_match(track: str, vacancy: Vacancy, scorer, profile_path: str,
     cache_vacancy(vacancy, cache_dir)
     profile_text = profile_to_text(load_profile(profile_path), cfg)
     score = score_with_retry(scorer, profile_text, cfg.scoring_guidance, vacancy)
+
+    # A vacancy you found yourself belongs on the dashboard beside the searched
+    # ones - same table, same tracker, no run behind it.
+    from src.models import ScoredVacancy
+    from src.storage import save_results
+
+    errors: list[str] = []
+    save_results(track, [ScoredVacancy(vacancy=vacancy, score=score)], errors)
+    for problem in errors:
+        print(f"Warning: {problem}")
+
     return vacancy, score

@@ -140,23 +140,11 @@ def write_output(state: SearchState) -> dict:
     write_md(state["scored"], base.with_suffix(".md"), state["track"],
              state["errors"], dropped=state.get("dropped"))
 
-    from src.settings import load_settings
-    from src.storage import (connect, finish_run, save_run, save_vacancies,
-                             storage_configured)
+    from src.storage import save_results
 
-    settings = load_settings()
-    if storage_configured(settings):
-        try:
-            client = connect(settings)
-            user_id = client.auth.get_user().user.id
-            run_id = save_run(client, user_id, state["track"], state["days"],
-                              state["limit"], state.get("dropped"), state["errors"])
-            save_vacancies(client, user_id, run_id, state["track"], state["scored"])
-            finish_run(client, run_id)
-        except SystemExit:
-            raise
-        except Exception as exc:
-            state["errors"].append(f"supabase: {exc}")
+    save_results(state["track"], state["scored"], state["errors"],
+                 days=state["days"], limit=state["limit"],
+                 dropped=state.get("dropped"))
 
     return {"md_path": base.with_suffix(".md")}
 

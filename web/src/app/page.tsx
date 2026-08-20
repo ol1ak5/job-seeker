@@ -1,3 +1,4 @@
+import AddVacancy from "@/components/AddVacancy";
 import Landing from "@/components/Landing";
 import SignOutButton from "@/components/SignOutButton";
 import StatTiles from "@/components/StatTiles";
@@ -27,12 +28,16 @@ export default async function HomePage() {
     return <Landing />;
   }
 
-  const { data, error } = await supabase
-    .from("vacancies")
-    .select("*, applications(status, applied_at)")
-    .order("score", { ascending: false, nullsFirst: false });
+  const [{ data, error }, { data: trackRows }] = await Promise.all([
+    supabase
+      .from("vacancies")
+      .select("*, applications(status, applied_at)")
+      .order("score", { ascending: false, nullsFirst: false }),
+    supabase.from("tracks").select("name").order("name"),
+  ]);
 
   const vacancies = (data ?? []) as Vacancy[];
+  const tracks = (trackRows ?? []).map((t) => t.name as string);
 
   const stats = {
     total: vacancies.length,
@@ -78,6 +83,10 @@ export default async function HomePage() {
           </p>
         )}
 
+        {vacancies.length > 0 && <StatTiles {...stats} />}
+
+        {!error && <AddVacancy userId={user.id} tracks={tracks} />}
+
         {!error && vacancies.length === 0 && (
           <div className="rounded-lg border border-dashed border-line bg-surface p-10 text-center">
             <p className="text-sm text-ink-soft">No vacancies yet.</p>
@@ -94,10 +103,7 @@ export default async function HomePage() {
         )}
 
         {vacancies.length > 0 && (
-          <>
-            <StatTiles {...stats} />
-            <VacancyTable vacancies={vacancies} userId={user.id} />
-          </>
+          <VacancyTable vacancies={vacancies} userId={user.id} />
         )}
       </div>
     </main>

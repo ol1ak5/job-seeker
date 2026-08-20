@@ -31,6 +31,40 @@ def connect(settings: Settings, client_factory=None):
     return client
 
 
+def save_results(track: str, scored: list[ScoredVacancy], errors: list[str],
+                 days: int | None = None, limit: int | None = None,
+                 dropped: dict | None = None) -> None:
+    """Put scored vacancies in the account, wherever they came from.
+
+    Both ways of producing a score end here: a full search through the graph,
+    and a single vacancy pasted in by hand. They used to end differently - the
+    search reached the database and the single match only reached the terminal -
+    which meant a vacancy you found yourself could never appear on the site.
+
+    A run row is only written for a search; a hand-matched vacancy belongs to no
+    run, which is what its null run_id says.
+    """
+    from src.settings import load_settings
+
+    settings = load_settings()
+    if not storage_configured(settings):
+        return
+    try:
+        client = connect(settings)
+        user_id = client.auth.get_user().user.id
+        run_id = None
+        if days is not None:
+            run_id = save_run(client, user_id, track, days, limit or 0,
+                              dropped or {}, errors)
+        save_vacancies(client, user_id, run_id, track, scored)
+        if run_id:
+            finish_run(client, run_id)
+    except SystemExit:
+        raise
+    except Exception as exc:
+        errors.append(f"supabase: {exc}")
+
+
 def save_run(client, user_id: str, track: str, days: int, limit: int,
              dropped: dict, errors: list[str]) -> str:
     result = client.table("runs").insert({

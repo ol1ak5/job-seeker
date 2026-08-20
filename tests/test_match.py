@@ -76,3 +76,32 @@ def test_match_cli_requires_exactly_one_input(tmp_path):
                                "--url", "https://x.com"])
     assert both.exit_code != 0
     assert "exactly one" in (str(both.output) + str(both.exception))
+
+
+def test_a_hand_matched_vacancy_is_saved_like_a_searched_one(monkeypatch, tmp_path):
+    """One destination for both paths: the terminal is not where results live."""
+    import datetime
+
+    import src.storage as storage
+    from src.match import parse_vacancy_text, run_match
+    from src.models import Score
+
+    saved = {}
+
+    def fake_save(track, scored, errors, days=None, limit=None, dropped=None):
+        saved["track"] = track
+        saved["scored"] = scored
+        saved["days"] = days      # None means "no run behind this one"
+
+    monkeypatch.setattr(storage, "save_results", fake_save)
+
+    vacancy = parse_vacancy_text("Energy Analyst\nAurora\nWe need someone.")
+    scorer = lambda *_: Score(score=71, verdict="worth_applying",
+                              matching_points=["m"], gaps=[], flags=[])
+    run_match("energy", vacancy, scorer, "profile/example_profile.yaml",
+              tmp_path, datetime.date(2026, 8, 20))
+
+    assert saved["track"] == "energy"
+    assert saved["days"] is None
+    assert saved["scored"][0].score.score == 71
+    assert saved["scored"][0].vacancy.source == "manual"
