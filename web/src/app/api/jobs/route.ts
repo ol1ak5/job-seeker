@@ -24,8 +24,25 @@ function env(name: string): string {
 async function dispatch(jobId: string): Promise<string | null> {
   const token = env("GITHUB_TOKEN");
   const repo = env("GITHUB_REPO");
-  if (!token || !repo) {
-    return "Searching is not wired up on this deployment yet.";
+
+  // Naming the missing variable turns a guessing game into a fact. Note that
+  // Vercel reads environment variables when a deployment is created, so adding
+  // one to the project does nothing until the project is redeployed - which is
+  // the usual reason this message appears at all.
+  const missing = [
+    !token && "GITHUB_TOKEN",
+    !repo && "GITHUB_REPO",
+  ].filter(Boolean);
+
+  if (missing.length) {
+    return `Searching is not wired up yet: ${missing.join(" and ")} ${
+      missing.length > 1 ? "are" : "is"
+    } missing from this deployment. Add ${
+      missing.length > 1 ? "them" : "it"
+    } in Vercel and redeploy - environment variables only reach a deployment that was built after they were saved.`;
+  }
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+    return `GITHUB_REPO should look like owner/repository, not "${repo}".`;
   }
 
   const response = await fetch(
