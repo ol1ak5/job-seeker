@@ -22,22 +22,72 @@ export type Hunk = {
 
 type Op = { kind: "same" | "remove" | "add"; line: string };
 
+/**
+ * Trailing spaces are not an edit anybody wants to rule on, and a model that
+ * reflows a line adds them constantly. Both sides are levelled before anything
+ * is compared, so a hunk always means a real difference in words.
+ */
+function normalise(text: string): string[] {
+  return text.replace(/[ \t]+$/gm, "").split("\n");
+}
+
+function lcs<T>(before: T[], after: T[], same: (a: T, b: T) => boolean): number[][] {
+  const table: number[][] = Array.from({ length: before.length + 1 }, () =>
+    new Array(after.length + 1).fill(0),
+  );
+  for (let i = before.length - 1; i >= 0; i--) {
+    for (let j = after.length - 1; j >= 0; j--) {
+      table[i][j] = same(before[i], after[j])
+        ? table[i + 1][j + 1] + 1
+        : Math.max(table[i + 1][j], table[i][j + 1]);
+    }
+  }
+  return table;
+}
+
+export type Piece = { text: string; changed: boolean };
+
+/**
+ * Which words inside a line actually moved.
+ *
+ * Painting a whole line red and a whole green when two words changed reads as
+ * "it replaced the line with an identical one" - the reader cannot see the
+ * edit, only that something happened. Splitting on whitespace but keeping the
+ * separators means the pieces still join back into the original text.
+ */
+export function inlineDiff(
+  before: string,
+  after: string,
+): { before: Piece[]; after: Piece[] } {
+  const a = before.split(/(\s+)/);
+  const b = after.split(/(\s+)/);
+  const table = lcs(a, b, (x, y) => x === y);
+
+  const left: Piece[] = [];
+  const right: Piece[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      left.push({ text: a[i], changed: false });
+      right.push({ text: b[j], changed: false });
+      i++;
+      j++;
+    } else if (table[i + 1][j] >= table[i][j + 1]) {
+      left.push({ text: a[i++], changed: true });
+    } else {
+      right.push({ text: b[j++], changed: true });
+    }
+  }
+  while (i < a.length) left.push({ text: a[i++], changed: true });
+  while (j < b.length) right.push({ text: b[j++], changed: true });
+  return { before: left, after: right };
+}
+
 function operations(before: string[], after: string[]): Op[] {
   const rows = before.length;
   const cols = after.length;
-
-  // table[i][j] = length of the longest common run of before[i:] and after[j:]
-  const table: number[][] = Array.from({ length: rows + 1 }, () =>
-    new Array(cols + 1).fill(0),
-  );
-  for (let i = rows - 1; i >= 0; i--) {
-    for (let j = cols - 1; j >= 0; j--) {
-      table[i][j] =
-        before[i] === after[j]
-          ? table[i + 1][j + 1] + 1
-          : Math.max(table[i + 1][j], table[i][j + 1]);
-    }
-  }
+  const table = lcs(before, after, (x, y) => x === y);
 
   const ops: Op[] = [];
   let i = 0;
@@ -61,7 +111,7 @@ function operations(before: string[], after: string[]): Op[] {
 }
 
 export function buildHunks(before: string, after: string): Hunk[] {
-  const ops = operations(before.split("\n"), after.split("\n"));
+  const ops = operations(normalise(before), normalise(after));
   const hunks: Hunk[] = [];
   let context = "";
   let current: Hunk | null = null;
@@ -104,7 +154,7 @@ export function applyDecisions(
   after: string,
   decisions: Record<number, Decision>,
 ): string {
-  const ops = operations(before.split("\n"), after.split("\n"));
+  const ops = operations(normalise(before), normalise(after));
   const out: string[] = [];
   let hunkIndex = -1;
   let inHunk = false;

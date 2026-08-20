@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { applyDecisions, buildHunks } from "./diff";
+import { applyDecisions, buildHunks, inlineDiff } from "./diff";
 
 const BEFORE = `# Olga Aksenova
 **Investment Banking Analyst**
@@ -98,5 +98,55 @@ describe("applyDecisions", () => {
     expect(result).toContain("# Olga Aksenova");
     expect(result).toContain("## Work Experience");
     expect(result).toContain("- **CaixaBank CIB** | *2023-2026*");
+  });
+});
+
+describe("inlineDiff", () => {
+  it("marks only the words that moved", () => {
+    const { before, after } = inlineDiff(
+      "  - Built valuation models",
+      "  - Built power market valuation models",
+    );
+    expect(before.filter((p) => p.changed)).toEqual([]);
+    expect(after.filter((p) => p.changed).map((p) => p.text).join("")).toContain(
+      "power",
+    );
+  });
+
+  it("shows a replacement on both sides", () => {
+    const { before, after } = inlineDiff(
+      "**Investment Banking Analyst**",
+      "**Energy Market Analyst**",
+    );
+    expect(before.some((p) => p.changed)).toBe(true);
+    expect(after.some((p) => p.changed)).toBe(true);
+  });
+
+  it("rejoins into exactly the original text", () => {
+    const a = "one two   three";
+    const b = "one four three";
+    const { before, after } = inlineDiff(a, b);
+    expect(before.map((p) => p.text).join("")).toBe(a);
+    expect(after.map((p) => p.text).join("")).toBe(b);
+  });
+
+  it("finds nothing to mark in identical lines", () => {
+    const { before, after } = inlineDiff("## Skills", "## Skills");
+    expect(before.some((p) => p.changed)).toBe(false);
+    expect(after.some((p) => p.changed)).toBe(false);
+  });
+});
+
+describe("whitespace is not an edit", () => {
+  it("ignores trailing spaces the model leaves behind", () => {
+    expect(buildHunks("a\nb", "a   \nb\t")).toEqual([]);
+  });
+
+  it("still round-trips once whitespace has been levelled", () => {
+    const before = "a\nold  ";
+    const after = "a\nnew";
+    const hunks = buildHunks(before, after);
+    expect(hunks).toHaveLength(1);
+    expect(applyDecisions(before, after, { 0: "keep" })).toBe("a\nold");
   });
 });

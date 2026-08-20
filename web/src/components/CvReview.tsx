@@ -1,9 +1,71 @@
 "use client";
 
 import type { Cv } from "@/app/cvs/page";
-import { applyDecisions, buildHunks, type Decision } from "@/lib/diff";
+import {
+  applyDecisions,
+  buildHunks,
+  inlineDiff,
+  type Decision,
+  type Piece,
+} from "@/lib/diff";
 import { createClient } from "@/lib/supabase/client";
 import { useMemo, useState } from "react";
+
+/**
+ * One line, with the words that moved picked out.
+ *
+ * A whole line in red beside a whole line in green reads as "replaced with
+ * something identical" whenever the edit was small - which it usually is.
+ */
+function Line({
+  pieces,
+  tone,
+}: {
+  pieces: Piece[];
+  tone: "removed" | "added";
+}) {
+  const base =
+    tone === "removed"
+      ? "bg-red-50 text-red-900"
+      : "bg-emerald-50 text-emerald-900";
+  const mark =
+    tone === "removed"
+      ? "bg-red-200/70 rounded-sm"
+      : "bg-emerald-200/70 rounded-sm";
+
+  return (
+    <p className={`flex gap-2 px-4 py-1 font-mono text-xs leading-relaxed ${base}`}>
+      <span aria-hidden="true" className="select-none opacity-60">
+        {tone === "removed" ? "\u2212" : "+"}
+      </span>
+      <span className="whitespace-pre-wrap">
+        {pieces.length === 0 ? " " : null}
+        {pieces.map((piece, i) => (
+          <span key={i} className={piece.changed ? mark : undefined}>
+            {piece.text}
+          </span>
+        ))}
+      </span>
+    </p>
+  );
+}
+
+/** Pair lines up so each can be compared word by word against its partner. */
+function pairs(before: string[], after: string[]) {
+  const rows: { before: Piece[] | null; after: Piece[] | null }[] = [];
+  const shared = Math.min(before.length, after.length);
+  for (let i = 0; i < shared; i++) {
+    const { before: left, after: right } = inlineDiff(before[i], after[i]);
+    rows.push({ before: left, after: right });
+  }
+  for (let i = shared; i < before.length; i++) {
+    rows.push({ before: [{ text: before[i], changed: true }], after: null });
+  }
+  for (let i = shared; i < after.length; i++) {
+    rows.push({ before: null, after: [{ text: after[i], changed: true }] });
+  }
+  return rows;
+}
 
 /**
  * Every change the model made, one decision at a time.
@@ -125,23 +187,11 @@ export default function CvReview({ cv }: { cv: Cv }) {
             )}
 
             <div className="divide-y divide-line-soft">
-              {hunk.before.map((line, i) => (
-                <p
-                  key={`b${i}`}
-                  className="flex gap-2 bg-red-50 px-4 py-1 font-mono text-xs leading-relaxed text-red-900"
-                >
-                  <span aria-hidden="true" className="select-none opacity-60">−</span>
-                  <span className="whitespace-pre-wrap">{line || " "}</span>
-                </p>
-              ))}
-              {hunk.after.map((line, i) => (
-                <p
-                  key={`a${i}`}
-                  className="flex gap-2 bg-emerald-50 px-4 py-1 font-mono text-xs leading-relaxed text-emerald-900"
-                >
-                  <span aria-hidden="true" className="select-none opacity-60">+</span>
-                  <span className="whitespace-pre-wrap">{line || " "}</span>
-                </p>
+              {pairs(hunk.before, hunk.after).map((row, i) => (
+                <div key={i}>
+                  {row.before && <Line pieces={row.before} tone="removed" />}
+                  {row.after && <Line pieces={row.after} tone="added" />}
+                </div>
               ))}
             </div>
 

@@ -1,22 +1,36 @@
 "use client";
 
 import type { Cv } from "@/app/cvs/page";
+import CvDocument from "@/components/CvDocument";
 import CvReview from "@/components/CvReview";
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+type View = "document" | "changes" | "source";
+
+const VIEWS: { key: View; label: string }[] = [
+  { key: "document", label: "The CV" },
+  { key: "changes", label: "What changed" },
+  { key: "source", label: "Source" },
+];
 
 /**
- * One generated CV: readable, copyable, downloadable.
+ * One generated CV, in the three forms it is actually needed in.
  *
- * It is shown as the Markdown the model produced rather than rendered prose,
- * because that text is the thing you will paste somewhere else and edit. Making
- * it look like a finished document would hide the parts worth correcting.
+ * The document is what you send, so it opens first. The changes are what you
+ * check before sending. The source is what you paste into something else - and
+ * it is last, because a CV shown as Markdown is a draft, not a CV, and reading
+ * one that way was the first thing to feel wrong about this page.
  */
 export default function CvReader({ cv }: { cv: Cv }) {
-  const [view, setView] = useState<"changes" | "text">("changes");
+  const [view, setView] = useState<View>("document");
   const [copied, setCopied] = useState(false);
+  const card = useRef<HTMLElement>(null);
+
+  /** What the reader settled on, or the model's version if they have not yet. */
+  const text = cv.approved_markdown ?? cv.markdown;
 
   function download() {
-    const blob = new Blob([cv.markdown], { type: "text/markdown" });
+    const blob = new Blob([text], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -25,8 +39,25 @@ export default function CvReader({ cv }: { cv: Cv }) {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * The browser's print dialog offers "Save as PDF" on every desktop platform,
+   * so a real PDF costs no library and keeps the text selectable. The attribute
+   * is set on this card alone: without it, a page listing four CVs prints all
+   * four.
+   */
+  function print() {
+    const node = card.current;
+    if (!node) return;
+    setView("document");
+    requestAnimationFrame(() => {
+      node.setAttribute("data-printing", "");
+      window.print();
+      node.removeAttribute("data-printing");
+    });
+  }
+
   async function copy() {
-    await navigator.clipboard.writeText(cv.markdown);
+    await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -39,7 +70,7 @@ export default function CvReader({ cv }: { cv: Cv }) {
   });
 
   return (
-    <section className="rounded-lg border border-line bg-surface">
+    <section ref={card} className="rounded-lg border border-line bg-surface">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line-soft px-5 py-3">
         <div>
           <h2 className="text-sm font-medium text-ink">
@@ -47,9 +78,19 @@ export default function CvReader({ cv }: { cv: Cv }) {
               ? `${cv.vacancies.title} — ${cv.vacancies.company}`
               : cv.filename}
           </h2>
-          <p className="mt-0.5 font-mono text-xs text-ink-faint">{when}</p>
+          <p className="mt-0.5 font-mono text-xs text-ink-faint">
+            {when}
+            {cv.approved_markdown && " · your edited version"}
+          </p>
         </div>
+
         <div className="flex items-center gap-3 text-xs">
+          <button
+            onClick={print}
+            className="cursor-pointer rounded border border-line px-2 py-1 text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
+          >
+            Print or save as PDF
+          </button>
           <button
             onClick={copy}
             className="cursor-pointer text-ink-soft transition-colors duration-150 hover:text-brand"
@@ -62,21 +103,32 @@ export default function CvReader({ cv }: { cv: Cv }) {
           >
             Download
           </button>
-          <button
-            onClick={() => setView(view === "changes" ? "text" : "changes")}
-            className="cursor-pointer text-ink-faint transition-colors duration-150 hover:text-ink"
-          >
-            {view === "changes" ? "Show the whole text" : "Show what changed"}
-          </button>
         </div>
       </div>
 
-      <div className="p-5">
-        {view === "changes" ? (
-          <CvReview cv={cv} />
-        ) : (
+      <div className="flex gap-1 border-b border-line-soft px-4 py-2">
+        {VIEWS.map((option) => (
+          <button
+            key={option.key}
+            onClick={() => setView(option.key)}
+            aria-current={view === option.key ? "true" : undefined}
+            className={`cursor-pointer rounded px-2.5 py-1 text-xs transition-colors duration-150 ${
+              view === option.key
+                ? "bg-brand/10 font-medium text-brand"
+                : "text-ink-soft hover:bg-line-soft"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="p-5 sm:p-7">
+        {view === "document" && <CvDocument markdown={text} />}
+        {view === "changes" && <CvReview cv={cv} />}
+        {view === "source" && (
           <pre className="overflow-x-auto font-mono text-xs leading-relaxed whitespace-pre-wrap text-ink-soft">
-            {cv.approved_markdown ?? cv.markdown}
+            {text}
           </pre>
         )}
       </div>

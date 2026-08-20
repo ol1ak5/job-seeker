@@ -43,3 +43,58 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------------------------------------------------------- a CV on screen --
+   A CV is read as a document, not as a web page: a narrow measure, generous
+   leading, and headings that separate sections by space rather than by rules
+   or colour. These sizes are in points-like steps because the thing being
+   imitated is a printed page. */
+.cv-document {
+  max-width: 46rem;
+  color: var(--color-ink);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.cv-h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+.cv-h2 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-soft);
+  margin-top: 1.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--color-line);
+}
+.cv-h3 { font-size: 1rem; font-weight: 600; margin-top: 1.1rem; }
+.cv-h4 { font-size: 0.9375rem; font-weight: 600; margin-top: 0.9rem; }
+.cv-p { margin-top: 0.5rem; }
+.cv-list { margin-top: 0.5rem; padding-left: 1.1rem; list-style: disc; }
+.cv-list li { margin-top: 0.3rem; padding-left: 0.2rem; }
+.cv-rule { margin: 1.25rem 0; border: 0; border-top: 1px solid var(--color-line); }
+
+/* ------------------------------------------------------------ and on paper --
+   "Save as PDF" is the browser's own print dialog, which needs no library and
+   produces a real, selectable-text PDF. Everything but the one CV being
+   printed is hidden, so the page furniture never lands on the page. */
+@media print {
+  body * { visibility: hidden; }
+  [data-printing] .cv-document,
+  [data-printing] .cv-document * { visibility: visible; }
+  [data-printing] .cv-document {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    max-width: none;
+    font-size: 10.5pt;
+  }
+  .cv-h2 { break-after: avoid; }
+  .cv-list li, .cv-h3 { break-inside: avoid; }
+  a { text-decoration: none; color: inherit; }
+}
