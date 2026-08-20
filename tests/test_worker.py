@@ -143,12 +143,50 @@ def test_the_job_decides_whose_work_this_is(monkeypatch):
 
 
 def test_main_marks_an_unknown_kind_failed(monkeypatch):
-    client = FakeClient({"jobs": [job_row(kind="adapt")]})
+    """A job kind the engine has never heard of must not leave the row running."""
+    client = FakeClient({"jobs": [job_row(kind="teleport")]})
     monkeypatch.setattr("src.worker.service_client", lambda: client)
     assert main(["worker", "job-1"]) == 1
     _, payload, _ = client.calls[-1]
-    assert payload["status"] == "failed" and "adapt" in payload["error"]
+    assert payload["status"] == "failed" and "teleport" in payload["error"]
 
 
 def test_main_needs_exactly_one_argument():
     assert main(["worker"]) == 2
+
+
+# ------------------------------------------------- writing a CV for one vacancy --
+
+def test_adapt_refuses_a_vacancy_belonging_to_somebody_else():
+    """The service-role key would happily fetch it; the query must not."""
+    from src.worker import run_adapt_job
+
+    client = FakeClient({"vacancies": []})       # the user_id filter matched nothing
+    with pytest.raises(SystemExit, match="does not belong to this account"):
+        run_adapt_job(client, job_row(kind="adapt",
+                                      payload={"vacancy_id": "someone-elses"}))
+
+
+def test_adapt_needs_a_vacancy_to_work_on():
+    from src.worker import run_adapt_job
+
+    with pytest.raises(SystemExit, match="no vacancy"):
+        run_adapt_job(FakeClient({}), job_row(kind="adapt", payload={}))
+
+
+def test_adapt_explains_a_track_that_was_deleted(monkeypatch):
+    """Settings can be deleted after a vacancy was found under them."""
+    import src.config
+    import src.storage
+    from src.worker import run_adapt_job
+
+    monkeypatch.setattr(src.storage, "load_db_profile",
+                        lambda *_: {"contact": {"name": "A"}, "sections": []})
+    monkeypatch.setattr(src.config, "load_db_tracks", lambda *_: {})
+
+    client = FakeClient({"vacancies": [
+        {"id": "v1", "user_id": "user-1", "track": "gone", "title": "t",
+         "company": "c", "location": "", "url": "u", "source": "s",
+         "description": "d"}]})
+    with pytest.raises(SystemExit, match="no longer exists"):
+        run_adapt_job(client, job_row(kind="adapt", payload={"vacancy_id": "v1"}))

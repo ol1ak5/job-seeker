@@ -159,6 +159,23 @@ def load_db_profile(client, user_id: str, name: str = "master") -> dict | None:
     return rows[0]["data"] if rows else None
 
 
+def save_cv(client, user_id: str, vacancy_id: str, filename: str,
+            markdown: str) -> str:
+    """Store a tailored CV where the site can show and download it.
+
+    One row per generation rather than one per vacancy: rewriting a CV is
+    cheap, comparing two attempts is useful, and nothing is lost by keeping
+    both.
+    """
+    result = client.table("cvs").insert({
+        "user_id": user_id,
+        "vacancy_id": vacancy_id,
+        "filename": filename,
+        "markdown": markdown,
+    }).execute()
+    return result.data[0]["id"]
+
+
 def save_tracks(client, user_id: str, tracks) -> int:
     """Copy local track definitions into the account, so they can be edited online.
 

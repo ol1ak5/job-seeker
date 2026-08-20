@@ -119,7 +119,50 @@ def run_search_job(client, job: dict) -> dict:
     return {"track": track, "vacancies": found.count or 0}
 
 
-HANDLERS = {"search": run_search_job}
+def run_adapt_job(client, job: dict) -> dict:
+    """Rewrite the CV for one vacancy the user picked."""
+    import datetime
+
+    from src.adapt_cv import adapt_cv_markdown, tailored_filename
+    from src.config import load_db_tracks
+    from src.storage import load_db_profile, save_cv
+
+    user_id = job["user_id"]
+    vacancy_id = (job.get("payload") or {}).get("vacancy_id")
+    if not vacancy_id:
+        raise SystemExit("This job carries no vacancy to write a CV for.")
+
+    rows = (client.table("vacancies").select("*")
+            .eq("id", vacancy_id).eq("user_id", user_id).execute().data or [])
+    if not rows:
+        raise SystemExit("That vacancy does not belong to this account.")
+    row = rows[0]
+
+    profile = load_db_profile(client, user_id)
+    if not profile:
+        raise SystemExit("This account has no CV to adapt. Upload one first.")
+
+    tracks = load_db_tracks(client, user_id)
+    cfg = tracks.get(row["track"])
+    if cfg is None:
+        raise SystemExit(
+            f"The vacancy belongs to a search called '{row['track']}' that no "
+            f"longer exists. Recreate it, or add the vacancy to another search.")
+
+    from src.models import Vacancy
+    vacancy = Vacancy(title=row["title"], company=row["company"],
+                      location=row["location"] or "", url=row["url"],
+                      source=row["source"], description=row["description"] or "")
+
+    markdown = adapt_cv_markdown(vacancy, cfg, profile)
+    filename = tailored_filename(vacancy.company, vacancy.title,
+                                 profile.get("contact", {}).get("name", "CV"),
+                                 datetime.date.today())
+    cv_id = save_cv(client, user_id, vacancy_id, filename, markdown)
+    return {"cv_id": cv_id, "filename": filename, "vacancy_id": vacancy_id}
+
+
+HANDLERS = {"search": run_search_job, "adapt": run_adapt_job}
 
 
 def main(argv: list[str]) -> int:

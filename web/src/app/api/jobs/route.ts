@@ -94,36 +94,52 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Sign in first." }, { status: 401 });
   }
 
-  // One at a time: a second search would read the same boards and score the
-  // same vacancies, on the same API allowance.
+  const body = await request.json().catch(() => ({}));
+  const kind = body.kind === "adapt" ? "adapt" : "search";
+
+  if (kind === "adapt" && !body.vacancy_id) {
+    return Response.json({ error: "Which vacancy?" }, { status: 400 });
+  }
+
+  // One of each kind at a time. Two searches would read the same boards and
+  // score the same vacancies on the same allowance; two CVs for the same
+  // vacancy would just cost twice.
   const { data: pending } = await supabase
     .from("jobs")
     .select("id")
+    .eq("kind", kind)
     .in("status", ["queued", "running"])
     .limit(1);
 
   if (pending?.length) {
     return Response.json(
-      { error: "A search is already running. Wait for it to finish." },
+      {
+        error:
+          kind === "search"
+            ? "A search is already running. Wait for it to finish."
+            : "A CV is already being written. Wait for it to finish.",
+      },
       { status: 409 },
     );
   }
 
-  const body = await request.json().catch(() => ({}));
   const { data: job, error } = await supabase
     .from("jobs")
     .insert({
       user_id: user.id,
-      kind: "search",
-      track: body.track ?? null,
-      payload: { days: 14, limit: 30 },
+      kind,
+      track: kind === "search" ? (body.track ?? null) : null,
+      payload:
+        kind === "adapt"
+          ? { vacancy_id: body.vacancy_id }
+          : { days: 14, limit: 30 },
     })
     .select()
     .single();
 
   if (error || !job) {
     return Response.json(
-      { error: `Could not queue the search: ${error?.message}` },
+      { error: `Could not queue the job: ${error?.message}` },
       { status: 500 },
     );
   }
@@ -153,9 +169,13 @@ export async function GET() {
 
   const { data } = await supabase
     .from("jobs")
-    .select("id, status, error, result, created_at, finished_at")
+    .select("id, kind, status, error, result, created_at, finished_at")
     .order("created_at", { ascending: false })
-    .limit(1);
+    .limit(4);
 
-  return Response.json({ job: data?.[0] ?? null });
+  const jobs = data ?? [];
+  return Response.json({
+    job: jobs.find((j) => j.kind === "search") ?? null,
+    adapt: jobs.find((j) => j.kind === "adapt") ?? null,
+  });
 }

@@ -33,7 +33,7 @@ export default async function HomePage() {
     await Promise.all([
       supabase
         .from("vacancies")
-        .select("*, applications(status, applied_at)")
+        .select("*, applications(status, applied_at), cvs(id)")
         .order("score", { ascending: false, nullsFirst: false }),
       supabase.from("tracks").select("name").order("name"),
       supabase
@@ -67,6 +67,12 @@ export default async function HomePage() {
             <p className="hidden text-xs text-ink-faint sm:block">{user.email}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/cvs"
+              className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
+            >
+              CVs
+            </Link>
             <Link
               href="/profile"
               className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"

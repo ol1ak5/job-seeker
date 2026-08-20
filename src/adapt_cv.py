@@ -28,6 +28,33 @@ def tailored_filename(vacancy_company: str, vacancy_title: str, person_name: str
             f"_{_slug(vacancy_title)}_{_joined_name(person_name)}.md")
 
 
+def adapt_cv_markdown(vacancy, cfg, profile: dict, llm=None) -> str:
+    """Rewrite the profile as a CV aimed at one vacancy.
+
+    Takes the vacancy as an object rather than an id so that it works the same
+    whether the posting came from a local cache file or from the database - the
+    site and the command line then produce the same document from the same
+    prompt, instead of two versions drifting apart.
+    """
+    if llm is None:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        from src.settings import load_settings
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-pro-latest",
+            google_api_key=load_settings(required=("GOOGLE_API_KEY",)).google_api_key)
+
+    messages = ADAPT_PROMPT.format_messages(
+        profile=profile_to_text(profile, cfg),
+        track=cfg.name,
+        section_order=cfg.cv_sections,
+        title=vacancy.title,
+        company=vacancy.company,
+        description=vacancy.description[:12000],
+    )
+    return message_text(llm.invoke(messages))
+
+
 def run_adapt_cv(vacancy_id: str, llm=None,
                  out_dir: pathlib.Path = pathlib.Path("output"),
                  today: datetime.date | None = None,
@@ -43,24 +70,7 @@ def run_adapt_cv(vacancy_id: str, llm=None,
     cfg = tracks[track]
     vacancy = load_cached_vacancy(vacancy_id, out_dir / "cache")
     profile = load_profile(profile_path)
-
-    if llm is None:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-
-        from src.settings import load_settings
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-pro-latest",
-            google_api_key=load_settings(required=("GOOGLE_API_KEY",)).google_api_key)
-
-    messages = ADAPT_PROMPT.format_messages(
-        profile=profile_to_text(profile, cfg),
-        track=track,
-        section_order=cfg.cv_sections,
-        title=vacancy.title,
-        company=vacancy.company,
-        description=vacancy.description[:12000],
-    )
-    cv_markdown = message_text(llm.invoke(messages))
+    cv_markdown = adapt_cv_markdown(vacancy, cfg, profile, llm)
 
     today = today or datetime.date.today()
     filename = tailored_filename(vacancy.company, vacancy.title,

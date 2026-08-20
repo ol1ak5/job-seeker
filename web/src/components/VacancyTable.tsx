@@ -1,5 +1,6 @@
 "use client";
 
+import TailorButton from "@/components/TailorButton";
 import { createClient } from "@/lib/supabase/client";
 import {
   daysSince,
@@ -213,6 +214,10 @@ export default function VacancyTable({
                           </p>
                         ))}
                         <p className="pt-1 font-mono text-ink-faint">via {v.source}</p>
+                        <TailorButton
+                          vacancyId={v.id}
+                          hasCv={Boolean(v.cvs?.length)}
+                        />
                       </div>
                     )}
                   </td>

@@ -23,6 +23,7 @@ export type Vacancy = {
   gaps: string[] | null;
   flags: string[] | null;
   applications: { status: string; applied_at: string | null }[] | null;
+  cvs: { id: string }[] | null;
 };
 
 /** Days after applying with no status change before a follow-up is suggested. */
