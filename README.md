@@ -37,14 +37,11 @@ reaches a recruiter without your approval.
 
 ```bash
 # Install dependencies
-uv sync
+uv sync --extra dev
 
 # Configure keys and profile
 cp .env.example .env                       # only GOOGLE_API_KEY is required
 cp profile/example_profile.yaml profile/master_profile.yaml
-
-# Or let AI read your existing CV instead
-uv run jobseeker import-cv --file ~/Documents/MyCV.docx
 ```
 
 Then run the loop:
@@ -52,7 +49,6 @@ Then run the loop:
 ```bash
 uv run jobseeker search-and-score --track energy      # find, filter, score
 uv run jobseeker adapt-cv --vacancy-id energy-0817-02 # tailor the CV
-uv run jobseeker review --vacancy-id energy-0817-02 --pdf   # approve, then print
 ```
 
 Found a vacancy yourself? Score it without a search:

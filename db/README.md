@@ -32,9 +32,9 @@ the Settings page. The `data` column holds the same fields as one YAML block and
 is parsed by the same `TrackConfig` model, so both routes produce identical
 objects.
 
-`jobseeker push-tracks` uploads the local YAML file into your account in one go.
-When an account has no tracks at all, the CLI falls back to the file, so a
-local-only setup needs no database.
+Tracks are created and edited on the Settings page. When an account has no
+tracks at all the engine falls back to the file, so a checkout with no database
+still runs.
 
 ## Isolation
 
