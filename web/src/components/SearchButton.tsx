@@ -22,6 +22,23 @@ const WORDS: Record<Job["status"], string> = {
 };
 
 /**
+ * "20 minutes ago". The count of what a run found is deliberately not shown
+ * here: it was true when the run ended, and a vacancy deleted since would make
+ * it a lie. The tiles above hold the current number, and only one of the two
+ * can be the source of truth.
+ */
+function relativeTime(iso: string | null): string {
+  if (!iso) return "recently";
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+/**
  * Start a search and watch it happen.
  *
  * The work is minutes long, so there is no request to wait on - only a row in
@@ -123,10 +140,10 @@ export default function SearchButton({
         )}
       </div>
 
-      {job?.status === "done" && job.result?.vacancies !== undefined && (
+      {job?.status === "done" && (
         <p className="mt-3 text-sm text-ink-soft" role="status">
-          Last search finished with {job.result.vacancies} vacancies on the{" "}
-          <span className="font-mono">{job.result.track}</span> list.
+          Last search ran {relativeTime(job.finished_at)} on the{" "}
+          <span className="font-mono">{job.result?.track ?? "saved"}</span> list.
         </p>
       )}
 

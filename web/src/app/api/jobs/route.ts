@@ -62,6 +62,24 @@ async function dispatch(jobId: string): Promise<string | null> {
   );
 
   if (response.status === 204) return null;
+
+  // GitHub answers 404 rather than 403 when a token may not touch a resource,
+  // so that a token cannot be used to discover which private repositories
+  // exist. The repository is found; the token is simply not allowed to know
+  // that. Repeating GitHub's "Not Found" would send the reader looking for a
+  // missing repository that is not missing.
+  if (response.status === 404) {
+    return (
+      `GitHub will not start the workflow for ${repo}. It answers "not found" ` +
+      `both when the repository does not exist and when the token may not see ` +
+      `it, so check the token: it must list this repository under Repository ` +
+      `access, and have Actions set to Read and write.`
+    );
+  }
+  if (response.status === 401) {
+    return "GitHub rejected the token. It may have been mistyped, revoked or expired.";
+  }
+
   const detail = await response.text();
   return `The engine could not be started (${response.status}). ${detail.slice(0, 200)}`;
 }
