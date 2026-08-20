@@ -24,6 +24,10 @@ def _salary(item: dict) -> str | None:
 
 def search_adzuna(cfg: TrackConfig, settings: Settings, days: int, limit: int,
                   client: httpx.Client | None = None) -> list[Vacancy]:
+    # A track created on the website may not name a country or any query yet;
+    # Adzuna simply has nothing to answer in that case.
+    if not cfg.queries or not cfg.adzuna_country:
+        return []
     client = client or httpx.Client(timeout=30)
     per_query = max(1, limit // len(cfg.queries))
     out: list[Vacancy] = []

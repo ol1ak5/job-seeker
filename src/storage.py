@@ -76,6 +76,24 @@ def save_vacancies(client, user_id: str, run_id: str, track: str,
     return len(rows)
 
 
+def save_tracks(client, user_id: str, tracks) -> int:
+    """Copy local track definitions into the account, so they can be edited online.
+
+    Overwrites a track of the same name: the YAML file is the source being
+    published, not something to merge with.
+    """
+    rows = [{
+        "user_id": user_id,
+        "name": name,
+        "label": name.replace("-", " ").replace("_", " ").capitalize(),
+        "data": cfg.model_dump(exclude={"name"}),
+    } for name, cfg in tracks.items()]
+    if not rows:
+        return 0
+    client.table("tracks").upsert(rows, on_conflict="user_id,name").execute()
+    return len(rows)
+
+
 def finish_run(client, run_id: str, status: str = "done") -> None:
     client.table("runs").update({
         "status": status,

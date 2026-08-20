@@ -121,3 +121,26 @@ def test_finish_run_sets_status():
     table, payload, filters = client.log[0]
     assert table == "runs" and payload["status"] == "done"
     assert payload["finished_at"] and filters == {"id": "run-1"}
+
+
+def test_save_tracks_publishes_the_yaml_file():
+    from src.config import load_tracks
+    from src.storage import save_tracks
+
+    client = FakeClient()
+    written = save_tracks(client, "user-1", load_tracks())
+    assert written == 2
+    table, payload, _ = client.log[0]
+    assert table == "tracks"
+    energy = next(row for row in payload if row["name"] == "energy")
+    assert energy["user_id"] == "user-1" and energy["label"] == "Energy"
+    # the body is one YAML block, so the form can read every filter back
+    assert energy["data"]["filters"]["locations"] == ["madrid"]
+    assert "name" not in energy["data"]   # it is the column, not the body
+
+
+def test_save_tracks_with_nothing_to_publish():
+    from src.storage import save_tracks
+    client = FakeClient()
+    assert save_tracks(client, "user-1", {}) == 0
+    assert client.log == []

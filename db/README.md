@@ -8,7 +8,7 @@ for the web interface.
 
 1. Create a project at [supabase.com](https://supabase.com) (free tier, region
    close to you).
-2. Open **SQL Editor** and run `migrations/0001_initial.sql`.
+2. Open **SQL Editor** and run every file in `migrations/`, in order.
 3. **Authentication → Providers → Google**: enable it and add the OAuth client
    ID and secret from Google Cloud Console.
 4. **Settings → API**: copy the values into `.env`:
@@ -23,6 +23,18 @@ SUPABASE_PASSWORD=<your account password>
 The CLI signs in as a normal user, so everything it writes goes through Row
 Level Security exactly like the website. The service-role key is never used by
 this project and must never appear in the frontend - it bypasses RLS entirely.
+
+## Where the search settings live
+
+A track used to be a block in `config/tracks.yaml`, which nobody using the
+website can edit. It now lives in the `tracks` table, one row per user, edited on
+the Settings page. The `data` column holds the same fields as one YAML block and
+is parsed by the same `TrackConfig` model, so both routes produce identical
+objects.
+
+`jobseeker push-tracks` uploads the local YAML file into your account in one go.
+When an account has no tracks at all, the CLI falls back to the file, so a
+local-only setup needs no database.
 
 ## Isolation
 
@@ -43,6 +55,7 @@ Limits live in `config/limits.yaml`.
 | Table | Holds |
 |---|---|
 | `profiles` | the candidate profile CVs are generated from |
+| `tracks` | one saved search: what to look for, where, and what to exclude |
 | `runs` | one row per search execution, with source and filter statistics |
 | `vacancies` | vacancies with their score, verdict and reasoning |
 | `applications` | tracker status per vacancy |

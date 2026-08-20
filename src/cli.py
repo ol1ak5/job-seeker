@@ -4,16 +4,52 @@ import click
 
 from src.config import load_tracks
 
-def _track_choices() -> list[str]:
+
+def resolve_track(name: str) -> str:
+    """Check the track exists, after pulling in whatever the user saved online.
+
+    The available names cannot be known when this module is imported: they may
+    live in the database, behind a login. So the check happens when a command
+    runs, not when click builds its option list.
+    """
+    activate_saved_tracks()
     try:
-        return sorted(load_tracks())
+        available = sorted(load_tracks())
     except FileNotFoundError:
         raise SystemExit(
             "config/tracks.yaml not found — run jobseeker from the project "
             "root directory (the folder containing config/ and profile/).")
+    if name not in available:
+        raise SystemExit(
+            f"Unknown track '{name}'. Available: {', '.join(available)}. "
+            f"Add or edit tracks on the Settings page of the website.")
+    return name
 
 
-TRACK_CHOICES = _track_choices()
+def activate_saved_tracks() -> None:
+    """Install this user's saved search settings, if Supabase is configured.
+
+    Silently does nothing when there is no database or no saved track: the YAML
+    file is then the source of truth, exactly as before.
+    """
+    from src.config import load_db_tracks, use_tracks
+    from src.settings import load_settings
+    from src.storage import connect, storage_configured
+
+    settings = load_settings(required=())
+    if not storage_configured(settings):
+        return
+    try:
+        client = connect(settings)
+        saved = load_db_tracks(client, client.auth.get_user().user.id)
+    except SystemExit:
+        raise
+    except Exception as exc:
+        click.echo(f"Could not read saved settings ({exc}); using "
+                   f"config/tracks.yaml.", err=True)
+        return
+    if saved:
+        use_tracks(saved)
 
 
 def resolve_profile(name: str) -> tuple[str, pathlib.Path]:
@@ -32,7 +68,7 @@ def cli():
 
 
 @cli.command("search-and-score")
-@click.option("--track", type=click.Choice(TRACK_CHOICES), required=True)
+@click.option("--track", required=True)
 @click.option("--days", default=14, show_default=True)
 @click.option("--limit", default=30, show_default=True)
 @click.option("--profile", default="master_profile", show_default=True)
@@ -44,6 +80,7 @@ def search_and_score(track: str, days: int, limit: int, profile: str):
     from src.scoring import make_scorer
     from src.settings import load_settings
 
+    track = resolve_track(track)
     profile_path, out_dir = resolve_profile(profile)
     settings = load_settings()
     llm = ChatGoogleGenerativeAI(model="gemini-flash-latest",
@@ -66,7 +103,7 @@ def adapt_cv(vacancy_id: str, profile: str):
 
 
 @cli.command("match")
-@click.option("--track", type=click.Choice(TRACK_CHOICES), required=True)
+@click.option("--track", required=True)
 @click.option("--file", "file_", type=click.Path(exists=True), default=None,
               help="Text file: line 1 title, line 2 company, rest description.")
 @click.option("--url", default=None, help="Job posting URL to fetch.")
@@ -113,6 +150,25 @@ def match(track: str, file_: str | None, url: str | None, adapt: bool,
         click.echo(f"CV written: {cv_path}")
 
 
+@cli.command("push-tracks")
+def push_tracks():
+    """Copy config/tracks.yaml into your account so you can edit it on the website."""
+    from src.config import read_tracks_file
+    from src.settings import load_settings
+    from src.storage import connect, save_tracks, storage_configured
+
+    settings = load_settings(required=())
+    if not storage_configured(settings):
+        raise SystemExit(
+            "No Supabase credentials in .env — nothing to push to. Fill in "
+            "SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_EMAIL and SUPABASE_PASSWORD.")
+    tracks = read_tracks_file()
+    client = connect(settings)
+    written = save_tracks(client, client.auth.get_user().user.id, tracks)
+    click.echo(f"Published {written} track(s): {', '.join(sorted(tracks))}.")
+    click.echo("They are now editable on the Settings page of the website.")
+
+
 @cli.command("import-cv")
 @click.option("--file", "file_", type=click.Path(exists=True), required=True,
               help="CV file to import (.docx, .pdf, .txt, .md).")
@@ -130,13 +186,15 @@ def import_cv(file_: str, out: str | None, tracks: str | None):
     from src.settings import load_settings
 
     src_path = pathlib.Path(file_)
+    activate_saved_tracks()
+    available = sorted(load_tracks())
     track_names = ([t.strip() for t in tracks.split(",")] if tracks
-                   else list(TRACK_CHOICES))
-    unknown = [t for t in track_names if t not in TRACK_CHOICES]
+                   else available)
+    unknown = [t for t in track_names if t not in available]
     if unknown:
         raise SystemExit(
             f"Unknown track(s): {', '.join(unknown)}. "
-            f"Configured tracks: {', '.join(TRACK_CHOICES)}.")
+            f"Configured tracks: {', '.join(available)}.")
     out_path = pathlib.Path(out) if out else pathlib.Path("profile") / f"{src_path.stem}.yaml"
     if out_path.exists():
         raise SystemExit(f"{out_path} already exists — choose another --out name.")

@@ -6,6 +6,7 @@ import VacancyTable, {
   type Vacancy,
 } from "@/components/VacancyTable";
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 /**
@@ -59,7 +60,15 @@ export default async function HomePage() {
             </h1>
             <p className="hidden text-xs text-ink-faint sm:block">{user.email}</p>
           </div>
-          <SignOutButton />
+          <div className="flex items-center gap-2">
+            <Link
+              href="/settings"
+              className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
+            >
+              Settings
+            </Link>
+            <SignOutButton />
+          </div>
         </div>
       </header>
 
@@ -73,9 +82,15 @@ export default async function HomePage() {
         {!error && vacancies.length === 0 && (
           <div className="rounded-lg border border-dashed border-line bg-surface p-10 text-center">
             <p className="text-sm text-ink-soft">No vacancies yet.</p>
-            <p className="mt-2 font-mono text-xs text-ink-faint">
-              jobseeker search-and-score --track energy
+            <p className="mt-2 text-sm text-ink-faint">
+              Describe what you are looking for, then run a search.
             </p>
+            <Link
+              href="/settings"
+              className="mt-4 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
+            >
+              Set up a search
+            </Link>
           </div>
         )}
 
