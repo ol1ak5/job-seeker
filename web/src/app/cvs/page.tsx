@@ -61,9 +61,25 @@ export default async function CvsPage({
 
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
         {error && (
-          <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-            Could not load them: {error.message}
-          </p>
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {/* 42703 is Postgres for "no such column": the code expects a
+                migration the database has not been given yet. Saying that is
+                far more use than repeating the column name. */}
+            {error.code === "42703" ? (
+              <>
+                <p className="font-medium">This database is behind the code.</p>
+                <p className="mt-1">
+                  Run{" "}
+                  <span className="font-mono">db/migrations/0004_cv_review.sql</span>{" "}
+                  in the Supabase SQL editor, then reload. Until then the
+                  changes a tailored CV made cannot be shown, because the column
+                  holding the earlier version does not exist yet.
+                </p>
+              </>
+            ) : (
+              <p>Could not load them: {error.message}</p>
+            )}
+          </div>
         )}
 
         {!error && cvs.length === 0 && (
