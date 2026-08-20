@@ -99,3 +99,8 @@
     margin: 0 auto;
   }
 }
+
+/* The app's canvas tint would otherwise be inked across the whole sheet. */
+@media print {
+  body { background: #fff; }
+}

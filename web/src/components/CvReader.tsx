@@ -3,7 +3,9 @@
 import type { Cv } from "@/app/cvs/page";
 import CvDocument from "@/components/CvDocument";
 import CvReview from "@/components/CvReview";
-import { useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type View = "document" | "changes" | "source";
 
@@ -24,10 +26,27 @@ const VIEWS: { key: View; label: string }[] = [
 export default function CvReader({ cv }: { cv: Cv }) {
   const [view, setView] = useState<View>("document");
   const [copied, setCopied] = useState(false);
-  const card = useRef<HTMLElement>(null);
 
   /** What the reader settled on, or the model's version if they have not yet. */
-  const text = cv.approved_markdown ?? cv.markdown;
+  const saved = cv.approved_markdown ?? cv.markdown;
+  const [text, setText] = useState(saved);
+  const [saving, setSaving] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const router = useRouter();
+
+  const edited = text !== saved;
+
+  async function saveText() {
+    setSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("cvs")
+      .update({ approved_markdown: text })
+      .eq("id", cv.id);
+    setSaving(false);
+    setNote(error ? `Could not save: ${error.message}` : "Saved.");
+    if (!error) router.refresh();
+  }
 
   function download() {
     const blob = new Blob([text], { type: "text/markdown" });
@@ -37,25 +56,6 @@ export default function CvReader({ cv }: { cv: Cv }) {
     link.download = cv.filename;
     link.click();
     URL.revokeObjectURL(url);
-  }
-
-  /**
-   * The browser's own print dialog, which every desktop platform offers as
-   * "Save as PDF". It produces the same A4 page cv/make_pdf.sh produces, from
-   * the same stylesheet, with selectable text and without a library.
-   *
-   * The attribute is set on this card alone: without it, a page listing four
-   * CVs would put all four on the paper.
-   */
-  function print() {
-    const node = card.current;
-    if (!node) return;
-    setView("document");
-    requestAnimationFrame(() => {
-      node.setAttribute("data-printing", "");
-      window.print();
-      node.removeAttribute("data-printing");
-    });
   }
 
   async function copy() {
@@ -72,7 +72,7 @@ export default function CvReader({ cv }: { cv: Cv }) {
   });
 
   return (
-    <section ref={card} className="rounded-lg border border-line bg-surface">
+    <section className="rounded-lg border border-line bg-surface">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line-soft px-5 py-3">
         <div>
           <h2 className="text-sm font-medium text-ink">
@@ -87,12 +87,14 @@ export default function CvReader({ cv }: { cv: Cv }) {
         </div>
 
         <div className="flex items-center gap-3 text-xs">
-          <button
-            onClick={print}
+          <a
+            href={`/cvs/${cv.id}/print`}
+            target="_blank"
+            rel="noreferrer"
             className="cursor-pointer rounded border border-line px-2 py-1 text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
           >
             Save as PDF
-          </button>
+          </a>
           <button
             onClick={copy}
             className="cursor-pointer text-ink-soft transition-colors duration-150 hover:text-brand"
@@ -129,9 +131,42 @@ export default function CvReader({ cv }: { cv: Cv }) {
         {view === "document" && <CvDocument markdown={text} />}
         {view === "changes" && <CvReview cv={cv} />}
         {view === "source" && (
-          <pre className="overflow-x-auto font-mono text-xs leading-relaxed whitespace-pre-wrap text-ink-soft">
-            {text}
-          </pre>
+          <div>
+            {/* Editable, because the change-by-change review cannot cover
+                everything: reordering a section or rewriting a whole job is one
+                intention, not fifteen decisions. */}
+            <textarea
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                setNote(null);
+              }}
+              spellCheck={false}
+              rows={Math.min(40, text.split("\n").length + 2)}
+              aria-label="The CV in Markdown"
+              className="w-full rounded-lg border border-line bg-surface p-4 font-mono text-xs leading-relaxed text-ink outline-none focus:border-brand"
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+              <button
+                onClick={saveText}
+                disabled={saving || !edited}
+                className="cursor-pointer rounded-lg bg-brand px-3 py-1.5 font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-40"
+              >
+                {saving ? "Saving..." : "Save my version"}
+              </button>
+              <button
+                onClick={() => {
+                  setText(saved);
+                  setNote(null);
+                }}
+                disabled={!edited}
+                className="cursor-pointer text-ink-faint transition-colors duration-150 hover:text-ink disabled:opacity-40"
+              >
+                Undo my changes
+              </button>
+              {note && <span className="text-ink-faint">{note}</span>}
+            </div>
+          </div>
         )}
       </div>
     </section>

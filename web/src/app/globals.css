@@ -43,19 +43,3 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
-
-/* The CV's own look lives in cv.css, imported by the page that shows one.
-   Printing hides the page furniture so only the document reaches the paper,
-   and only the card the reader pressed print on - a list of four CVs must not
-   print all four. */
-@media print {
-  body * { visibility: hidden; }
-  [data-printing] .cv-document,
-  [data-printing] .cv-document * { visibility: visible; }
-  [data-printing] .cv-document {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-  }
-}
