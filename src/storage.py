@@ -31,6 +31,22 @@ def connect(settings: Settings, client_factory=None):
     return client
 
 
+# Installed by the worker for the length of one job: (client, user_id). The CLI
+# leaves it unset and signs in as itself. Same idiom as use_tracks/use_profile.
+_SESSION: tuple | None = None
+
+
+def use_session(client, user_id: str) -> None:
+    """Write everything from here on behalf of this account."""
+    global _SESSION
+    _SESSION = (client, user_id)
+
+
+def reset_session() -> None:
+    global _SESSION
+    _SESSION = None
+
+
 def save_results(track: str, scored: list[ScoredVacancy], errors: list[str],
                  days: int | None = None, limit: int | None = None,
                  dropped: dict | None = None) -> None:
@@ -46,12 +62,16 @@ def save_results(track: str, scored: list[ScoredVacancy], errors: list[str],
     """
     from src.settings import load_settings
 
-    settings = load_settings()
-    if not storage_configured(settings):
-        return
+    if _SESSION is None:
+        settings = load_settings()
+        if not storage_configured(settings):
+            return
     try:
-        client = connect(settings)
-        user_id = client.auth.get_user().user.id
+        if _SESSION is not None:
+            client, user_id = _SESSION
+        else:
+            client = connect(load_settings())
+            user_id = client.auth.get_user().user.id
         run_id = None
         if days is not None:
             run_id = save_run(client, user_id, track, days, limit or 0,

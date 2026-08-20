@@ -61,3 +61,17 @@ Limits live in `config/limits.yaml`.
 | `applications` | tracker status per vacancy |
 | `cvs` | generated CVs, with an approval flag |
 | `user_limits`, `usage_daily` | quota override and daily counters |
+
+## How work gets done
+
+A search takes minutes, so the site never runs one. It writes a row to `jobs`
+and asks a GitHub Actions runner to pick it up; the browser watches that row.
+
+The worker connects with the **service-role key**, which bypasses Row Level
+Security — there is no signed-in session inside a CI runner, and it has to act
+for whichever account owns the job. That key belongs in GitHub Actions secrets
+and nowhere else: never in the frontend, never in `NEXT_PUBLIC_` anything.
+
+The consequence is that isolation stops being the database's problem for that
+one process. Every read and write in `src/worker.py` is scoped to the job's
+`user_id`, and `tests/test_worker.py` exists mainly to keep it that way.

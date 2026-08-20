@@ -1,0 +1,43 @@
+name: Run a job
+
+# Started by the site, never by hand: it posts a workflow_dispatch with the id
+# of a row in the jobs table. A search takes minutes, which no web request can
+# wait for, and a runner is free where a server would have to be paid for and
+# kept awake.
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: Row id in public.jobs
+        required: true
+        type: string
+
+concurrency:
+  # Two runs of the same job would score the same vacancies twice.
+  group: job-${{ inputs.job_id }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - run: uv sync
+
+      - name: Perform the job
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+        run: uv run python -m src.worker "${{ inputs.job_id }}"
