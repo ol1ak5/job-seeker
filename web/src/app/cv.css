@@ -10,6 +10,11 @@
  *
  * A4, Times New Roman, justified. Job dates sit right of the location line;
  * list dates stay inline after a |
+ *
+ * Headings carry an explicit font-weight even though bold is what a browser
+ * would do unprompted. Tailwind's base layer resets headings to inherit their
+ * weight, so on the site - and only there - every heading came out thin while
+ * the PDF stayed bold. Saying it outright makes the two agree.
  */
 @page { size: A4; margin: 13mm 16mm; }
 
@@ -25,6 +30,7 @@
 .cv-document h1 {
   text-align: center;
   font-size: 19pt;
+  font-weight: bold;
   letter-spacing: 1px;
   margin: 0;
 }
@@ -41,6 +47,7 @@
 /* ---------- section headers ---------- */
 .cv-document h2 {
   font-size: 11pt;
+  font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1.2px;
   border-bottom: 1px solid #444;
@@ -52,6 +59,7 @@
 /* job title line */
 .cv-document h3 {
   font-size: 10.5pt;
+  font-weight: bold;
   margin: 6pt 0 1pt 0;
   break-after: avoid;
 }
@@ -80,3 +88,14 @@
 .cv-document hr { display: none; }
 
 .cv-document a { color: #0b5394; text-decoration: none; }
+
+/* On screen the column is the width it has on paper - A4 less its margins -
+   so a justified line breaks in the same place in both, and what you see is
+   what prints. */
+@media screen {
+  .cv-document {
+    width: 178mm;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+}
