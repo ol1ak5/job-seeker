@@ -20,15 +20,22 @@ import traceback
 
 
 def service_client():
-    """A Supabase client with the service-role key. Never expose this key."""
+    """A Supabase client with the secret key. Never expose this key.
+
+    Supabase renamed its keys: what the docs used to call `service_role` is now
+    a secret key beginning `sb_secret_`. Both still work, so the old variable
+    name is accepted for projects created before the change.
+    """
     from supabase import create_client
 
     url = os.environ["SUPABASE_URL"]
-    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    key = (os.environ.get("SUPABASE_SECRET_KEY")
+           or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", ""))
     if not key:
         raise SystemExit(
-            "SUPABASE_SERVICE_ROLE_KEY is not set. The worker cannot act for a "
-            "user without it (Supabase → Settings → API → service_role).")
+            "SUPABASE_SECRET_KEY is not set. The worker cannot act for a user "
+            "without it: Supabase → Settings → API Keys → Secret keys. It is "
+            "the key beginning sb_secret_, not the publishable one.")
     return create_client(url, key)
 
 

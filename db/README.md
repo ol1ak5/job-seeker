@@ -67,10 +67,12 @@ Limits live in `config/limits.yaml`.
 A search takes minutes, so the site never runs one. It writes a row to `jobs`
 and asks a GitHub Actions runner to pick it up; the browser watches that row.
 
-The worker connects with the **service-role key**, which bypasses Row Level
-Security — there is no signed-in session inside a CI runner, and it has to act
-for whichever account owns the job. That key belongs in GitHub Actions secrets
-and nowhere else: never in the frontend, never in `NEXT_PUBLIC_` anything.
+The worker connects with the **secret key** (`sb_secret_…`, found under
+Settings → API Keys → Secret keys; Supabase used to call this `service_role`).
+It bypasses Row Level Security — there is no signed-in session inside a CI
+runner, and it has to act for whichever account owns the job. That key belongs
+in GitHub Actions secrets and nowhere else: never in the frontend, never in
+`NEXT_PUBLIC_` anything.
 
 The consequence is that isolation stops being the database's problem for that
 one process. Every read and write in `src/worker.py` is scoped to the job's
