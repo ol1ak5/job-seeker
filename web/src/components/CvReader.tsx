@@ -40,10 +40,12 @@ export default function CvReader({ cv }: { cv: Cv }) {
   }
 
   /**
-   * The browser's print dialog offers "Save as PDF" on every desktop platform,
-   * so a real PDF costs no library and keeps the text selectable. The attribute
-   * is set on this card alone: without it, a page listing four CVs prints all
-   * four.
+   * The browser's own print dialog, which every desktop platform offers as
+   * "Save as PDF". It produces the same A4 page cv/make_pdf.sh produces, from
+   * the same stylesheet, with selectable text and without a library.
+   *
+   * The attribute is set on this card alone: without it, a page listing four
+   * CVs would put all four on the paper.
    */
   function print() {
     const node = card.current;
@@ -89,7 +91,7 @@ export default function CvReader({ cv }: { cv: Cv }) {
             onClick={print}
             className="cursor-pointer rounded border border-line px-2 py-1 text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
           >
-            Print or save as PDF
+            Save as PDF
           </button>
           <button
             onClick={copy}

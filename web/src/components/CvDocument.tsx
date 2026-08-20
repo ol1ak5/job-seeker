@@ -14,6 +14,15 @@ import type { JSX, ReactNode } from "react";
  * right failure: an unrecognised character shows up, it does not vanish.
  */
 
+/** "Certifications & Courses" -> "certifications-courses", as pandoc does. */
+function slug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
 /** `**bold**`, `*italic*`, `[text](url)` - nested one level, which is enough. */
 function inline(text: string, keyPrefix = ""): ReactNode[] {
   const out: ReactNode[] = [];
@@ -41,7 +50,6 @@ function inline(text: string, keyPrefix = ""): ReactNode[] {
             href={href}
             target="_blank"
             rel="noreferrer"
-            className="text-brand hover:opacity-80"
           >
             {link?.[1]}
           </a>
@@ -65,7 +73,7 @@ export default function CvDocument({ markdown }: { markdown: string }) {
   const flushBullets = () => {
     if (!bullets.length) return;
     blocks.push(
-      <ul key={`ul-${blocks.length}`} className="cv-list">
+      <ul key={`ul-${blocks.length}`}>
         {bullets.map((item, i) => (
           <li key={i}>{inline(item, `li${blocks.length}-${i}`)}</li>
         ))}
@@ -87,7 +95,7 @@ export default function CvDocument({ markdown }: { markdown: string }) {
     if (!line.trim()) continue;
 
     if (/^\s*(-{3,}|_{3,})\s*$/.test(line)) {
-      blocks.push(<hr key={blocks.length} className="cv-rule" />);
+      blocks.push(<hr key={blocks.length} />);
       continue;
     }
 
@@ -96,7 +104,10 @@ export default function CvDocument({ markdown }: { markdown: string }) {
       const level = heading[1].length;
       const Tag = (["h1", "h2", "h3", "h4"] as const)[level - 1];
       blocks.push(
-        <Tag key={blocks.length} className={`cv-h${level}`}>
+        // pandoc gives every heading an id from its text, and the stylesheet
+        // uses one of them (#languages). Matching that keeps one stylesheet
+        // correct for both renderers.
+        <Tag key={blocks.length} id={slug(heading[2])}>
           {inline(heading[2], `h${blocks.length}`)}
         </Tag>,
       );
@@ -104,7 +115,7 @@ export default function CvDocument({ markdown }: { markdown: string }) {
     }
 
     blocks.push(
-      <p key={blocks.length} className="cv-p">
+      <p key={blocks.length}>
         {inline(line, `p${blocks.length}`)}
       </p>,
     );

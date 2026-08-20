@@ -1,3 +1,5 @@
+import "@/app/cv.css";
+
 import CvReader from "@/components/CvReader";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";

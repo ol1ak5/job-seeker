@@ -1,0 +1,82 @@
+/* What a CV looks like. The only description of it anywhere.
+ *
+ * Chrome reads this file through cv/make_pdf.sh when building a PDF from the
+ * command line, and the site imports it to render and print the same document.
+ * While the site had a stylesheet of its own, one text produced two different
+ * CVs - a serif A4 page on disk and a sans-serif web page online.
+ *
+ * Every rule is scoped under .cv-document so the page around it keeps its own
+ * look; make_pdf.sh puts that class on <body> so the same rules apply there.
+ *
+ * A4, Times New Roman, justified. Job dates sit right of the location line;
+ * list dates stay inline after a |
+ */
+@page { size: A4; margin: 13mm 16mm; }
+
+.cv-document {
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: 10pt;
+  line-height: 1.3;
+  color: #1c1c1c;
+  margin: 0;
+}
+
+/* ---------- header: name / headline / contact, tight spacing ---------- */
+.cv-document h1 {
+  text-align: center;
+  font-size: 19pt;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.cv-document h1 + p,
+.cv-document h1 + p + p {
+  text-align: center;
+  margin: 1pt 0;
+}
+
+.cv-document h1 + p { font-size: 12pt; }          /* headline — larger */
+.cv-document h1 + p + p { font-size: 10.5pt; }    /* contact line */
+
+/* ---------- section headers ---------- */
+.cv-document h2 {
+  font-size: 11pt;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 1pt;
+  margin: 8pt 0 4pt 0;
+  break-after: avoid;
+}
+
+/* job title line */
+.cv-document h3 {
+  font-size: 10.5pt;
+  margin: 6pt 0 1pt 0;
+  break-after: avoid;
+}
+
+/* location (left) + dates (right) on the line under each job title */
+.cv-document h3 + p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 2pt 0;
+}
+
+.cv-document p { margin: 2pt 0; text-align: justify; }
+
+.cv-document ul { margin: 2pt 0 4pt 0; padding-left: 14pt; list-style: disc; }
+.cv-document li { text-align: justify; margin: 1.5pt 0; break-inside: avoid; }
+
+/* project headings: date in em flies right too */
+.cv-document h3 em { float: right; font-weight: normal; font-size: 9.5pt; }
+
+/* languages: single line stretched edge to edge */
+.cv-document #languages + p {
+  text-align: justify;
+  text-align-last: justify;
+}
+
+.cv-document hr { display: none; }
+
+.cv-document a { color: #0b5394; text-decoration: none; }
