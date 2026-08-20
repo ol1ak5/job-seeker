@@ -1,3 +1,4 @@
+import Landing from "@/components/Landing";
 import SignOutButton from "@/components/SignOutButton";
 import StatTiles from "@/components/StatTiles";
 import VacancyTable, {
@@ -7,7 +8,6 @@ import VacancyTable, {
 } from "@/components/VacancyTable";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 /**
  * A Server Component: it runs on the server, so it can query the database
@@ -24,8 +24,10 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // A visitor with no account is not sent to a login wall: they get the public
+  // search, which is the only way anybody ever sees what this does.
   if (!user) {
-    redirect("/login");
+    return <Landing />;
   }
 
   const { data, error } = await supabase
