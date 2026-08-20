@@ -55,6 +55,12 @@ export default async function HomePage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              href="/profile"
+              className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
+            >
+              CV
+            </Link>
+            <Link
               href="/settings"
               className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
             >
