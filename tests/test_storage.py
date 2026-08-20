@@ -13,8 +13,15 @@ CONFIGURED = Settings(adzuna_app_id="a", adzuna_app_key="b", google_api_key="c",
 
 
 class FakeTable:
-    def __init__(self, log, name):
+    def __init__(self, log, name, rows=None):
         self.log, self.name, self.payload, self.filters = log, name, None, {}
+        self.rows, self.on_conflict = rows, None
+
+    def select(self, *_):
+        return self
+
+    def limit(self, _):
+        return self
 
     def insert(self, payload):
         self.payload = payload
@@ -35,9 +42,10 @@ class FakeTable:
 
     def execute(self):
         self.log.append((self.name, self.payload, self.filters))
+        rows = self.rows if self.rows is not None else [{"id": "run-1"}]
 
         class Result:
-            data = [{"id": "run-1"}]
+            data = rows
         return Result()
 
 
@@ -56,12 +64,14 @@ class FakeAuth:
 
 
 class FakeClient:
-    def __init__(self, ok=True):
+    def __init__(self, ok=True, rows=None):
         self.log = []
+        self.rows = rows
         self.auth = FakeAuth(ok)
 
     def table(self, name):
-        return FakeTable(self.log, name)
+        self.table_obj = FakeTable(self.log, name, self.rows)
+        return self.table_obj
 
 
 def vac(url="https://job/1", score=78):
@@ -144,3 +154,38 @@ def test_save_tracks_with_nothing_to_publish():
     client = FakeClient()
     assert save_tracks(client, "user-1", {}) == 0
     assert client.log == []
+
+
+# ------------------------------------------------------ the profile in the database --
+
+SAMPLE_PROFILE = {
+    "contact": {"name": "Alex Rivera", "details": ["alex@example.com"]},
+    "headline": "Analyst",
+    "sections": [{"label": "Skills", "items": ["Python"]}],
+}
+
+
+def test_save_profile_upserts_on_name():
+    from src.storage import save_profile
+
+    client = FakeClient()
+    save_profile(client, "user-1", SAMPLE_PROFILE, name="master")
+    table, payload, _ = client.log[0]
+    assert table == "profiles"
+    assert payload["user_id"] == "user-1" and payload["name"] == "master"
+    assert payload["data"]["contact"]["name"] == "Alex Rivera"
+    # a second upload replaces the profile rather than adding a duplicate
+    assert client.table_obj.on_conflict == "user_id,name"
+
+
+def test_load_db_profile_returns_the_stored_body():
+    from src.storage import load_db_profile
+
+    client = FakeClient(rows=[{"data": SAMPLE_PROFILE}])
+    assert load_db_profile(client, "user-1")["contact"]["name"] == "Alex Rivera"
+
+
+def test_load_db_profile_when_nothing_uploaded_yet():
+    from src.storage import load_db_profile
+
+    assert load_db_profile(FakeClient(rows=[]), "user-1") is None

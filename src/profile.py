@@ -6,8 +6,30 @@ from src.config import TrackConfig
 
 
 def load_profile(path: str = "profile/master_profile.yaml") -> dict:
+    """The CV in force: the one uploaded to the account, else the local file.
+
+    Same arrangement as load_tracks - the CLI installs the signed-in user's
+    profile once at startup and every later call sees it, so the graph nodes
+    need no database handle of their own.
+    """
+    if _INSTALLED is not None:
+        return _INSTALLED
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+# Set by use_profile() for the length of one run; None means "read the file".
+_INSTALLED: dict | None = None
+
+
+def use_profile(profile: dict) -> None:
+    global _INSTALLED
+    _INSTALLED = profile
+
+
+def reset_profile() -> None:
+    global _INSTALLED
+    _INSTALLED = None
 
 
 def _clean(text) -> str:

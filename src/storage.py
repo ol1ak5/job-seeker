@@ -76,6 +76,35 @@ def save_vacancies(client, user_id: str, run_id: str, track: str,
     return len(rows)
 
 
+def save_profile(client, user_id: str, profile: dict, name: str = "master") -> None:
+    """Store the parsed CV in the account.
+
+    This is the input the whole pipeline runs on: the scorer reads it, the CV
+    writer rewrites it. While it lived in profile/master_profile.yaml the tool
+    only worked for whoever owned that laptop.
+
+    Re-uploading replaces the profile of the same name rather than piling up
+    copies - a person has one CV, not a history of them.
+    """
+    client.table("profiles").upsert({
+        "user_id": user_id,
+        "name": name,
+        "data": profile,
+    }, on_conflict="user_id,name").execute()
+
+
+def load_db_profile(client, user_id: str, name: str = "master") -> dict | None:
+    """The uploaded CV, or None when this account has not uploaded one yet."""
+    result = (client.table("profiles")
+              .select("data")
+              .eq("user_id", user_id)
+              .eq("name", name)
+              .limit(1)
+              .execute())
+    rows = result.data or []
+    return rows[0]["data"] if rows else None
+
+
 def save_tracks(client, user_id: str, tracks) -> int:
     """Copy local track definitions into the account, so they can be edited online.
 

@@ -94,3 +94,27 @@ def test_course_and_degree_names_are_bold():
     text = profile_to_text(load_profile(EXAMPLE_PROFILE), TRACKS["energy"])
     assert "- **Machine Learning Specialization** by DeepLearning.AI" in text
     assert "- **MSc in Energy Economics** |" in text
+
+
+def test_use_profile_overrides_the_local_file():
+    """The account's CV wins over profile/master_profile.yaml everywhere."""
+    from src.profile import load_profile, reset_profile, use_profile
+
+    uploaded = {"contact": {"name": "Someone From The Database"},
+                "headline": "x", "sections": []}
+    try:
+        use_profile(uploaded)
+        # the default path is never opened once a profile is installed
+        assert load_profile()["contact"]["name"] == "Someone From The Database"
+        assert load_profile("profile/example_profile.yaml")["contact"]["name"] \
+            == "Someone From The Database"
+    finally:
+        reset_profile()
+
+
+def test_reset_profile_returns_to_the_file():
+    from src.profile import load_profile, reset_profile, use_profile
+
+    use_profile({"contact": {"name": "Someone Else"}, "headline": "", "sections": []})
+    reset_profile()
+    assert "contact" in load_profile("profile/example_profile.yaml")

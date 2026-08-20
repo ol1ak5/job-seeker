@@ -27,29 +27,35 @@ def resolve_track(name: str) -> str:
 
 
 def activate_saved_tracks() -> None:
-    """Install this user's saved search settings, if Supabase is configured.
+    """Install this account's search settings and CV, if Supabase is configured.
 
-    Silently does nothing when there is no database or no saved track: the YAML
-    file is then the source of truth, exactly as before.
+    The account is the source of truth; the local files are the fallback for a
+    setup with no database at all. Both are installed in one visit so the CLI
+    signs in once rather than twice.
     """
     from src.config import load_db_tracks, use_tracks
+    from src.profile import use_profile
     from src.settings import load_settings
-    from src.storage import connect, storage_configured
+    from src.storage import connect, load_db_profile, storage_configured
 
     settings = load_settings(required=())
     if not storage_configured(settings):
         return
     try:
         client = connect(settings)
-        saved = load_db_tracks(client, client.auth.get_user().user.id)
+        user_id = client.auth.get_user().user.id
+        saved = load_db_tracks(client, user_id)
+        profile = load_db_profile(client, user_id)
     except SystemExit:
         raise
     except Exception as exc:
-        click.echo(f"Could not read saved settings ({exc}); using "
-                   f"config/tracks.yaml.", err=True)
+        click.echo(f"Could not read your account ({exc}); using the local "
+                   f"config/ and profile/ files.", err=True)
         return
     if saved:
         use_tracks(saved)
+    if profile:
+        use_profile(profile)
 
 
 def resolve_profile(name: str) -> tuple[str, pathlib.Path]:
@@ -167,6 +173,26 @@ def push_tracks():
     written = save_tracks(client, client.auth.get_user().user.id, tracks)
     click.echo(f"Published {written} track(s): {', '.join(sorted(tracks))}.")
     click.echo("They are now editable on the Settings page of the website.")
+
+
+@cli.command("push-profile")
+@click.option("--profile", default="master_profile", show_default=True)
+def push_profile(profile: str):
+    """Copy a local profile YAML into your account, where the site can read it."""
+    from src.profile import load_profile
+    from src.settings import load_settings
+    from src.storage import connect, save_profile, storage_configured
+
+    settings = load_settings(required=())
+    if not storage_configured(settings):
+        raise SystemExit("No Supabase credentials in .env — nothing to push to.")
+    profile_path, _ = resolve_profile(profile)
+    client = connect(settings)
+    data = load_profile(profile_path)
+    save_profile(client, client.auth.get_user().user.id, data)
+    name = data.get("contact", {}).get("name", "the profile")
+    click.echo(f"Uploaded {name} from {profile_path}.")
+    click.echo("The site can now read it; the local file is only a backup.")
 
 
 @cli.command("import-cv")
