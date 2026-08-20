@@ -1,6 +1,7 @@
 "use client";
 
 import type { Cv } from "@/app/cvs/page";
+import CvReview from "@/components/CvReview";
 import { useState } from "react";
 
 /**
@@ -11,7 +12,7 @@ import { useState } from "react";
  * it look like a finished document would hide the parts worth correcting.
  */
 export default function CvReader({ cv }: { cv: Cv }) {
-  const [open, setOpen] = useState(true);
+  const [view, setView] = useState<"changes" | "text">("changes");
   const [copied, setCopied] = useState(false);
 
   function download() {
@@ -62,20 +63,23 @@ export default function CvReader({ cv }: { cv: Cv }) {
             Download
           </button>
           <button
-            onClick={() => setOpen(!open)}
-            aria-expanded={open}
+            onClick={() => setView(view === "changes" ? "text" : "changes")}
             className="cursor-pointer text-ink-faint transition-colors duration-150 hover:text-ink"
           >
-            {open ? "Hide" : "Show"}
+            {view === "changes" ? "Show the whole text" : "Show what changed"}
           </button>
         </div>
       </div>
 
-      {open && (
-        <pre className="overflow-x-auto px-5 py-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-ink-soft">
-          {cv.markdown}
-        </pre>
-      )}
+      <div className="p-5">
+        {view === "changes" ? (
+          <CvReview cv={cv} />
+        ) : (
+          <pre className="overflow-x-auto font-mono text-xs leading-relaxed whitespace-pre-wrap text-ink-soft">
+            {cv.approved_markdown ?? cv.markdown}
+          </pre>
+        )}
+      </div>
     </section>
   );
 }

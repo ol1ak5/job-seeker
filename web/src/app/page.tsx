@@ -71,13 +71,13 @@ export default async function HomePage() {
               href="/cvs"
               className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
             >
-              CVs
+              Tailored
             </Link>
             <Link
               href="/profile"
               className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
             >
-              CV
+              My CV
             </Link>
             <Link
               href="/settings"

@@ -10,6 +10,9 @@ export type Cv = {
   vacancy_id: string | null;
   filename: string;
   markdown: string;
+  /** The CV before this vacancy was taken into account. "" for older rows. */
+  baseline: string;
+  approved_markdown: string | null;
   created_at: string;
   vacancies: { title: string; company: string } | null;
 };
@@ -32,7 +35,7 @@ export default async function CvsPage({
 
   let query = supabase
     .from("cvs")
-    .select("id, vacancy_id, filename, markdown, created_at, vacancies(title, company)")
+    .select("id, vacancy_id, filename, markdown, baseline, approved_markdown, created_at, vacancies(title, company)")
     .order("created_at", { ascending: false });
 
   if (vacancy) query = query.eq("vacancy_id", vacancy);

@@ -160,7 +160,7 @@ def load_db_profile(client, user_id: str, name: str = "master") -> dict | None:
 
 
 def save_cv(client, user_id: str, vacancy_id: str, filename: str,
-            markdown: str) -> str:
+            markdown: str, baseline: str = "") -> str:
     """Store a tailored CV where the site can show and download it.
 
     One row per generation rather than one per vacancy: rewriting a CV is
@@ -172,6 +172,8 @@ def save_cv(client, user_id: str, vacancy_id: str, filename: str,
         "vacancy_id": vacancy_id,
         "filename": filename,
         "markdown": markdown,
+        # the untailored rendering, kept so the site can show what changed
+        "baseline": baseline,
     }).execute()
     return result.data[0]["id"]
 

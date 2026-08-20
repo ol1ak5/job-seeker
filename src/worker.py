@@ -124,6 +124,7 @@ def run_adapt_job(client, job: dict) -> dict:
     import datetime
 
     from src.adapt_cv import adapt_cv_markdown, tailored_filename
+    from src.profile import profile_to_text
     from src.config import load_db_tracks
     from src.storage import load_db_profile, save_cv
 
@@ -155,10 +156,13 @@ def run_adapt_job(client, job: dict) -> dict:
                       source=row["source"], description=row["description"] or "")
 
     markdown = adapt_cv_markdown(vacancy, cfg, profile)
+    # What the profile alone renders as, so the reader can see what the vacancy
+    # changed rather than having to trust it.
+    baseline = profile_to_text(profile, cfg)
     filename = tailored_filename(vacancy.company, vacancy.title,
                                  profile.get("contact", {}).get("name", "CV"),
                                  datetime.date.today())
-    cv_id = save_cv(client, user_id, vacancy_id, filename, markdown)
+    cv_id = save_cv(client, user_id, vacancy_id, filename, markdown, baseline)
     return {"cv_id": cv_id, "filename": filename, "vacancy_id": vacancy_id}
 
 
