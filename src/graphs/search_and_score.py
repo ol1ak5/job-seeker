@@ -105,14 +105,25 @@ def loosen(state: SearchState) -> dict:
     return {"relaxations": state["relaxations"] + 1}
 
 
+def enough_to_be_useful(limit: int) -> int:
+    """How thin a result has to be before loosening is worth its cost.
+
+    Not `limit`. Loosening to fill a thirty-slot quota means the last slots get
+    whatever is left over, and the run pays a model call for each - the first
+    version of this did exactly that and put a cyber security role on an energy
+    list. A short list of the right things beats a full list padded with the
+    wrong ones.
+    """
+    return max(8, limit // 3)
+
+
 def enough_found(state: SearchState) -> str:
     """Whether to score what we have, or give up a keyword list and re-select.
 
-    The budget is the same either way - selection is capped at `limit`, so a
-    looser pass fills the quota rather than enlarging it. Coming back costs no
-    API call and no extra scoring; it only changes which vacancies fill it.
+    Coming back costs no API call: the pool is already collected. It costs
+    relevance, which is why the bar for doing it is emptiness, not fullness.
     """
-    if len(state["vacancies"]) >= state["limit"]:
+    if len(state["vacancies"]) >= enough_to_be_useful(state["limit"]):
         return "score_match"
     if state["relaxations"] >= len(RELAXATIONS):
         return "score_match"

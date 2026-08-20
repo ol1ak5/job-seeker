@@ -86,9 +86,9 @@ def test_selection_loosens_until_the_budget_is_filled(monkeypatch, tmp_path):
     pool = [Vacancy(title=f"Energy Analyst {i}", company=f"C{i}", location="Madrid",
                     url=f"https://job/{i}", source="s",
                     description="energy markets, 6+ years of experience")
-            for i in range(5)]
+            for i in range(12)]
 
-    state = {"track": "t", "days": 14, "limit": 3,
+    state = {"track": "t", "days": 14, "limit": 30,
              "today": datetime.date(2026, 8, 15),
              "out_dir": tmp_path, "candidates": pool, "relaxations": 0}
 
@@ -98,8 +98,21 @@ def test_selection_loosens_until_the_budget_is_filled(monkeypatch, tmp_path):
 
     state["relaxations"] = graph.loosen(state)["relaxations"]
     second = graph.select(state)
-    assert len(second["vacancies"]) == 3                  # budget filled, not exceeded
+    assert len(second["vacancies"]) == 12
+    # twelve good ones is a useful answer; it does not keep loosening to reach 30
     assert graph.enough_found({**state, **second}) == "score_match"
+
+
+def test_loosening_stops_at_a_useful_result_not_a_full_one(tmp_path):
+    """Padding a quota with leftovers is what put a cyber role on an energy list."""
+    import src.graphs.search_and_score as graph
+
+    assert graph.enough_to_be_useful(30) == 10
+    assert graph.enough_to_be_useful(9) == 8       # never demands more than it can use
+    thin = {"vacancies": list(range(9)), "limit": 30, "relaxations": 0}
+    full_enough = {"vacancies": list(range(10)), "limit": 30, "relaxations": 0}
+    assert graph.enough_found(thin) == "loosen"
+    assert graph.enough_found(full_enough) == "score_match"
 
 
 def test_loosening_stops_rather_than_looping_forever():

@@ -161,12 +161,22 @@ def test_relax_gives_up_experience_and_title_words_first():
     assert loosened.function_exclude == ENERGY.function_exclude
 
 
-def test_relax_gives_up_the_subject_only_at_the_last_level():
-    from src.filters import relax
-    loosened = relax(ENERGY, 2)
-    assert loosened.domain_include == [] and loosened.title_exclude == []
-    # sales is never wanted, at any level
-    assert loosened.function_exclude == ENERGY.function_exclude
+def test_the_subject_survives_every_level_but_the_last():
+    """Giving up the subject turns an energy search into a search for anything."""
+    from src.filters import RELAXATIONS, relax
+
+    assert relax(ENERGY, 1).domain_include == ENERGY.domain_include
+    assert relax(ENERGY, 2).domain_include == ENERGY.domain_include
+    assert relax(ENERGY, 2).title_exclude == []
+    assert relax(ENERGY, len(RELAXATIONS)).domain_include == []
+
+
+def test_the_wrong_kind_of_job_is_never_forgiven():
+    """Sales and recruitment are not a guess about wording; they are a no."""
+    from src.filters import RELAXATIONS, relax
+
+    for level in range(len(RELAXATIONS) + 1):
+        assert relax(ENERGY, level).function_exclude == ENERGY.function_exclude
 
 
 def test_relaxing_keeps_more_of_the_same_vacancies():

@@ -85,12 +85,21 @@ def location_allowed(vacancy: Vacancy, f: TrackFilters) -> bool:
     return not vacancy.location.strip()
 
 
-# What each round of loosening gives up, in order. Experience limits go first
-# because a stated "5+ years" is a wish, not a wall; the subject-matter check
-# goes last because without it a track stops being about anything.
+# What each round of loosening gives up, in order.
+#
+# Experience limits go first: a stated "5+ years" is a wish, not a wall. Title
+# words follow, because guessing how an employer worded a heading is the least
+# reliable guess in the list.
+#
+# The subject-matter check is alone on the last rung, and function_exclude is on
+# none of them. Those two are not guesses about wording - they are what the
+# search is about and what it is never about. Giving up the subject turns an
+# energy search into a search for any analyst anywhere, which is how a cyber
+# security role ends up on an energy list.
 RELAXATIONS = (
     ("max_years_experience", "title_include"),
-    ("title_exclude", "domain_include"),
+    ("title_exclude",),
+    ("domain_include",),
 )
 
 
