@@ -101,7 +101,7 @@ def search_and_score(track: str, days: int, limit: int, profile: str):
 @click.option("--profile", default="master_profile", show_default=True)
 def adapt_cv(vacancy_id: str, profile: str):
     """Generate a tailored Markdown CV for a previously listed vacancy."""
-    from src.graphs.adapt_cv import run_adapt_cv
+    from src.adapt_cv import run_adapt_cv
 
     profile_path, out_dir = resolve_profile(profile)
     cv_path = run_adapt_cv(vacancy_id, out_dir=out_dir, profile_path=profile_path)
@@ -150,7 +150,7 @@ def match(track: str, file_: str | None, url: str | None, adapt: bool,
     if score.flags:
         click.echo("Flags: " + "; ".join(score.flags))
     if adapt:
-        from src.graphs.adapt_cv import run_adapt_cv
+        from src.adapt_cv import run_adapt_cv
         cv_path = run_adapt_cv(vacancy.id, out_dir=out_dir,
                                profile_path=profile_path)
         click.echo(f"CV written: {cv_path}")

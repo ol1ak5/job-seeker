@@ -3,7 +3,7 @@ import pathlib
 
 from pydantic import BaseModel
 
-from src.graphs.adapt_cv import _slug
+from src.adapt_cv import _slug
 
 
 class Hunk(BaseModel):

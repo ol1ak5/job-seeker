@@ -85,6 +85,32 @@ def location_allowed(vacancy: Vacancy, f: TrackFilters) -> bool:
     return not vacancy.location.strip()
 
 
+# What each round of loosening gives up, in order. Experience limits go first
+# because a stated "5+ years" is a wish, not a wall; the subject-matter check
+# goes last because without it a track stops being about anything.
+RELAXATIONS = (
+    ("max_years_experience", "title_include"),
+    ("title_exclude", "domain_include"),
+)
+
+
+def relax(f: TrackFilters, level: int) -> TrackFilters:
+    """The same filters, minus whatever the first `level` rounds give up.
+
+    A keyword list is a guess about how employers word their adverts, and a
+    wrong guess should cost a smaller list, not an empty one. Nothing dropped
+    here is lost: every vacancy that survives is still read and scored, so a
+    genuinely unsuitable one sinks on its own merit instead of never being seen.
+    """
+    if level <= 0:
+        return f
+    given_up: dict[str, object] = {}
+    for names in RELAXATIONS[:level]:
+        for name in names:
+            given_up[name] = None if name == "max_years_experience" else []
+    return f.model_copy(update=given_up)
+
+
 def apply_filters(vacancies: list[Vacancy],
                   f: TrackFilters) -> tuple[list[Vacancy], dict[str, int]]:
     dropped = {"title": 0, "function": 0, "domain": 0, "years": 0, "location": 0,

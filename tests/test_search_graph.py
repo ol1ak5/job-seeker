@@ -66,3 +66,56 @@ def test_run_search_uses_profile_path(tmp_path, monkeypatch):
                out_dir=tmp_path, today=datetime.date(2026, 8, 15),
                profile_path=str(alt))
     assert seen_paths == [str(alt)]
+
+
+# ------------------------------------------------- the loop that stops "nothing found" --
+
+def test_selection_loosens_until_the_budget_is_filled(monkeypatch, tmp_path):
+    """A too-strict keyword list must cost results, not produce an empty run."""
+    import src.graphs.search_and_score as graph
+    from src.config import TrackConfig, TrackFilters
+    from src.models import Vacancy
+
+    strict = TrackConfig(name="t", filters=TrackFilters(
+        title_include=["quantum"],          # matches nothing below
+        max_years_experience=1,
+        domain_include=["energy"],
+        max_per_company=99))
+    monkeypatch.setattr(graph, "load_tracks", lambda *_, **__: {"t": strict})
+
+    pool = [Vacancy(title=f"Energy Analyst {i}", company=f"C{i}", location="Madrid",
+                    url=f"https://job/{i}", source="s",
+                    description="energy markets, 6+ years of experience")
+            for i in range(5)]
+
+    state = {"track": "t", "days": 14, "limit": 3,
+             "today": datetime.date(2026, 8, 15),
+             "out_dir": tmp_path, "candidates": pool, "relaxations": 0}
+
+    first = graph.select(state)
+    assert first["vacancies"] == []                       # strict pass finds nothing
+    assert graph.enough_found({**state, **first}) == "loosen"
+
+    state["relaxations"] = graph.loosen(state)["relaxations"]
+    second = graph.select(state)
+    assert len(second["vacancies"]) == 3                  # budget filled, not exceeded
+    assert graph.enough_found({**state, **second}) == "score_match"
+
+
+def test_loosening_stops_rather_than_looping_forever():
+    import src.graphs.search_and_score as graph
+    from src.filters import RELAXATIONS
+
+    exhausted = {"vacancies": [], "limit": 30, "relaxations": len(RELAXATIONS)}
+    assert graph.enough_found(exhausted) == "score_match"
+
+
+def test_the_graph_really_has_the_loop_wired():
+    """The conditional edge is the reason LangGraph is here at all."""
+    import src.graphs.search_and_score as graph
+
+    compiled = graph.build_graph()
+    edges = compiled.get_graph()
+    names = {n for n in edges.nodes}
+    assert {"select", "loosen"} <= names
+    assert any(e.source == "loosen" and e.target == "select" for e in edges.edges)

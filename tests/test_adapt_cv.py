@@ -2,7 +2,7 @@ import datetime
 
 from langchain_core.messages import AIMessage
 
-from src.graphs.adapt_cv import run_adapt_cv, tailored_filename
+from src.adapt_cv import run_adapt_cv, tailored_filename
 from src.models import Vacancy
 from src.prompts.adapt_cv import ADAPT_PROMPT
 from src.writers import cache_vacancy

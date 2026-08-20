@@ -135,3 +135,50 @@ def test_domain_filter_reads_the_description_too():
 
 def test_empty_domain_include_allows_everything():
     assert domain_allowed(vac(title="Anything"), F)
+
+
+# ------------------------------------------------- loosening instead of failing --
+
+ENERGY = F.model_copy(update={
+    "title_include": ["analyst", "consultant"],
+    "domain_include": ["energy", "renewable"],
+})
+
+
+def test_relax_level_zero_changes_nothing():
+    from src.filters import relax
+    assert relax(ENERGY, 0) == ENERGY
+
+
+def test_relax_gives_up_experience_and_title_words_first():
+    """A stated years requirement is a wish, not a wall."""
+    from src.filters import relax
+    loosened = relax(ENERGY, 1)
+    assert loosened.max_years_experience is None
+    assert loosened.title_include == []
+    # the subject is still enforced: the track is still about energy
+    assert loosened.domain_include == ENERGY.domain_include
+    assert loosened.function_exclude == ENERGY.function_exclude
+
+
+def test_relax_gives_up_the_subject_only_at_the_last_level():
+    from src.filters import relax
+    loosened = relax(ENERGY, 2)
+    assert loosened.domain_include == [] and loosened.title_exclude == []
+    # sales is never wanted, at any level
+    assert loosened.function_exclude == ENERGY.function_exclude
+
+
+def test_relaxing_keeps_more_of_the_same_vacancies():
+    from src.filters import relax
+    vacancies = [
+        vac(title="Energy Analyst", company="A", description="2 years"),
+        vac(title="Energy Specialist", company="B", description="renewable"),   # title
+        vac(title="Energy Analyst", company="C", description="8+ years required"),
+    ]
+    strict, _ = apply_filters(vacancies, ENERGY)
+    loose, _ = apply_filters(vacancies, relax(ENERGY, 1))
+    assert len(strict) == 1
+    assert len(loose) == 3
+    # nothing new is invented - the wider result contains the narrower one
+    assert {v.company for v in strict} <= {v.company for v in loose}
