@@ -1,9 +1,8 @@
-import CvDocument from "@/components/CvDocument";
+import { cvToHtml } from "@/lib/cvMarkdown";
 import { renderPdf } from "@/lib/pdf";
 import { createClient } from "@/lib/supabase/server";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { renderToStaticMarkup } from "react-dom/server";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
@@ -61,11 +60,12 @@ export async function GET(
     return Response.json({ error: "No such CV." }, { status: 404 });
   }
 
-  const body = renderToStaticMarkup(
-    CvDocument({ markdown: data.approved_markdown ?? data.markdown }),
-  );
+  // Next forbids react-dom/server here, so the shared parser emits the markup
+  // directly. Both renderers read the same document; only the drawing differs.
+  const body = cvToHtml(data.approved_markdown ?? data.markdown);
   const html = `<!doctype html><html><head><meta charset="utf-8">
-<style>${stylesheet()}</style></head><body>${body}</body></html>`;
+<style>${stylesheet()}</style></head>
+<body><article class="cv-document">${body}</article></body></html>`;
 
   let pdf: Uint8Array;
   try {

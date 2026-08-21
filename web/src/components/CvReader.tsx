@@ -85,13 +85,15 @@ export default function CvReader({ cv }: { cv: Cv }) {
         </div>
 
         <div className="flex items-center gap-3 text-xs">
+          {/* A real file from the server, not the browser's print dialog:
+              Chrome and Safari disagree about page margins and Safari cannot
+              be told otherwise, so the same CV came out one page in one and two
+              in the other. */}
           <a
-            href={`/cvs/${cv.id}/print`}
-            target="_blank"
-            rel="noreferrer"
+            href={`/api/cvs/${cv.id}/pdf`}
             className="cursor-pointer rounded border border-line px-2 py-1 text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
           >
-            Save as PDF
+            Download PDF
           </a>
           <button
             onClick={copy}
@@ -103,7 +105,7 @@ export default function CvReader({ cv }: { cv: Cv }) {
             onClick={download}
             className="cursor-pointer text-ink-soft transition-colors duration-150 hover:text-brand"
           >
-            Download
+            Markdown
           </button>
         </div>
       </div>

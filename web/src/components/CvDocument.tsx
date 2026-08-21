@@ -1,3 +1,4 @@
+import { parseCv, type Inline } from "@/lib/cvMarkdown";
 import type { JSX, ReactNode } from "react";
 
 /**
@@ -9,118 +10,56 @@ import type { JSX, ReactNode } from "react";
  * elements means nothing can escape into markup, so no sanitiser is needed and
  * none can be forgotten.
  *
- * Only the syntax a CV actually uses is understood - headings, bold, italic,
- * links, bullets, rules. Anything else is left as plain text, which is the
- * right failure: an unrecognised character shows up, it does not vanish.
+ * What the Markdown means is decided in cvMarkdown, shared with the PDF
+ * builder. This file only decides how to draw it.
  */
-
-/** "Certifications & Courses" -> "certifications-courses", as pandoc does. */
-function slug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
-}
-
-/** `**bold**`, `*italic*`, `[text](url)` - nested one level, which is enough. */
-function inline(text: string, keyPrefix = ""): ReactNode[] {
-  const out: ReactNode[] = [];
-  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/g;
-  let last = 0;
-  let match: RegExpExecArray | null;
-  let n = 0;
-
-  while ((match = pattern.exec(text)) !== null) {
-    if (match.index > last) out.push(text.slice(last, match.index));
-    const token = match[0];
-    const key = `${keyPrefix}-${n++}`;
-
-    if (token.startsWith("**")) {
-      out.push(<strong key={key}>{token.slice(2, -2)}</strong>);
-    } else if (token.startsWith("[")) {
-      const link = /\[([^\]]+)\]\(([^)]+)\)/.exec(token);
-      const href = link?.[2] ?? "";
-      // Only ordinary web links become links; anything else stays as text so a
-      // javascript: URL can never be clicked.
-      out.push(
-        /^https?:\/\/|^mailto:/i.test(href) ? (
-          <a
-            key={key}
-            href={href}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {link?.[1]}
+function draw(content: Inline[], keyPrefix: string): ReactNode[] {
+  return content.map((piece, i) => {
+    const key = `${keyPrefix}-${i}`;
+    switch (piece.kind) {
+      case "bold":
+        return <strong key={key}>{piece.text}</strong>;
+      case "italic":
+        return <em key={key}>{piece.text}</em>;
+      case "link":
+        return (
+          <a key={key} href={piece.href} target="_blank" rel="noreferrer">
+            {piece.text}
           </a>
-        ) : (
-          <span key={key}>{link?.[1]}</span>
-        ),
-      );
-    } else {
-      out.push(<em key={key}>{token.slice(1, -1)}</em>);
+        );
+      default:
+        return piece.text;
     }
-    last = match.index + token.length;
-  }
-  if (last < text.length) out.push(text.slice(last));
-  return out;
+  });
 }
 
 export default function CvDocument({ markdown }: { markdown: string }) {
-  const blocks: JSX.Element[] = [];
-  let bullets: string[] = [];
-
-  const flushBullets = () => {
-    if (!bullets.length) return;
-    blocks.push(
-      <ul key={`ul-${blocks.length}`}>
-        {bullets.map((item, i) => (
-          <li key={i}>{inline(item, `li${blocks.length}-${i}`)}</li>
-        ))}
-      </ul>,
-    );
-    bullets = [];
-  };
-
-  for (const raw of markdown.split("\n")) {
-    const line = raw.trimEnd();
-    const bullet = /^\s*[-*]\s+(.*)$/.exec(line);
-
-    if (bullet) {
-      bullets.push(bullet[1]);
-      continue;
-    }
-    flushBullets();
-
-    if (!line.trim()) continue;
-
-    if (/^\s*(-{3,}|_{3,})\s*$/.test(line)) {
-      blocks.push(<hr key={blocks.length} />);
-      continue;
-    }
-
-    const heading = /^(#{1,4})\s+(.*)$/.exec(line);
-    if (heading) {
-      const level = heading[1].length;
-      const Tag = (["h1", "h2", "h3", "h4"] as const)[level - 1];
-      blocks.push(
+  const blocks: JSX.Element[] = parseCv(markdown).map((block, i) => {
+    switch (block.kind) {
+      case "rule":
+        return <hr key={i} />;
+      case "heading": {
+        const Tag = (["h1", "h2", "h3", "h4"] as const)[block.level - 1];
         // pandoc gives every heading an id from its text, and the stylesheet
-        // uses one of them (#languages). Matching that keeps one stylesheet
-        // correct for both renderers.
-        <Tag key={blocks.length} id={slug(heading[2])}>
-          {inline(heading[2], `h${blocks.length}`)}
-        </Tag>,
-      );
-      continue;
+        // uses one of them (#languages).
+        return (
+          <Tag key={i} id={block.id}>
+            {draw(block.content, `h${i}`)}
+          </Tag>
+        );
+      }
+      case "list":
+        return (
+          <ul key={i}>
+            {block.items.map((item, j) => (
+              <li key={j}>{draw(item, `li${i}-${j}`)}</li>
+            ))}
+          </ul>
+        );
+      default:
+        return <p key={i}>{draw(block.content, `p${i}`)}</p>;
     }
-
-    blocks.push(
-      <p key={blocks.length}>
-        {inline(line, `p${blocks.length}`)}
-      </p>,
-    );
-  }
-  flushBullets();
+  });
 
   return <article className="cv-document">{blocks}</article>;
 }
