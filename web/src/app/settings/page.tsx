@@ -1,5 +1,6 @@
 import TrackForm from "@/components/TrackForm";
 import { createClient } from "@/lib/supabase/server";
+import { isSessionError } from "@/lib/supabase/session";
 import type { TrackRow } from "@/lib/tracks";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -21,6 +22,10 @@ export default async function SettingsPage() {
     .from("tracks")
     .select("id, name, label, data, enabled")
     .order("name");
+
+  if (isSessionError(error)) {
+    redirect("/login");
+  }
 
   return (
     <main className="min-h-screen">

@@ -2,6 +2,7 @@ import "@/app/cv.css";
 
 import CvReader from "@/components/CvReader";
 import { createClient } from "@/lib/supabase/server";
+import { isSessionError } from "@/lib/supabase/session";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -43,6 +44,10 @@ export default async function CvsPage({
   if (vacancy) query = query.eq("vacancy_id", vacancy);
 
   const { data, error } = await query;
+
+  if (isSessionError(error)) {
+    redirect("/login");
+  }
   const cvs = (data ?? []) as unknown as Cv[];
 
   return (

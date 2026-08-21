@@ -6,8 +6,10 @@ import StatTiles from "@/components/StatTiles";
 import TrackTabs from "@/components/TrackTabs";
 import VacancyTable from "@/components/VacancyTable";
 import { createClient } from "@/lib/supabase/server";
+import { isSessionError } from "@/lib/supabase/session";
 import { needsFollowUp, statusOf, type Vacancy } from "@/lib/vacancies";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 /**
  * A Server Component: it runs on the server, so it can query the database
@@ -47,6 +49,12 @@ export default async function HomePage({
         .order("created_at", { ascending: false })
         .limit(1),
     ]);
+
+  // A rejected token is not a data problem, and the only cure is a new session.
+  // Asking for one beats printing GoTrue's wording on the page.
+  if (isSessionError(error)) {
+    redirect("/login");
+  }
 
   const all = (data ?? []) as Vacancy[];
   const tracks = (trackRows ?? []).map((t) => t.name as string);
