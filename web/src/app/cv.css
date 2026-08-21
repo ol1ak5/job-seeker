@@ -16,7 +16,13 @@
  * weight, so on the site - and only there - every heading came out thin while
  * the PDF stayed bold. Saying it outright makes the two agree.
  */
-@page { size: A4; margin: 13mm 16mm; }
+/* The margins are the document's padding, not the page's.
+ *
+ * Safari's print dialog has no margin controls and applies its own on top of
+ * @page, which pushed the last two lines of a one-page CV onto a second sheet.
+ * A page with no margin has nothing to add to, so the text block is the same
+ * width and height in every browser - and the same as the PDF pandoc builds. */
+@page { size: A4; margin: 0; }
 
 .cv-document {
   font-family: "Times New Roman", Georgia, serif;
@@ -24,6 +30,10 @@
   line-height: 1.3;
   color: #1c1c1c;
   margin: 0;
+}
+
+@media print {
+  .cv-document { padding: 13mm 16mm; }
 }
 
 /* ---------- header: name / headline / contact, tight spacing ---------- */

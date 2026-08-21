@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { isSessionError } from "./session";
 
 function error(message: string, code = "42501") {
-  return { message, code, details: "", hint: "", name: "PostgrestError" };
+  return { message, code, hint: "" };
 }
 
 describe("isSessionError", () => {
