@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { applyDecisions, buildHunks, inlineDiff } from "./diff";
+import {
+  applyDecisions,
+  buildHunks,
+  buildSegments,
+  inlineDiff,
+} from "./diff";
 
 const BEFORE = `# Olga Aksenova
 **Investment Banking Analyst**
@@ -148,5 +153,39 @@ describe("whitespace is not an edit", () => {
     const hunks = buildHunks(before, after);
     expect(hunks).toHaveLength(1);
     expect(applyDecisions(before, after, { 0: "keep" })).toBe("a\nold");
+  });
+});
+
+describe("buildSegments", () => {
+  it("returns the whole document, not only the changes", () => {
+    const rebuilt = buildSegments(BEFORE, AFTER)
+      .map((s) => (s.kind === "same" ? s.lines : s.after))
+      .flat()
+      .join("\n");
+    expect(rebuilt).toBe(AFTER);
+  });
+
+  it("numbers changes the way buildHunks does, so decisions carry over", () => {
+    const hunks = buildHunks(BEFORE, AFTER);
+    const changes = buildSegments(BEFORE, AFTER).filter((s) => s.kind === "change");
+    expect(changes).toHaveLength(hunks.length);
+    changes.forEach((change, i) => {
+      if (change.kind !== "change") return;
+      expect(change.id).toBe(hunks[i].id);
+      expect(change.after).toEqual(hunks[i].after);
+      expect(change.before).toEqual(hunks[i].before);
+    });
+  });
+
+  it("keeps the untouched text between the changes", () => {
+    const same = buildSegments(BEFORE, AFTER)
+      .filter((s) => s.kind === "same")
+      .flatMap((s) => (s.kind === "same" ? s.lines : []));
+    expect(same).toContain("## Work Experience");
+    expect(same).toContain("  - Ran market research");
+  });
+
+  it("has nothing to decide when the two documents match", () => {
+    expect(buildSegments(BEFORE, BEFORE).every((s) => s.kind === "same")).toBe(true);
   });
 });

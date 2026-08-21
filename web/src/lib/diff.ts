@@ -197,3 +197,64 @@ export function applyDecisions(
 
   return out.join("\n");
 }
+
+export type Segment =
+  | { kind: "same"; lines: string[] }
+  | { kind: "change"; id: number; before: string[]; after: string[] };
+
+/**
+ * The whole document in reading order, with the changes marked in place.
+ *
+ * buildHunks answers "what changed". This answers "what does it say, and which
+ * parts of that are new" - a different question, and the one that catches a
+ * sentence which no longer follows from the one above it. Ruling on a paragraph
+ * while seeing the paragraphs around it is not the same act as ruling on it in
+ * a list of isolated cards.
+ *
+ * Change ids match buildHunks, so a decision made here means the same thing to
+ * applyDecisions.
+ */
+export function buildSegments(before: string, after: string): Segment[] {
+  const ops = operations(normalise(before), normalise(after));
+  const segments: Segment[] = [];
+  let same: string[] = [];
+  let pending: { before: string[]; after: string[] } | null = null;
+  let id = 0;
+
+  const flushSame = () => {
+    if (same.length) {
+      segments.push({ kind: "same", lines: same });
+      same = [];
+    }
+  };
+
+  const flushChange = () => {
+    if (!pending) return;
+    const meaningful =
+      pending.before.some((l) => l.trim()) || pending.after.some((l) => l.trim());
+    if (meaningful) {
+      segments.push({ kind: "change", id: id++, ...pending });
+    } else {
+      // blank-line churn is not a decision; it belongs to the text around it
+      same.push(...pending.after);
+    }
+    pending = null;
+  };
+
+  for (const op of ops) {
+    if (op.kind === "same") {
+      flushChange();
+      same.push(op.line);
+      continue;
+    }
+    if (!pending) {
+      flushSame();
+      pending = { before: [], after: [] };
+    }
+    if (op.kind === "remove") pending.before.push(op.line);
+    else pending.after.push(op.line);
+  }
+  flushChange();
+  flushSame();
+  return segments;
+}

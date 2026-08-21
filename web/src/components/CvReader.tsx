@@ -2,26 +2,24 @@
 
 import type { Cv } from "@/app/cvs/page";
 import CvDocument from "@/components/CvDocument";
-import CvReview from "@/components/CvReview";
+import CvSource from "@/components/CvSource";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type View = "document" | "changes" | "source";
+type View = "document" | "source";
 
 const VIEWS: { key: View; label: string }[] = [
   { key: "document", label: "The CV" },
-  { key: "changes", label: "What changed" },
-  { key: "source", label: "Source" },
+  { key: "source", label: "Text and changes" },
 ];
 
 /**
  * One generated CV, in the three forms it is actually needed in.
  *
- * The document is what you send, so it opens first. The changes are what you
- * check before sending. The source is what you paste into something else - and
- * it is last, because a CV shown as Markdown is a draft, not a CV, and reading
- * one that way was the first thing to feel wrong about this page.
+ * The document is what you send, so it opens first. Behind it is the text with
+ * the model's changes marked in place - deciding about them and rewriting the
+ * whole thing were two screens until it became clear they are one job.
  */
 export default function CvReader({ cv }: { cv: Cv }) {
   const [view, setView] = useState<View>("document");
@@ -129,22 +127,16 @@ export default function CvReader({ cv }: { cv: Cv }) {
 
       <div className="p-5 sm:p-7">
         {view === "document" && <CvDocument markdown={text} />}
-        {view === "changes" && <CvReview cv={cv} />}
         {view === "source" && (
           <div>
-            {/* Editable, because the change-by-change review cannot cover
-                everything: reordering a section or rewriting a whole job is one
-                intention, not fifteen decisions. */}
-            <textarea
+            <CvSource
+              baseline={cv.baseline}
+              generated={cv.markdown}
               value={text}
-              onChange={(e) => {
-                setText(e.target.value);
+              onChange={(next) => {
+                setText(next);
                 setNote(null);
               }}
-              spellCheck={false}
-              rows={Math.min(40, text.split("\n").length + 2)}
-              aria-label="The CV in Markdown"
-              className="w-full rounded-lg border border-line bg-surface p-4 font-mono text-xs leading-relaxed text-ink outline-none focus:border-brand"
             />
             <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
               <button
