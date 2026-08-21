@@ -124,61 +124,115 @@ function Change({
   decision: Decision | undefined;
   onDecide: (decision: Decision) => void;
 }) {
+  const [writing, setWriting] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const edited = typeof decision === "object" ? decision.edited : null;
   const kept = decision === "keep";
-  const shown = kept ? before : after;
-  const other = kept ? after : before;
+
+  function open() {
+    setDraft(edited ?? after.join("\n"));
+    setWriting(true);
+  }
+
+  if (writing) {
+    return (
+      <div className="-mx-2 my-1 rounded border border-brand/40 bg-brand/5 p-3">
+        <label className="block text-xs font-medium text-ink">
+          Write this bit yourself
+        </label>
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          spellCheck={false}
+          rows={Math.max(2, draft.split("\n").length + 1)}
+          autoFocus
+          className="mt-2 w-full rounded border border-line bg-surface p-2 font-mono text-xs leading-relaxed text-ink outline-none focus:border-brand"
+        />
+        <div className="mt-2 flex gap-3 text-xs">
+          <button
+            onClick={() => {
+              onDecide({ edited: draft });
+              setWriting(false);
+            }}
+            className="cursor-pointer rounded bg-brand px-3 py-1.5 font-medium text-white transition-opacity duration-150 hover:opacity-90"
+          >
+            Use mine
+          </button>
+          <button
+            onClick={() => setWriting(false)}
+            className="cursor-pointer px-2 py-1.5 text-ink-faint transition-colors duration-150 hover:text-ink"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="group relative -mx-2 my-0.5 rounded px-2 py-0.5 hover:bg-line-soft/60">
-      {/* Struck-through: what this replaced, so the choice is visible without
-          leaving the page or remembering what used to be there. */}
-      {other.some((l) => l.trim()) && (
-        <pre
-          className={`whitespace-pre-wrap line-through decoration-1 ${
-            kept ? "text-emerald-700/50" : "text-red-700/50"
-          }`}
-        >
-          {other.join("\n")}
+    <div className="-mx-2 my-2 rounded border border-line/70 px-2 py-1.5">
+      {edited !== null ? (
+        <pre className="whitespace-pre-wrap rounded-sm bg-brand/10 px-1 text-ink">
+          {edited}
         </pre>
-      )}
-      {shown.some((l) => l.trim()) && (
-        <pre
-          className={`whitespace-pre-wrap rounded-sm ${
-            kept ? "bg-line-soft text-ink" : "bg-emerald-50 text-emerald-900"
-          }`}
-        >
-          {shown.join("\n")}
-        </pre>
+      ) : (
+        <>
+          {/* What it replaced, on red - the colour says "gone" faster than a
+              strikethrough does, and stays readable while it says it. */}
+          {before.some((l) => l.trim()) && (
+            <pre
+              className={`whitespace-pre-wrap rounded-sm px-1 ${
+                kept ? "bg-red-100 text-red-900" : "bg-red-50 text-red-800"
+              }`}
+            >
+              {before.join("\n")}
+            </pre>
+          )}
+          {after.some((l) => l.trim()) && !kept && (
+            <pre className="whitespace-pre-wrap rounded-sm bg-emerald-50 px-1 text-emerald-900">
+              {after.join("\n")}
+            </pre>
+          )}
+        </>
       )}
 
-      <span
-        className={`absolute right-2 top-0.5 flex gap-1 rounded border border-line bg-surface px-1 py-0.5 transition-opacity duration-150 ${
-          decision ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100"
-        }`}
-      >
+      {/* Under the change, not over it, and always visible.
+          Floating the controls in the corner covered the end of the first line,
+          and hiding them until hover meant the one thing you came here to do
+          was the one thing you could not see. */}
+      <div className="mt-1.5 flex overflow-hidden rounded-md border border-line bg-surface">
         <button
           onClick={() => onDecide("accept")}
-          aria-label="Take the new wording"
-          title="Take the new wording"
-          className={`cursor-pointer rounded px-1.5 ${
+          className={`cursor-pointer px-2.5 py-1 text-xs whitespace-nowrap transition-colors duration-150 ${
             decision === "accept"
-              ? "bg-emerald-100 text-emerald-900"
-              : "text-ink-faint hover:text-emerald-700"
+              ? "bg-emerald-100 font-medium text-emerald-900"
+              : "text-ink-soft hover:bg-emerald-50 hover:text-emerald-800"
           }`}
         >
-          ✓
+          Take new
         </button>
         <button
           onClick={() => onDecide("keep")}
-          aria-label="Keep what I had"
-          title="Keep what I had"
-          className={`cursor-pointer rounded px-1.5 ${
-            kept ? "bg-line-soft text-ink" : "text-ink-faint hover:text-red-700"
+          className={`cursor-pointer border-l border-line px-2.5 py-1 text-xs whitespace-nowrap transition-colors duration-150 ${
+            kept
+              ? "bg-red-100 font-medium text-red-900"
+              : "text-ink-soft hover:bg-red-50 hover:text-red-800"
           }`}
         >
-          ✕
+          Keep mine
         </button>
-      </span>
+        <button
+          onClick={open}
+          className={`cursor-pointer border-l border-line px-2.5 py-1 text-xs whitespace-nowrap transition-colors duration-150 ${
+            edited !== null
+              ? "bg-brand/10 font-medium text-brand"
+              : "text-ink-soft hover:bg-brand/5 hover:text-brand"
+          }`}
+        >
+          {edited !== null ? "Edited" : "Rewrite"}
+        </button>
+      </div>
     </div>
   );
 }
