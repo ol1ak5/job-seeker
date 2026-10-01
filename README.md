@@ -120,4 +120,4 @@ the interactive review as the human checkpoint between generation and output.
 
 Copyright © 2026 Olga Aksenova.
 
-The code in this repository is licensed under the **[Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)** - see [LICENSE](LICENSE) for the full text.
+The code in this repository is licensed under the **[Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)** – see [LICENSE](LICENSE) for the full text.
