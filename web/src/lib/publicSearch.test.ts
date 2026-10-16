@@ -5,7 +5,6 @@ import {
   isSearchCountry,
   jsearchJobs,
   jsearchQuery,
-  searchCountries,
   sourceFor,
 } from "./publicSearch";
 import { COUNTRIES } from "./tracks";
@@ -26,21 +25,6 @@ describe("which source a country uses", () => {
   it("refuses codes that are not countries", () => {
     expect(isSearchCountry("xx")).toBe(false);
     expect(isSearchCountry("")).toBe(false);
-  });
-});
-
-describe("the country list", () => {
-  const list = searchCountries();
-
-  it("names every country and sorts by name", () => {
-    expect(list.length).toBeGreaterThan(200);
-    expect(list.find((c) => c.code === "es")?.name).toBe("Spain");
-    const names = list.map((c) => c.name);
-    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, "en")));
-  });
-
-  it("offers only countries the route accepts", () => {
-    for (const { code } of list) expect(isSearchCountry(code)).toBe(true);
   });
 });
 

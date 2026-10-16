@@ -47,19 +47,6 @@ export function sourceFor(code: string): Source {
   return ADZUNA.has(code) ? "adzuna" : "jsearch";
 }
 
-/**
- * Every country with its English name, alphabetical.
- *
- * Built on the server and handed to the form as a prop: the browser's names
- * can differ from Node's ("Turkey" or "Türkiye"), and a server render that
- * disagrees with the browser's is a hydration error.
- */
-export function searchCountries(): { code: string; name: string }[] {
-  const names = new Intl.DisplayNames(["en"], { type: "region" });
-  return CODES.map((code) => ({ code, name: names.of(code.toUpperCase()) ?? code }))
-    .sort((a, b) => a.name.localeCompare(b.name, "en"));
-}
-
 function plain(html: unknown): string {
   return String(html ?? "").replace(/<\/?[^>]+>/g, "");
 }

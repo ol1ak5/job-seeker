@@ -1,6 +1,5 @@
 import Logo from "@/components/Logo";
 import PublicSearch from "@/components/PublicSearch";
-import { searchCountries } from "@/lib/publicSearch";
 import Link from "next/link";
 
 const STEPS = [
@@ -181,7 +180,7 @@ export default function Landing() {
             lead="Search live vacancies, no account needed. Signing in adds the part that saves time: each one read against your CV and scored."
           />
           <div className="mt-10 rounded-2xl border border-line bg-surface p-5 sm:p-6">
-            <PublicSearch countries={searchCountries()} />
+            <PublicSearch />
           </div>
         </div>
       </section>

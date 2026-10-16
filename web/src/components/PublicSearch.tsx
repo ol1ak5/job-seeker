@@ -17,14 +17,9 @@ function shortDate(value: string | null) {
  * are real and current - the reason to sign in is everything this list is
  * missing.
  */
-export default function PublicSearch({
-  countries,
-}: {
-  countries: { code: string; name: string }[];
-}) {
+export default function PublicSearch() {
   const [what, setWhat] = useState("");
   const [where, setWhere] = useState("");
-  const [country, setCountry] = useState("es");
   const [vacancies, setVacancies] = useState<DemoVacancy[] | null>(null);
   const [broadened, setBroadened] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +31,9 @@ export default function PublicSearch({
     setBusy(true);
     setError(null);
 
-    const query = new URLSearchParams({ what, where, country });
+    // No country picker: the search runs in Spain, the market this site is
+    // built around. The API still takes `country` for when that changes.
+    const query = new URLSearchParams({ what, where, country: "es" });
     try {
       const response = await fetch(`/api/search?${query}`);
       const body = await response.json();
@@ -83,35 +80,19 @@ export default function PublicSearch({
           <label htmlFor="search-where" className="block text-sm font-medium text-ink">
             Where
           </label>
-          <div className="mt-1.5 flex gap-2">
-            <input
-              id="search-where"
-              name="search-where"
-              value={where}
-              onChange={(e) => setWhere(e.target.value)}
-              placeholder="Type a place"
-              autoComplete="off"
-              data-1p-ignore
-              data-lpignore="true"
-              data-bwignore
-              data-form-type="other"
-              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
-            />
-            {/* Each job API searches one national market at a time, so the
-                country is picked here and the place beside it is free text. */}
-            <select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              aria-label="Country"
-              className="max-w-[45%] cursor-pointer rounded-lg border border-line bg-surface px-2 py-2 text-sm text-ink-soft outline-none focus:border-brand"
-            >
-              {countries.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <input
+            id="search-where"
+            name="search-where"
+            value={where}
+            onChange={(e) => setWhere(e.target.value)}
+            placeholder="Type a place in Spain"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-bwignore
+            data-form-type="other"
+            className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
+          />
         </div>
 
         <button
