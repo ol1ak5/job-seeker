@@ -1,0 +1,295 @@
+# Companies and job boards to add to the site later. Not read by any code yet.
+#
+# Collected from LinkedIn posts. The /careers links are as the posts gave them
+# and have not been checked: some may redirect or point to the wrong page.
+# A company that fits several categories appears in each of them.
+
+companies:
+  ai_energy:
+    - {name: Joulent, url: https://joulent.com/careers}
+    # The company corrected this link in the post; the original was dexterenergy.ai/careers.
+    - {name: Dexter Energy, url: https://jobs.dexterenergy.ai/}
+    - {name: Modo Energy, url: https://modo.energy/careers}
+    - {name: ThinkLabs AI, url: https://thinklabs.ai/careers}
+    - {name: Fuse Energy, url: https://fuseenergy.com/careers}
+    - {name: Emerald AI, url: https://emeraldai.co/careers}
+    - {name: tem, url: https://tem.energy/careers}
+    - {name: Zanskar, url: https://zanskar.com/careers}
+    - {name: Halcyon, url: https://halcyon.io/careers}
+    - {name: Gigaton, url: https://gigaton.co/careers}
+    - {name: Applied Computing, url: https://appliedcomputing.com/careers}
+    - {name: NobleAI, url: https://noble.ai/careers}
+    - {name: The Nuclear Company, url: https://thenuclearcompany.com/careers}
+    - {name: Jua, url: https://jua.ai/careers}
+    - {name: Immensa, url: https://immensa.com/careers}
+    - {name: Detect Technologies, url: https://detecttechnologies.com/careers}
+    - {name: Smart Wires, url: https://smartwires.com/careers}
+    - {name: Planted, url: https://plantedsolar.com/careers}
+    - {name: SolarX, url: https://solarx.com/careers}
+    - {name: enspired, url: https://enspired.energy/careers}
+    - {name: Lunar Energy, url: https://lunarenergy.com/careers}
+    - {name: WeaveGrid, url: https://weavegrid.com/careers}
+    - {name: EARTH AI, url: https://earth.ai/careers}
+    - {name: Arcadia, url: https://arcadia.com/careers}
+    - {name: VoltaGrid, url: https://voltagrid.com/careers}
+    - {name: KoBold Metals, url: https://koboldmetals.com/careers}
+    - {name: 1KOMMA5°, url: https://1komma5grad.com/careers}
+    - {name: Terabase Energy, url: https://terabase.energy/careers}
+    - {name: Morgan Solar, url: https://morgansolar.com/careers}
+    - {name: GRIDSIGHT, url: https://gridsight.com/careers}
+    - {name: NZero, url: https://nzero.com/careers}
+    - {name: GeologicAI, url: https://geologic.ai/careers}
+    - {name: Infinium, url: https://infiniumtech.com/careers}
+    - {name: Novi Labs, url: https://novilabs.com/careers}
+    - {name: Vortexa, url: https://vortexa.com/careers}
+
+  ai_agents:
+    - {name: Sycamore, url: https://sycamore.so/careers}
+    - {name: CrewAI, url: https://crewai.com/careers}
+    - {name: Vectara, url: https://vectara.com/careers}
+    - {name: Parloa, url: https://parloa.com/careers}
+    - {name: Vapi, url: https://vapi.ai/careers}
+    - {name: FlowX.AI, url: https://flowx.ai/careers}
+    - {name: Mastra, url: https://mastra.ai/careers}
+    - {name: Ascendion, url: https://ascendion.com/careers}
+    - {name: 1mind, url: https://1mind.com/careers}
+    - {name: Synera, url: https://synera.io/careers}
+    - {name: ThinkingAI, url: https://thinkingai.io/careers}
+    - {name: Leena AI, url: https://leena.ai/careers}
+    - {name: Arrakis Technologies, url: https://arrakistechnologies.ai/careers}
+    - {name: Town, url: https://town.com/careers}
+    - {name: Wonderful, url: https://wonderful.ai/careers}
+    - {name: HappyRobot, url: https://happyrobot.ai/careers}
+    - {name: Trase, url: https://trase.ai/careers}
+    - {name: E2B, url: https://e2b.dev/careers}
+    - {name: Dust, url: https://dust.tt/careers}
+    - {name: Guild.ai, url: https://guild.ai/careers}
+    - {name: LangChain, url: https://langchain.com/careers}
+    - {name: Coworker.ai, url: https://coworker.ai/careers}
+    - {name: Newo.ai, url: https://newo.ai/careers}
+    - {name: ada CX, url: https://ada.cx/careers}
+    - {name: ConnexAI, url: https://connex.ai/careers}
+    - {name: Maven AGI, url: https://mavenagi.com/careers}
+    - {name: WIZ.AI, url: https://wiz.ai/careers}
+    - {name: Avataar, url: https://avataar.ai/careers}
+    - {name: Syllable AI, url: https://syllable.ai/careers}
+    - {name: Accrete, url: https://accrete.ai/careers}
+    - {name: REGAL, url: https://regal.ai/careers}
+    - {name: Outreach, url: https://outreach.ai/careers}
+    - {name: Observe.AI, url: https://observe.ai/careers}
+    - {name: Talkdesk, url: https://talkdesk.com/careers}
+    - {name: SoundHound AI, url: https://soundhound.com/careers}
+
+  ai_data_and_insights:
+    - {name: Alembic Technologies, url: https://alembic.ai/careers}
+    - {name: Lightfield, url: https://lightfield.ai/careers}
+    - {name: AILY LABS, url: https://ailylabs.com/careers}
+    - {name: Hebbia, url: https://hebbia.com/careers}
+    - {name: ThinkingAI, url: https://thinkingai.io/careers}
+    - {name: InsightFinder AI, url: https://insightfinder.com/careers}
+    - {name: Mixpanel, url: https://mixpanel.com/careers}
+    - {name: Tredence, url: https://tredence.com/careers}
+    - {name: Natter, url: https://natter.ai/careers}
+    - {name: WisdomAI, url: https://wisdom.ai/careers}
+    - {name: Patsnap, url: https://patsnap.com/careers}
+    - {name: Gong, url: https://gong.io/careers}
+    - {name: 1001 AI, url: https://1001.ai/careers}
+    - {name: Coworker.ai, url: https://coworker.ai/careers}
+    - {name: Translucent AI, url: https://translucent.ai/careers}
+    - {name: 9fin, url: https://9fin.com/careers}
+    - {name: Omni, url: https://omni.co/careers}
+    - {name: Zetaris, url: https://zetaris.com/careers}
+    - {name: Finster AI, url: https://finster.ai/careers}
+    - {name: NobleAI, url: https://noble.ai/careers}
+    - {name: MDOTM, url: https://mdotm.ai/careers}
+    - {name: Axiamatic, url: https://axiamatic.com/careers}
+    - {name: Cube, url: https://cube.dev/careers}
+    - {name: ChapsVision, url: https://chapsvision.com/careers}
+    - {name: Addepar, url: https://addepar.com/careers}
+    - {name: Whale, url: https://whale.io/careers}
+    - {name: Stargo, url: https://stargo.ai/careers}
+    - {name: Hypersonix, url: https://hypersonix.ai/careers}
+    - {name: ConnexAI, url: https://connex.ai/careers}
+    - {name: Quantium, url: https://quantium.com/careers}
+    - {name: AlphaSense, url: https://alpha-sense.com/careers}
+    - {name: Arlequin AI, url: https://arlq.ai/careers}
+    - {name: Chord, url: https://chord.co/careers}
+    - {name: Synerise, url: https://synerise.com/careers}
+    - {name: Encore AI, url: https://encoreai.com/careers}
+
+  ai_climate_tech:
+    # The company corrected this link in the post; the original was dexterenergy.ai/careers.
+    - {name: Dexter Energy, url: https://jobs.dexterenergy.ai/}
+    - {name: Mariana Minerals, url: https://marianaminerals.com/careers}
+    - {name: Emerald AI, url: https://emeraldai.co/careers}
+    - {name: Zanskar, url: https://zanskar.com/careers}
+    # ai_energy lists gridsight.com; one of the two is probably wrong.
+    - {name: GRIDSIGHT, url: https://gridsight.ai/careers}
+    # ai_energy lists modo.energy; one of the two is probably wrong.
+    - {name: Modo Energy, url: https://modoenergy.com/careers}
+    - {name: Gigaton, url: https://gigaton.co/careers}
+    - {name: tem, url: https://tem.energy/careers}
+    - {name: Neptune Robotics, url: https://neptune-robotics.com/careers}
+    - {name: Halcyon, url: https://halcyon.io/careers}
+    - {name: PhysicsX, url: https://physicsx.ai/careers}
+    - {name: GridCARE, url: https://gridcare.ai/careers}
+    - {name: Applied Computing, url: https://appliedcomputing.com/careers}
+    - {name: KoBold Metals, url: https://koboldmetals.com/careers}
+    - {name: Terabase Energy, url: https://terabase.energy/careers}
+    - {name: Torus, url: https://torus.co/careers}
+    - {name: Planted, url: https://plantedsolar.com/careers}
+    - {name: Elvy, url: https://elvyenergy.com/careers}
+    - {name: NobleAI, url: https://noble.ai/careers}
+    - {name: Crux, url: https://crux.com/careers}
+    - {name: Amber Electric, url: https://amber.com.au/careers}
+    - {name: 1KOMMA5°, url: https://1komma5grad.com/careers}
+    # ai_energy lists fuseenergy.com; one of the two is probably wrong.
+    - {name: Fuse Energy, url: https://getfuse.com/careers}
+    - {name: Eco-Pork, url: https://eco-pork.com/careers}
+    - {name: Novisto, url: https://novisto.com/careers}
+    - {name: Arcadia, url: https://arcadia.com/careers}
+    - {name: IntegrityNext, url: https://integritynext.com/careers}
+    - {name: SYSO Technologies, url: https://sysotechnologies.com/careers}
+    - {name: Titan Advanced Energy Solutions, url: https://titanaes.com/careers}
+    - {name: Morgan Solar, url: https://morgansolar.com/careers}
+    - {name: Terra One, url: https://terra.one/careers}
+    - {name: Youdera, url: https://youdera.com/careers}
+    - {name: Tanzle Inc., url: https://tanzle.com/careers}
+    - {name: GRIDWIZ, url: null}   # no link in the post
+    - {name: Kevala, url: null}    # no link in the post
+
+  sf_deep_tech_ai:
+    - {name: Inferact, url: https://inferact.ai/careers}
+    - {name: Akka, url: https://akka.io/careers}
+    - {name: Encord, url: https://encord.com/careers}
+    - {name: Zyphra, url: https://zyphra.com/careers}
+    - {name: 0G, url: https://0g.ai/careers}
+    - {name: Majestic Labs ai, url: https://majesticlabs.ai/careers}
+    - {name: Sentient Labs, url: https://sentient.xyz/careers}
+    - {name: Synerise, url: https://synerise.com/careers}
+    - {name: Causal Labs, url: https://causallabs.ai/careers}
+    - {name: Standard Intelligence, url: https://standard.tech/careers}
+    - {name: Rain AI, url: https://rain.ai/careers}
+    - {name: General Compute, url: https://generalcompute.com/careers}
+    - {name: Gimlet Labs, url: https://gimletlabs.ai/careers}
+    - {name: Prime Intellect, url: https://primeintellect.ai/careers}
+    - {name: Turing, url: https://turing.com/careers}
+    - {name: Anyscale, url: https://anyscale.com/careers}
+    - {name: Weights & Biases, url: https://wandb.ai/careers}
+    - {name: Domino Data Lab, url: https://dominodatalab.com/careers}
+    - {name: Mirendil, url: https://mirendil.com/careers}
+    - {name: Applied Compute, url: https://appliedcompute.ai/careers}
+    - {name: OpenAI, url: https://openai.com/careers}
+    - {name: Lambda, url: https://lambdalabs.com/careers}
+    - {name: Baseten, url: https://baseten.co/careers}
+    - {name: Physical Intelligence, url: https://physicalintelligence.company/careers}
+    - {name: World Labs, url: https://worldlabs.ai/careers}
+    - {name: Together AI, url: https://together.ai/careers}
+    - {name: Magic, url: https://magic.dev/careers}
+    - {name: Flapping Airplanes, url: https://flappingairplanes.com/careers}
+    - {name: Voltage Park, url: https://voltagepark.com/careers}
+    - {name: Decart, url: https://decart.ai/careers}
+    - {name: Andromeda, url: https://andromeda.ai/careers}
+    - {name: Arcee AI, url: https://arcee.ai/careers}
+    - {name: Bespoke Labs, url: https://bespokelabs.ai/careers}
+    - {name: Hedra, url: https://hedra.com/careers}
+    - {name: Luel, url: https://luel.ai/careers}
+
+  ai_payments_and_fintech:
+    - {name: Xelix, url: https://xelix.com/careers}
+    - {name: Primer, url: https://primer.io/careers}
+    - {name: Payabli, url: https://payabli.com/careers}
+    - {name: Omise, url: https://omise.co/careers}
+    - {name: Checkout.com, url: https://checkout.com/careers}
+    - {name: Nanonets, url: https://nanonets.com/careers}
+    - {name: Anchor, url: https://sayanchor.com/careers}
+    - {name: Sema4.ai, url: https://sema4.ai/careers}
+    - {name: Apron, url: https://apron.io/careers}
+    - {name: Pagos, url: https://pagos.ai/careers}
+    - {name: Yuno, url: https://yuno.com/careers}
+    - {name: Moss, url: https://getmoss.com/careers}
+    - {name: Stampli, url: https://stampli.com/careers}
+    - {name: HighRadius, url: https://highradius.com/careers}
+    - {name: Billtrust, url: https://billtrust.com/careers}
+    - {name: Paymentus, url: https://paymentus.com/careers}
+    - {name: Pomelo, url: https://pomelo.la/careers}
+    - {name: InvoiceCloud, url: https://invoicecloud.com/careers}
+    - {name: Modulr, url: https://modulr.finance/careers}
+    - {name: Ottimate, url: https://ottimate.com/careers}
+    - {name: Volante Technologies, url: https://volantetech.com/careers}
+    - {name: IXOPAY, url: https://ixopay.com/careers}
+    - {name: CloudWalk, url: https://cloudwalk.io/careers}
+    - {name: Synechron, url: https://synechron.com/careers}
+    - {name: Natural, url: https://natural.co/careers}
+    - {name: Adfin, url: https://adfin.com/careers}
+    - {name: Surfboard Payments, url: https://surfboardpayments.com/careers}
+    - {name: Stuut, url: https://stuut.ai/careers}
+    - {name: World Liberty Financial, url: https://worldlibertyfinancial.com/careers}
+    - {name: KUN Global, url: https://kun.finance/careers}
+    - {name: Tabs, url: https://tabs.com/careers}
+    - {name: Traild, url: https://traild.com/careers}
+    - {name: Pay.com, url: https://pay.com/careers}
+    - {name: Nuvo, url: https://nuvo.cash/careers}
+    - {name: Kite, url: https://gokite.ai/careers}
+
+# Remote job platforms, from two posts: Sachin Malik's "Remote Job Platforms"
+# and Varsha Dharwal's list of 52. Remotive appears in both and is listed once.
+# Some are freelance marketplaces or paid data-annotation work, not job boards.
+remote_job_boards:
+  # Sachin Malik
+  - {name: JobCrexa, url: https://www.jobcrexa.com}
+  - {name: Remotive, url: https://remotive.com}
+  - {name: RemoteRocketship, url: https://remoterocketship.com}
+  - {name: Remote Nomad Jobs, url: https://remotenomadjobs.com}
+  # Varsha Dharwal
+  - {name: Toptal, url: https://www.toptal.com}
+  - {name: SkipTheDrive, url: https://www.skipthedrive.com}
+  - {name: NoDesk, url: https://nodesk.co}
+  - {name: RemoteHabits, url: https://remotehabits.com}
+  - {name: Remote4Me, url: https://remote4me.com}
+  - {name: Pangian, url: https://pangian.com}
+  - {name: Remotees, url: https://remotees.com}
+  - {name: JustRemote, url: https://justremote.co}
+  - {name: RemoteCrew, url: https://remotecrew.io}
+  - {name: Europe Remotely, url: https://europeremotely.com}
+  - {name: FlexJobs, url: https://www.flexjobs.com}
+  - {name: Remote.co, url: https://remote.co}
+  - {name: We Work Remotely, url: https://weworkremotely.com}
+  - {name: Remote OK, url: https://remoteok.com}
+  - {name: Wellfound, url: https://wellfound.com}
+  - {name: Upwork, url: https://www.upwork.com}
+  - {name: Freelancer, url: https://www.freelancer.com}
+  - {name: Working Nomads, url: https://www.workingnomads.com}
+  - {name: Jobspresso, url: https://jobspresso.co}
+  - {name: Virtual Vocations, url: https://www.virtualvocations.com}
+  - {name: Outsourcely, url: https://www.outsourcely.com}
+  - {name: Hubstaff Talent, url: https://hubstafftalent.com}
+  - {name: Himalayas, url: https://himalayas.app}
+  - {name: Contra, url: https://contra.com}
+  - {name: Arc, url: https://arc.dev}
+  - {name: Braintrust, url: https://www.usebraintrust.com}
+  - {name: PeoplePerHour, url: https://www.peopleperhour.com}
+  - {name: Fiverr, url: https://www.fiverr.com}
+  - {name: Guru, url: https://www.guru.com}
+  - {name: Codeable, url: https://www.codeable.io}
+  - {name: Lemon.io, url: https://lemon.io}
+  - {name: Crossover, url: https://www.crossover.com}
+  - {name: Dynamite Jobs, url: https://dynamitejobs.com}
+  - {name: Y Combinator Jobs, url: https://www.ycombinator.com/jobs}
+  - {name: Startup Jobs, url: https://startup.jobs}
+  - {name: AI Jobs, url: https://aijobs.net}
+  - {name: Crypto Jobs List, url: https://cryptojobslist.com}
+  - {name: Web3 Career, url: https://web3.career}
+  - {name: DailyRemote, url: https://dailyremote.com}
+  - {name: RemoteLeaf, url: https://remoteleaf.com}
+  - {name: PowerToFly, url: https://powertofly.com}
+  - {name: Clickworker, url: https://www.clickworker.com}
+  - {name: Appen, url: https://www.appen.com}
+  - {name: DataAnnotation, url: https://www.dataannotation.tech}
+  - {name: Outlier AI, url: https://outlier.ai}
+  - {name: Toloka, url: https://toloka.ai}
+  - {name: UserTesting, url: https://www.usertesting.com}
+  - {name: Respondent, url: https://www.respondent.io}
+  - {name: Andela, url: https://www.andela.com}
+  - {name: Workew, url: https://workew.com}
+  - {name: Jobicy, url: https://jobicy.com}
