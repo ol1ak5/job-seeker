@@ -81,20 +81,24 @@ Company career boards need no key at all - list the companies you care about in
 ## 🧠 How the Pipeline Works
 
 ```
-search_jobs  ->  dedupe_filter  ->  score_match  ->  write_output
- Adzuna,          duplicates,       Gemini,          CSV + Markdown
- JSearch,         age, title,       0-100 with       report per run
- Tavily,          seniority,        reasons
- ATS boards       location, cap
+collect  ->  dedupe  ->  select  ->  score  ->  write
+Adzuna,      duplicates,  title,       Gemini,      CSV + Markdown
+JSearch,     age,         seniority,   0-100 with   report per run
+Tavily,      already      location,    reasons
+ATS boards   seen         cap
+                          (loosened if
+                           too few match)
 ```
 
-Two LangGraph pipelines, one for searching and scoring, one for writing a CV, with
-the interactive review as the human checkpoint between generation and output.
+The pipeline is plain Python in `src/search_and_score.py`, one function per step.
+If the filters leave too few vacancies, they give up one keyword list at a time and
+select again from the same pool, so a strict track costs results, not a whole run.
+CV writing is a single model call, followed by the interactive review in the web app.
 
 | Directory | Contents |
 |---|---|
 | `src/sources/` | one adapter per job source |
-| `src/graphs/` | the LangGraph pipelines |
+| `src/search_and_score.py` | the search pipeline, step by step |
 | `src/prompts/` | every prompt sent to the model, in full |
 | `config/` | career tracks, filters, company watchlist |
 | `profile/` | your profile (private) and a worked example |
@@ -103,7 +107,7 @@ the interactive review as the human checkpoint between generation and output.
 
 ## 🧩 Built With
 
-**Python 3.11** · **LangGraph** · **LangChain** · **Gemini API** · **pydantic** · **click** · **httpx** · **pytest** · **uv**
+**Python 3.11** · **LangChain** · **Gemini API** · **pydantic** · **click** · **httpx** · **pytest** · **uv**
 
 ## ⚠️ Honest Limits
 

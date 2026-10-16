@@ -82,7 +82,7 @@ def search_and_score(track: str, days: int, limit: int, profile: str):
     """Search vacancies for TRACK, score them, write CSV+MD report."""
     from langchain_google_genai import ChatGoogleGenerativeAI
 
-    from src.graphs.search_and_score import run_search
+    from src.search_and_score import run_search
     from src.scoring import make_scorer
     from src.settings import load_settings
 

@@ -75,7 +75,7 @@ def run_search_job(client, job: dict) -> dict:
     from langchain_google_genai import ChatGoogleGenerativeAI
 
     from src.config import load_db_tracks, use_tracks
-    from src.graphs.search_and_score import run_search
+    from src.search_and_score import run_search
     from src.profile import use_profile
     from src.scoring import make_scorer
     from src.settings import load_settings

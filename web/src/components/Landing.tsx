@@ -68,7 +68,7 @@ export default function Landing() {
         </section>
 
         <footer className="mt-14 border-t border-line pt-6 text-xs text-ink-faint">
-          Built with LangGraph and Gemini. Vacancy data from Adzuna and public
+          Built with Python and Gemini. Vacancy data from Adzuna and public
           company career pages.
         </footer>
       </div>
