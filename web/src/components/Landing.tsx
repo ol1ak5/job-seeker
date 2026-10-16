@@ -65,7 +65,7 @@ function PillLink({
   return (
     <a
       href={href}
-      className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium transition-colors duration-150 ${look}`}
+      className={`inline-flex h-[46px] items-center justify-center rounded-full px-6 text-[15px] font-medium transition-colors duration-150 ${look}`}
     >
       {children}
     </a>
@@ -229,13 +229,13 @@ export default function Landing() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/login"
-              className="inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-medium text-brand transition-colors duration-150 hover:bg-line-soft"
+              className="inline-flex h-[46px] items-center rounded-full bg-white px-6 text-[15px] font-medium text-brand transition-colors duration-150 hover:bg-line-soft"
             >
               Sign in with Google →
             </Link>
             <a
               href="#search"
-              className="inline-flex rounded-full border border-white/25 px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:border-white/60"
+              className="inline-flex h-[46px] items-center rounded-full border border-white/25 px-6 text-[15px] font-medium text-white transition-colors duration-150 hover:border-white/60"
             >
               Try a search first
             </a>
