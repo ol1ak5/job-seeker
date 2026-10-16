@@ -39,9 +39,9 @@ const FEATURES = [
 // An illustration of a scored list, not real data. Companies are described,
 // never named, so nobody mistakes the example for a real employer.
 const EXAMPLE_ROWS = [
-  { title: "Energy Market Analyst", company: "Renewable energy company", place: "Madrid", score: 88 },
+  { title: "Energy Market Analyst", company: "Renewable energy company", place: "Madrid, ES", score: 88 },
   { title: "AI Product Analyst", company: "AI startup", place: "Remote, EU", score: 74 },
-  { title: "Data Analyst, Trading", company: "Energy trading firm", place: "Barcelona", score: 61 },
+  { title: "Data Analyst, Trading", company: "Energy trading firm", place: "Barcelona, ES", score: 61 },
 ];
 
 function scoreTone(score: number) {

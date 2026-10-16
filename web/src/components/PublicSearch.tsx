@@ -52,18 +52,21 @@ export default function PublicSearch() {
 
   return (
     <div>
-      {/* Not a login or address form, but browsers and password managers guess
-          otherwise and put their icons in the fields. These attributes say no. */}
+      {/* Not a login or contact form, but browsers guess otherwise and put their
+          autofill icons in the fields. Safari ignores autocomplete="off" and goes
+          by words like "city" and "job title", so the placeholders avoid them and
+          the field names say "search", which it never fills. */}
       <form onSubmit={search} autoComplete="off" className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <div>
-          <label htmlFor="what" className="block text-sm font-medium text-ink">
+          <label htmlFor="search-what" className="block text-sm font-medium text-ink">
             What
           </label>
           <input
-            id="what"
+            id="search-what"
+            name="search-what"
             value={what}
             onChange={(e) => setWhat(e.target.value)}
-            placeholder="Type a job title"
+            placeholder="Type a role"
             autoComplete="off"
             data-1p-ignore
             data-lpignore="true"
@@ -74,15 +77,16 @@ export default function PublicSearch() {
         </div>
 
         <div>
-          <label htmlFor="where" className="block text-sm font-medium text-ink">
+          <label htmlFor="search-where" className="block text-sm font-medium text-ink">
             Where
           </label>
           <div className="mt-1.5 flex gap-2">
             <input
-              id="where"
+              id="search-where"
+              name="search-where"
               value={where}
               onChange={(e) => setWhere(e.target.value)}
-              placeholder="Type a city"
+              placeholder="Type a place"
               autoComplete="off"
               data-1p-ignore
               data-lpignore="true"

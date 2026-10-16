@@ -53,6 +53,8 @@ export const COUNTRIES = [
   { code: "sg", name: "Singapore" },
   { code: "br", name: "Brazil" },
   { code: "mx", name: "Mexico" },
+  { code: "nz", name: "New Zealand" },
+  { code: "za", name: "South Africa" },
 ] as const;
 
 /** Words that mean "remote" across the languages the sources publish in. */
