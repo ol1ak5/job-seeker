@@ -45,13 +45,13 @@ export default function LoginPage() {
         </div>
       </header>
 
-      <section className="flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
-        <div className="w-full max-w-2xl text-center">
-          <h1 className="text-4xl font-semibold tracking-tight text-balance text-ink sm:text-5xl">
+      <section className="flex flex-1 items-center justify-center px-4 pt-10 pb-24 sm:px-6">
+        <div className="w-full max-w-3xl text-center">
+          <h1 className="text-4xl font-semibold tracking-tight text-balance text-ink sm:text-6xl">
             <span className="block">Welcome.</span>
             <span className="block text-ink-faint">Let&apos;s find your next role.</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-sm leading-relaxed text-ink-soft">
+          <p className="mx-auto mt-8 max-w-lg text-lg leading-relaxed text-ink-soft">
             Sign in to see vacancies scored against your CV, and tailor your CV to
             the ones worth it.
           </p>
@@ -59,10 +59,10 @@ export default function LoginPage() {
           <button
             onClick={signInWithGoogle}
             disabled={busy}
-            className="mt-10 inline-flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-brand py-1.5 pr-6 pl-1.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-60 sm:w-auto"
+            className="mt-10 inline-flex w-full cursor-pointer items-center justify-center gap-4 rounded-full bg-brand py-2 pr-8 pl-2 text-base font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-60 sm:w-auto"
           >
-            <span className="grid size-9 place-items-center rounded-full bg-white">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+            <span className="grid size-11 place-items-center rounded-full bg-white">
+              <svg className="h-6 w-6" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.65l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z" />
                 <path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84z" />
@@ -78,9 +78,9 @@ export default function LoginPage() {
             </p>
           )}
 
-          <p className="mt-6 text-xs text-ink-faint">
+          <p className="mt-8 text-sm text-ink-faint">
             Your CV and results stay in your account. Not ready?{" "}
-            <Link href="/#search" className="text-ink-soft underline-offset-2 hover:text-brand hover:underline">
+            <Link href="/#search" className="underline underline-offset-2 transition-colors duration-150 hover:text-brand">
               Try a search first
             </Link>
           </p>
