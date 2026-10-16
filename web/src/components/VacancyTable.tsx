@@ -29,7 +29,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 function scoreStyle(score: number | null) {
   if (score === null) return "bg-line-soft text-ink-faint";
-  if (score >= 80) return "bg-emerald-100 text-emerald-900";
+  if (score >= 80) return "bg-brand text-white";
   if (score >= 60) return "bg-brand/10 text-brand";
   if (score >= 40) return "bg-amber-100 text-amber-900";
   return "bg-line-soft text-ink-faint";

@@ -1,5 +1,6 @@
 "use client";
 
+import Logo from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 
@@ -30,7 +31,9 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">Job Seeker</h1>
+        <h1>
+          <Logo size="large" />
+        </h1>
         <p className="mt-2 text-sm text-ink-soft">
           Sign in to see the vacancies scored against your profile.
         </p>

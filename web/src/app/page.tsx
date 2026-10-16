@@ -1,5 +1,6 @@
 import AddVacancy from "@/components/AddVacancy";
 import Landing from "@/components/Landing";
+import Logo from "@/components/Logo";
 import SearchButton, { type Job } from "@/components/SearchButton";
 import SignOutButton from "@/components/SignOutButton";
 import StatTiles from "@/components/StatTiles";
@@ -82,30 +83,30 @@ export default async function HomePage({
 
   return (
     <main className="min-h-screen">
-      <header className="border-b border-line bg-surface">
+      <header className="sticky top-0 z-10 border-b border-line/70 bg-surface/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-baseline gap-3">
-            <h1 className="text-base font-semibold tracking-tight text-ink">
-              Job Seeker
+          <div className="flex items-center gap-3">
+            <h1>
+              <Logo />
             </h1>
             <p className="hidden text-xs text-ink-faint sm:block">{user.email}</p>
           </div>
           <div className="flex items-center gap-2">
             <Link
               href="/cvs"
-              className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
+              className="rounded-full border border-line px-3.5 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
             >
               Tailored
             </Link>
             <Link
               href="/profile"
-              className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
+              className="rounded-full border border-line px-3.5 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
             >
               My CV
             </Link>
             <Link
               href="/settings"
-              className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
+              className="rounded-full border border-line px-3.5 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
             >
               Settings
             </Link>
@@ -139,7 +140,7 @@ export default async function HomePage({
             </p>
             <Link
               href="/settings"
-              className="mt-4 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
+              className="mt-4 inline-block rounded-full bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
             >
               Set up a search
             </Link>

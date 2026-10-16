@@ -52,7 +52,9 @@ export default function PublicSearch() {
 
   return (
     <div>
-      <form onSubmit={search} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+      {/* Not a login or address form, but browsers and password managers guess
+          otherwise and put their icons in the fields. These attributes say no. */}
+      <form onSubmit={search} autoComplete="off" className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <div>
           <label htmlFor="what" className="block text-sm font-medium text-ink">
             What
@@ -61,7 +63,12 @@ export default function PublicSearch() {
             id="what"
             value={what}
             onChange={(e) => setWhat(e.target.value)}
-            placeholder="energy market analyst"
+            placeholder="Type a job title"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-bwignore
+            data-form-type="other"
             className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
           />
         </div>
@@ -75,18 +82,25 @@ export default function PublicSearch() {
               id="where"
               value={where}
               onChange={(e) => setWhere(e.target.value)}
-              placeholder="Madrid"
+              placeholder="Type a city"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-bwignore
+              data-form-type="other"
               className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
             />
+            {/* Each job API searches one national market at a time, so the
+                country is picked here and the city above is free text. */}
             <select
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               aria-label="Country"
-              className="cursor-pointer rounded-lg border border-line bg-surface px-2 py-2 font-mono text-sm uppercase text-ink-soft outline-none focus:border-brand"
+              className="max-w-[45%] cursor-pointer rounded-lg border border-line bg-surface px-2 py-2 text-sm text-ink-soft outline-none focus:border-brand"
             >
               {COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
-                  {c.code}
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -96,7 +110,7 @@ export default function PublicSearch() {
         <button
           type="submit"
           disabled={busy}
-          className="cursor-pointer self-end rounded-lg bg-brand px-5 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
+          className="cursor-pointer self-end rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "Searching..." : "Search"}
         </button>
@@ -161,7 +175,7 @@ export default function PublicSearch() {
             </p>
             <a
               href="/login"
-              className="mt-3 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
+              className="mt-3 inline-block rounded-full bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
             >
               Sign in
             </a>

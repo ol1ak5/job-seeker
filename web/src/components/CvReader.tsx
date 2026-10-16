@@ -144,7 +144,7 @@ export default function CvReader({ cv }: { cv: Cv }) {
               <button
                 onClick={saveText}
                 disabled={saving || !edited}
-                className="cursor-pointer rounded-lg bg-brand px-3 py-1.5 font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-40"
+                className="cursor-pointer rounded-full bg-brand px-3 py-1.5 font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-40"
               >
                 {saving ? "Saving..." : "Save my version"}
               </button>

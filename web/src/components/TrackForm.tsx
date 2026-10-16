@@ -349,7 +349,7 @@ export default function TrackForm({
           <button
             type="submit"
             disabled={saving}
-            className="cursor-pointer rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
+            className="cursor-pointer rounded-full bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Saving..." : draft.id ? "Save changes" : "Create search"}
           </button>

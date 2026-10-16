@@ -197,7 +197,7 @@ export default function AddVacancy({
         <button
           type="submit"
           disabled={busy}
-          className="cursor-pointer rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
+          className="cursor-pointer rounded-full bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "Saving..." : "Add to my list"}
         </button>
