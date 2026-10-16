@@ -18,13 +18,13 @@ import { useState } from "react";
 export default function AddVacancy({
   userId,
   tracks,
-  active,
+  onClose,
 }: {
   userId: string;
   tracks: string[];
-  active: string;
+  /** Called on cancel, and once the vacancy is saved. */
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -33,7 +33,7 @@ export default function AddVacancy({
     location: "",
     url: "",
     description: "",
-    track: active || tracks[0] || "manual",
+    track: tracks[0] || "manual",
   });
   const router = useRouter();
 
@@ -76,19 +76,8 @@ export default function AddVacancy({
       return;
     }
     setForm({ ...form, title: "", company: "", location: "", url: "", description: "" });
-    setOpen(false);
+    onClose();
     router.refresh();
-  }
-
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="mb-4 cursor-pointer rounded-lg border border-dashed border-line px-4 py-2 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
-      >
-        + Add a vacancy you found yourself
-      </button>
-    );
   }
 
   const field =
@@ -97,7 +86,7 @@ export default function AddVacancy({
   return (
     <form
       onSubmit={save}
-      className="mb-4 space-y-4 rounded-lg border border-line bg-surface p-5"
+      className="mt-6 space-y-4 rounded-2xl border border-line bg-surface p-6"
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -120,7 +109,7 @@ export default function AddVacancy({
             id="v-company"
             value={form.company}
             onChange={(e) => set("company", e.target.value)}
-            placeholder="Aurora Energy Research"
+            placeholder="Company name"
             className={field}
           />
         </div>
@@ -197,13 +186,13 @@ export default function AddVacancy({
         <button
           type="submit"
           disabled={busy}
-          className="cursor-pointer rounded-full bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
+          className="cursor-pointer rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-50"
         >
           {busy ? "Saving..." : "Add to my list"}
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={onClose}
           className="cursor-pointer text-sm text-ink-faint transition-colors duration-150 hover:text-ink"
         >
           Cancel

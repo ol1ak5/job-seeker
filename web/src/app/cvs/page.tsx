@@ -1,3 +1,5 @@
+import AppHeader from "@/components/AppHeader";
+import PageIntro from "@/components/PageIntro";
 import "@/app/cv.css";
 
 import CvReader from "@/components/CvReader";
@@ -52,21 +54,13 @@ export default async function CvsPage({
 
   return (
     <main className="min-h-screen">
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <h1 className="text-base font-semibold tracking-tight text-ink">
-            Tailored CVs
-          </h1>
-          <Link
-            href="/"
-            className="rounded-full border border-line px-3.5 py-1.5 text-sm text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand"
-          >
-            Back to vacancies
-          </Link>
-        </div>
-      </header>
+      <AppHeader />
 
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      <section className="px-4 pt-14 pb-10 sm:px-6 sm:pt-20">
+        <PageIntro title="Tailored CVs." subtitle="One for each vacancy you chose." />
+      </section>
+
+      <div className="mx-auto max-w-4xl px-4 pb-20 sm:px-6">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             {/* 42703 is Postgres for "no such column": the code expects a

@@ -23,24 +23,22 @@ export type Vacancy = {
   matching_points: string[] | null;
   gaps: string[] | null;
   flags: string[] | null;
-  applications: { status: string; applied_at: string | null }[] | null;
+  applications:
+    | {
+        status: string;
+        applied_at: string | null;
+        notes?: string | null;
+        applied_text?: string | null;
+        /** Values of the columns you added, keyed by column id. */
+        extra?: Record<string, string> | null;
+      }[]
+    | null;
   cvs: { id: string }[] | null;
 };
-
-/** Days after applying with no status change before a follow-up is suggested. */
-export const FOLLOW_UP_AFTER_DAYS = 10;
-
-export function daysSince(date: string | null): number | null {
-  if (!date) return null;
-  return Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000);
-}
 
 export function statusOf(vacancy: Vacancy): string {
   return vacancy.applications?.[0]?.status ?? "interested";
 }
 
-/** Applied, and the company has said nothing since. */
-export function needsFollowUp(status: string, appliedAt: string | null): boolean {
-  const waiting = daysSince(appliedAt);
-  return status === "applied" && waiting !== null && waiting >= FOLLOW_UP_AFTER_DAYS;
-}
+/** A column you added to the table yourself. */
+export type CustomColumn = { id: string; name: string };

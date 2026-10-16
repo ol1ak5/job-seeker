@@ -61,30 +61,32 @@ export default function TailorButton({
     }, 4000);
   }
 
+  // Plain links sized for a table cell. A failure shows as the link's tooltip
+  // and colour rather than a line of text, so the row keeps its height.
+  const link = "cursor-pointer text-sm transition-colors duration-150 disabled:opacity-50";
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-3">
+    <span className="inline-flex items-center gap-3 whitespace-nowrap">
+      {hasCv && (
+        <a href={`/cvs?vacancy=${vacancyId}`} className={`${link} font-medium text-brand hover:text-brand-soft`}>
+          Open
+        </a>
+      )}
       <button
         onClick={start}
         disabled={state === "working"}
-        className="cursor-pointer rounded border border-line px-2 py-1 text-xs text-ink-soft transition-colors duration-150 hover:border-brand hover:text-brand disabled:opacity-50"
+        title={error ?? (hasCv ? "Write another CV for this vacancy" : "Write a CV for this vacancy")}
+        className={`${link} inline-flex items-center ${state === "failed" ? "text-red-700" : hasCv ? "text-ink-faint hover:text-brand" : "font-medium text-brand hover:text-brand-soft"}`}
       >
-        {state === "working"
-          ? "Writing..."
-          : hasCv
-            ? "Write another CV"
-            : "Tailor my CV for this"}
+        {state === "working" ? (
+          "Writing..."
+        ) : state === "failed" ? (
+          "Retry"
+        ) : hasCv ? (
+          "Redo"
+        ) : (
+          "Tailor"
+        )}
       </button>
-
-      {hasCv && (
-        <a
-          href={`/cvs?vacancy=${vacancyId}`}
-          className="text-xs text-brand transition-opacity duration-150 hover:opacity-80"
-        >
-          Read the CV
-        </a>
-      )}
-
-      {error && <span className="text-xs text-red-700">{error}</span>}
-    </div>
+    </span>
   );
 }

@@ -7,7 +7,7 @@ export type Job = {
   id: string;
   status: "queued" | "running" | "done" | "failed";
   error: string | null;
-  result: { track?: string; vacancies?: number } | null;
+  result: { track?: string; tracks?: string[]; vacancies?: number } | null;
   created_at: string;
   finished_at: string | null;
 };
@@ -22,23 +22,6 @@ const WORDS: Record<Job["status"], string> = {
 };
 
 /**
- * "20 minutes ago". The count of what a run found is deliberately not shown
- * here: it was true when the run ended, and a vacancy deleted since would make
- * it a lie. The tiles above hold the current number, and only one of the two
- * can be the source of truth.
- */
-function relativeTime(iso: string | null): string {
-  if (!iso) return "recently";
-  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
-  const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
-}
-
-/**
  * Start a search and watch it happen.
  *
  * The work is minutes long, so there is no request to wait on - only a row in
@@ -47,11 +30,15 @@ function relativeTime(iso: string | null): string {
  * reads as a broken page.
  */
 export default function SearchButton({
-  track,
+  ready,
   initialJob,
+  children,
 }: {
-  track: string;
+  /** Whether the account has a saved search to run. */
+  ready: boolean;
   initialJob: Job | null;
+  /** Further actions shown beside the button, such as adding a vacancy. */
+  children?: React.ReactNode;
 }) {
   const [job, setJob] = useState<Job | null>(initialJob);
   const [error, setError] = useState<string | null>(null);
@@ -84,10 +71,11 @@ export default function SearchButton({
     setStarting(true);
     setError(null);
     try {
+      // No track named: the engine runs every saved search in turn.
       const response = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ track }),
+        body: JSON.stringify({}),
       });
       const data = await response.json();
       if (!response.ok) setError(data.error ?? "Could not start the search.");
@@ -99,49 +87,36 @@ export default function SearchButton({
   }
 
   return (
-    <div className="mb-4 rounded-lg border border-line bg-surface p-4">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+      <div className="flex flex-wrap gap-3">
         <button
           onClick={start}
-          disabled={busy || starting || !track}
-          className="cursor-pointer rounded-full bg-brand px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
+          disabled={busy || starting || !ready}
+          className="cursor-pointer rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-50"
         >
-          {busy
-            ? "Searching..."
-            : starting
-              ? "Starting..."
-              : `Search ${track}`}
+          {busy ? "Searching..." : starting ? "Starting..." : "Run the search"}
         </button>
-
-        {busy && (
-          <p className="text-sm text-ink-soft" role="status">
-            {WORDS[job!.status]}. This takes a few minutes - you can leave the
-            page.
-          </p>
-        )}
-
-        {!busy && !track && (
-          <p className="text-sm text-ink-faint">
-            Set up a search first, and upload your CV.
-          </p>
-        )}
+        {children}
       </div>
 
-      {job?.status === "done" && (
-        <p className="mt-3 text-sm text-ink-soft" role="status">
-          Last search ran {relativeTime(job.finished_at)} on the{" "}
-          <span className="font-mono">{job.result?.track ?? "saved"}</span> list.
+      {busy && (
+        <p className="max-w-sm text-xs text-ink-soft sm:text-right" role="status">
+          {WORDS[job!.status]}. This takes a few minutes - you can leave the page.
         </p>
       )}
 
+      {!busy && !ready && (
+        <p className="text-xs text-ink-faint">Set up a search first, and upload your CV.</p>
+      )}
+
       {job?.status === "failed" && job.error && (
-        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <p className="max-w-sm rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           {job.error.split("\n").slice(-3).join(" ").slice(0, 300)}
         </p>
       )}
 
       {error && (
-        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <p className="max-w-sm rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           {error}
         </p>
       )}

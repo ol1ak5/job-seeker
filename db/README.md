@@ -58,7 +58,8 @@ Limits live in `config/limits.yaml`.
 | `tracks` | one saved search: what to look for, where, and what to exclude |
 | `runs` | one row per search execution, with source and filter statistics |
 | `vacancies` | vacancies with their score, verdict and reasoning |
-| `applications` | tracker status per vacancy |
+| `applications` | tracker status per vacancy, your notes, and the values of your own columns |
+| `custom_columns` | columns you added to the vacancy table yourself |
 | `cvs` | generated CVs, with an approval flag |
 | `user_limits`, `usage_daily` | quota override and daily counters |
 
