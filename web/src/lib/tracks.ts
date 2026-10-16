@@ -67,7 +67,8 @@ const SENIOR_TITLES = [
 
 export function emptyTrack(): TrackData {
   return {
-    adzuna_country: "es",
+    // No country is assumed: the person types theirs, and saving asks for it.
+    adzuna_country: "",
     queries: [],
     scoring_guidance: "",
     filters: {

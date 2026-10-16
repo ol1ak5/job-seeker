@@ -118,6 +118,11 @@ function countryByName(): Map<string, string> {
   return map;
 }
 
+/** A country typed by name - English, Spanish or a common alias - to its code. */
+export function countryCode(text: string): string | undefined {
+  return countryByName().get(normal(text));
+}
+
 /**
  * One free-text box for the place: "Madrid", "Portugal" and "Lisbon,
  * Portugal" all work.

@@ -95,6 +95,11 @@ export default function AddVacancy({
           </label>
           <input
             id="v-title"
+            name="search-v-title"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-form-type="other"
             value={form.title}
             onChange={(e) => set("title", e.target.value)}
             placeholder="Energy Market Analyst"
@@ -107,6 +112,11 @@ export default function AddVacancy({
           </label>
           <input
             id="v-company"
+            name="search-v-company"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-form-type="other"
             value={form.company}
             onChange={(e) => set("company", e.target.value)}
             placeholder="Company name"
@@ -119,6 +129,11 @@ export default function AddVacancy({
           </label>
           <input
             id="v-location"
+            name="search-v-location"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-form-type="other"
             value={form.location}
             onChange={(e) => set("location", e.target.value)}
             placeholder="Madrid, Spain"
@@ -131,6 +146,11 @@ export default function AddVacancy({
           </label>
           <input
             id="v-url"
+            name="search-v-url"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-form-type="other"
             value={form.url}
             onChange={(e) => set("url", e.target.value)}
             placeholder="https://..."

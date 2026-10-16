@@ -80,7 +80,7 @@ export default function AddColumn({
               setError(null);
             }}
             maxLength={40}
-            placeholder="Recruiter"
+            placeholder="Write a name"
             autoComplete="off"
             data-1p-ignore
             data-lpignore="true"

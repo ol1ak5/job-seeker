@@ -69,8 +69,15 @@ export default function TagInput({
             </button>
           </span>
         ))}
+        {/* Browsers read labels like "City" as an address form; a name that
+            says "search" keeps their autofill icons out. */}
         <input
           id={id}
+          name={`search-${id}`}
+          autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}

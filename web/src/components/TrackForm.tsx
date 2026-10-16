@@ -10,6 +10,7 @@ import {
   type TrackData,
   type TrackRow,
 } from "@/lib/tracks";
+import { countryCode } from "@/lib/publicSearch";
 import { useState } from "react";
 
 type Draft = { id: string | null; label: string; data: TrackData };
@@ -20,6 +21,48 @@ function blankDraft(): Draft {
 
 function draftOf(row: TrackRow): Draft {
   return { id: row.id, label: row.label || row.name, data: withDefaults(row.data) };
+}
+
+/**
+ * The country is typed freely, in English or Spanish. Only the countries the
+ * job index covers can be searched, so anything else is pointed out - with the
+ * list of those that work - rather than saved.
+ */
+function CountryInput({ code, onChange }: { code: string; onChange: (code: string) => void }) {
+  const [text, setText] = useState(() => COUNTRIES.find((c) => c.code === code)?.name ?? "");
+  const typed = text.trim() ? countryCode(text) : undefined;
+  const covered = COUNTRIES.some((c) => c.code === typed);
+
+  return (
+    <div>
+      <label htmlFor="search-country" className="block text-sm font-medium text-ink">
+        Country
+      </label>
+      <p className="mt-0.5 text-xs text-ink-faint">The country where the search looks for jobs.</p>
+      <input
+        id="search-country"
+        name="search-country"
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          const match = countryCode(e.target.value);
+          onChange(match && COUNTRIES.some((c) => c.code === match) ? match : "");
+        }}
+        placeholder="Type a country"
+        autoComplete="off"
+        data-1p-ignore
+        data-lpignore="true"
+        data-form-type="other"
+        className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
+      />
+      {text.trim() !== "" && !covered && (
+        <p className="mt-1 text-xs leading-relaxed text-red-700">
+          The search does not cover this country yet. It covers{" "}
+          {COUNTRIES.map((c) => c.name).join(", ")}.
+        </p>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -64,6 +107,12 @@ export default function TrackForm({
   async function save() {
     if (!name) {
       setStatus("Give the search a name first.");
+      return;
+    }
+    // Without a country the job index has nowhere to look, and the search
+    // would quietly find nothing.
+    if (!draft.data.adzuna_country) {
+      setStatus("Type the country to search in.");
       return;
     }
     setSaving(true);
@@ -128,7 +177,6 @@ export default function TrackForm({
             }`}
           >
             {track.label || track.name}
-            <span className="block font-mono text-xs text-ink-faint">{track.name}</span>
           </button>
         ))}
         <button
@@ -136,7 +184,7 @@ export default function TrackForm({
             setDraft(blankDraft());
             setStatus(null);
           }}
-          className="mt-1 cursor-pointer rounded-lg border border-dashed border-line px-3 py-2 text-left text-sm text-ink-faint transition-colors duration-150 hover:border-brand hover:text-brand"
+          className="flex h-11 cursor-pointer items-center rounded-lg border border-dashed border-line px-3 text-left text-sm text-ink-faint transition-colors duration-150 hover:border-brand hover:text-brand"
         >
           + New search
         </button>
@@ -157,63 +205,46 @@ export default function TrackForm({
             </label>
             <input
               id="label"
+              name="search-label"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
               value={draft.label}
               onChange={(e) => {
                 setDraft((d) => ({ ...d, label: e.target.value }));
                 setStatus(null);
               }}
-              placeholder="Energy consulting"
+              placeholder="Type a job title or field"
               className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
             />
-            {name && (
-              <p className="mt-1 font-mono text-xs text-ink-faint">
-                jobseeker search-and-score --track {name}
-              </p>
-            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="country" className="block text-sm font-medium text-ink">
-                Country
-              </label>
-              <p className="mt-0.5 text-xs text-ink-faint">
-                Which national job index to search.
-              </p>
-              <select
-                id="country"
-                value={draft.data.adzuna_country}
-                onChange={(e) => setData({ adzuna_country: e.target.value })}
-                className="mt-1.5 w-full cursor-pointer rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
-              >
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CountryInput
+              key={draft.id ?? "new"}
+              code={draft.data.adzuna_country}
+              onChange={(adzuna_country) => setData({ adzuna_country })}
+            />
 
             <TagInput
               id="locations"
-              label="Cities"
-              hint="A posting elsewhere is dropped. Leave empty to accept any city."
+              label="City"
+              hint="Only vacancies in these cities are kept. Leave empty for any city."
               values={filters.locations}
-              placeholder="madrid"
+              placeholder="Type a city"
               onChange={(locations) => setFilters({ locations })}
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TagInput
-              id="authorised_in"
-              label="Where you may already work"
-              hint="A remote role pinned to somewhere else is not really open to you. Leave empty to skip the check."
-              values={filters.authorised_in}
-              placeholder="spain"
-              onChange={(authorised_in) => setFilters({ authorised_in })}
-            />
-          </div>
+          <TagInput
+            id="authorised_in"
+            label="Where you are authorised to work"
+            hint="Remote roles based in other countries are left out, and postings that ask for the right to work elsewhere get a warning. Leave empty to skip this check."
+            values={filters.authorised_in}
+            placeholder="Type a country"
+            onChange={(authorised_in) => setFilters({ authorised_in })}
+          />
 
           <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
             <input
@@ -231,50 +262,50 @@ export default function TrackForm({
 
           <TagInput
             id="queries"
-            label="Search phrases"
-            hint="What you would type into a job board. Each phrase is searched separately."
+            label="Job titles to search for"
+            hint="Each one is searched on the job boards separately."
             values={draft.data.queries}
-            placeholder="energy market analyst"
+            placeholder="Type a job title"
             onChange={(queries) => setData({ queries })}
           />
 
           <TagInput
             id="title_include"
             label="Words that must appear in the job title"
-            hint="Usually the level: analyst, associate, consultant. Empty means any title."
+            hint="Usually the level of the role. Leave empty for any title."
             values={filters.title_include}
-            placeholder="analyst"
+            placeholder="Type a word"
             onChange={(title_include) => setFilters({ title_include })}
           />
 
           <TagInput
             id="domain_include"
             label="Words that must appear somewhere in the posting"
-            hint="The subject. Without this, any analyst role in the right city passes."
+            hint="The field or subject of the work. Leave empty to skip this check."
             values={filters.domain_include}
-            placeholder="energy"
+            placeholder="Type a word"
             onChange={(domain_include) => setFilters({ domain_include })}
           />
         </section>
 
         <section className="space-y-4 rounded-lg border border-line bg-surface p-5">
-          <h2 className="text-sm font-semibold text-ink">What to throw away</h2>
+          <h2 className="text-sm font-semibold text-ink">What to filter out</h2>
 
           <TagInput
             id="title_exclude"
-            label="Too senior (or too junior)"
-            hint="Matched against the title only."
+            label="Seniority to filter out"
+            hint="Levels you do not want, above or below yours. Checked against the job title."
             values={filters.title_exclude}
-            placeholder="director"
+            placeholder="Type a word"
             onChange={(title_exclude) => setFilters({ title_exclude })}
           />
 
           <TagInput
             id="function_exclude"
-            label="Wrong kind of job"
-            hint="Departments you never want to see: sales, recruitment, marketing."
+            label="Areas to filter out"
+            hint="Kinds of work you do not want to see. Checked against the job title."
             values={filters.function_exclude}
-            placeholder="sales"
+            placeholder="Type a word"
             onChange={(function_exclude) => setFilters({ function_exclude })}
           />
 
@@ -284,11 +315,13 @@ export default function TrackForm({
                 Maximum years of experience asked for
               </label>
               <p className="mt-0.5 text-xs text-ink-faint">
-                Empty means no limit. Postings that state nothing are kept.
+                Postings that state nothing are kept.
               </p>
               <input
                 id="years"
+                name="search-years"
                 type="number"
+                placeholder="No limit"
                 min={0}
                 max={40}
                 value={filters.max_years_experience ?? ""}
@@ -297,7 +330,7 @@ export default function TrackForm({
                     max_years_experience: e.target.value ? Number(e.target.value) : null,
                   })
                 }
-                className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink outline-none focus:border-brand"
+                className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-sm text-ink outline-none placeholder:font-sans placeholder:text-ink-faint focus:border-brand"
               />
             </div>
 
@@ -310,6 +343,7 @@ export default function TrackForm({
               </p>
               <input
                 id="perCompany"
+                name="search-per-company"
                 type="number"
                 min={1}
                 max={50}
@@ -333,14 +367,11 @@ export default function TrackForm({
           </p>
           <textarea
             id="guidance"
+            name="search-guidance"
             rows={6}
             value={draft.data.scoring_guidance}
             onChange={(e) => setData({ scoring_guidance: e.target.value })}
-            placeholder={
-              "Target: energy consulting and market analysis at associate level.\n" +
-              "Not the target: deal execution - score those down heavily.\n" +
-              "My edge: Spanish power market regulation, valuation modelling."
-            }
+            placeholder="Describe the roles you want, what makes you a strong fit, and what should score low."
             className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm leading-relaxed text-ink outline-none focus:border-brand"
           />
         </section>
