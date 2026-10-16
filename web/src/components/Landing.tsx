@@ -41,7 +41,7 @@ const FEATURES = [
 const EXAMPLE_ROWS = [
   { title: "Energy Market Analyst", company: "Renewable energy company", place: "Madrid, ES", score: 88 },
   { title: "Power Trading Analyst", company: "Energy trading firm", place: "Remote, EU", score: 74 },
-  { title: "Grid Data Analyst", company: "Electricity utility", place: "Barcelona, ES", score: 61 },
+  { title: "Grid Data Analyst", company: "Utility", place: "Barcelona, ES", score: 61 },
 ];
 
 function scoreTone(score: number) {
@@ -138,7 +138,7 @@ export default function Landing() {
         </p>
 
         {/* Product frame */}
-        <div className="mx-auto mt-14 max-w-4xl rounded-2xl border border-line bg-surface p-2 shadow-[0_24px_60px_-34px_rgba(30,58,95,0.35)]">
+        <div className="mx-auto mt-14 max-w-5xl rounded-2xl border border-line bg-surface p-2 shadow-[0_24px_60px_-34px_rgba(30,58,95,0.35)]">
           <div className="overflow-hidden rounded-xl border border-line bg-surface text-left">
             <div className="flex items-center gap-1.5 border-b border-line px-4 py-3">
               <span className="size-2.5 rounded-full bg-line" />

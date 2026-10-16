@@ -31,9 +31,9 @@ export default function PublicSearch() {
     setBusy(true);
     setError(null);
 
-    // No country picker: the search runs in Spain, the market this site is
-    // built around. The API still takes `country` for when that changes.
-    const query = new URLSearchParams({ what, where, country: "es" });
+    // No country picker: the server reads the country from the place, so a
+    // city, a country or both can go in the one box.
+    const query = new URLSearchParams({ what, where });
     try {
       const response = await fetch(`/api/search?${query}`);
       const body = await response.json();
@@ -85,7 +85,7 @@ export default function PublicSearch() {
             name="search-where"
             value={where}
             onChange={(e) => setWhere(e.target.value)}
-            placeholder="Type a place in Spain"
+            placeholder="Type a place"
             autoComplete="off"
             data-1p-ignore
             data-lpignore="true"

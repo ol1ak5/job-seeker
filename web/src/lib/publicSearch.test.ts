@@ -5,6 +5,7 @@ import {
   isSearchCountry,
   jsearchJobs,
   jsearchQuery,
+  parsePlace,
   sourceFor,
 } from "./publicSearch";
 import { COUNTRIES } from "./tracks";
@@ -25,6 +26,31 @@ describe("which source a country uses", () => {
   it("refuses codes that are not countries", () => {
     expect(isSearchCountry("xx")).toBe(false);
     expect(isSearchCountry("")).toBe(false);
+  });
+});
+
+describe("reading the place box", () => {
+  it("takes a city on its own as a place in Spain", () => {
+    expect(parsePlace("Madrid")).toEqual({ country: "es", where: "Madrid" });
+    expect(parsePlace("Málaga")).toEqual({ country: "es", where: "Málaga" });
+    expect(parsePlace("")).toEqual({ country: "es", where: "" });
+  });
+
+  it("recognises a country by its English or Spanish name", () => {
+    expect(parsePlace("Portugal")).toEqual({ country: "pt", where: "" });
+    expect(parsePlace("Alemania")).toEqual({ country: "de", where: "" });
+    expect(parsePlace("united kingdom")).toEqual({ country: "gb", where: "" });
+    expect(parsePlace("UK")).toEqual({ country: "gb", where: "" });
+  });
+
+  it("splits a city and a country", () => {
+    expect(parsePlace("Lisbon, Portugal")).toEqual({ country: "pt", where: "Lisbon" });
+    expect(parsePlace("Bilbao, España")).toEqual({ country: "es", where: "Bilbao" });
+  });
+
+  it("knows the big cities of other markets", () => {
+    expect(parsePlace("London")).toEqual({ country: "gb", where: "London" });
+    expect(parsePlace("münchen")).toEqual({ country: "de", where: "münchen" });
   });
 });
 

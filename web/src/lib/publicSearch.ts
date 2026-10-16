@@ -47,6 +47,103 @@ export function sourceFor(code: string): Source {
   return ADZUNA.has(code) ? "adzuna" : "jsearch";
 }
 
+/** "Málaga " and "malaga" are the same place. */
+function normal(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Names people type that the English and Spanish official names do not cover.
+const COUNTRY_ALIASES: Record<string, string> = {
+  uk: "gb", england: "gb", scotland: "gb", wales: "gb", "great britain": "gb",
+  "reino unido": "gb", inglaterra: "gb",
+  usa: "us", us: "us", america: "us", eeuu: "us", "ee uu": "us",
+  holland: "nl", "the netherlands": "nl", holanda: "nl",
+  "czech republic": "cz", turkey: "tr", turquia: "tr", korea: "kr",
+  "south korea": "kr", uae: "ae", emirates: "ae", russia: "ru",
+};
+
+// The largest job markets' cities, so that "London" alone finds the right
+// country. A city not listed here is searched in Spain, the site's home market.
+const CITY_COUNTRY: Record<string, string> = {
+  london: "gb", londres: "gb", manchester: "gb", birmingham: "gb", edinburgh: "gb",
+  glasgow: "gb", bristol: "gb", leeds: "gb", cambridge: "gb", oxford: "gb",
+  "new york": "us", "nueva york": "us", "san francisco": "us", boston: "us",
+  chicago: "us", "los angeles": "us", seattle: "us", austin: "us", houston: "us",
+  washington: "us", miami: "us", denver: "us",
+  berlin: "de", munich: "de", munchen: "de", hamburg: "de", frankfurt: "de",
+  cologne: "de", koln: "de", stuttgart: "de", dusseldorf: "de",
+  paris: "fr", lyon: "fr", marseille: "fr", toulouse: "fr", lille: "fr", nice: "fr",
+  amsterdam: "nl", rotterdam: "nl", "the hague": "nl", utrecht: "nl", eindhoven: "nl",
+  milan: "it", milano: "it", rome: "it", roma: "it", turin: "it", torino: "it",
+  warsaw: "pl", varsovia: "pl", krakow: "pl", wroclaw: "pl",
+  vienna: "at", viena: "at", wien: "at",
+  brussels: "be", bruselas: "be", antwerp: "be",
+  zurich: "ch", geneva: "ch", ginebra: "ch", basel: "ch",
+  toronto: "ca", vancouver: "ca", montreal: "ca", calgary: "ca",
+  sydney: "au", melbourne: "au", brisbane: "au", perth: "au",
+  bangalore: "in", bengaluru: "in", mumbai: "in", delhi: "in", hyderabad: "in",
+  singapore: "sg", singapur: "sg",
+  "sao paulo": "br", "rio de janeiro": "br",
+  "mexico city": "mx", "ciudad de mexico": "mx", cdmx: "mx", guadalajara: "mx",
+  auckland: "nz", wellington: "nz",
+  johannesburg: "za", "cape town": "za",
+  lisbon: "pt", lisboa: "pt", porto: "pt", oporto: "pt",
+  dublin: "ie", stockholm: "se", estocolmo: "se", copenhagen: "dk",
+  oslo: "no", helsinki: "fi", prague: "cz", praga: "cz", athens: "gr",
+  dubai: "ae", "buenos aires": "ar", santiago: "cl", bogota: "co", lima: "pe",
+  tokyo: "jp",
+};
+
+let countryNames: Map<string, string> | null = null;
+
+/** Every country's English and Spanish name, plus the aliases above. */
+function countryByName(): Map<string, string> {
+  if (countryNames) return countryNames;
+  const map = new Map<string, string>();
+  for (const locale of ["en", "es"]) {
+    const names = new Intl.DisplayNames([locale], { type: "region" });
+    for (const code of CODES) {
+      const name = names.of(code.toUpperCase());
+      if (name) map.set(normal(name), code);
+    }
+  }
+  for (const [alias, code] of Object.entries(COUNTRY_ALIASES)) map.set(alias, code);
+  countryNames = map;
+  return map;
+}
+
+/**
+ * One free-text box for the place: "Madrid", "Portugal" and "Lisbon,
+ * Portugal" all work.
+ *
+ * A part that names a country sets the country, and whatever is left is the
+ * city. With no country named, a well-known city sets it; anything else is
+ * taken as a place in Spain.
+ */
+export function parsePlace(text: string): { country: string; where: string } {
+  const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+  const names = countryByName();
+
+  const whole = names.get(normal(text));
+  if (whole) return { country: whole, where: "" };
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const code = names.get(normal(parts[i]));
+    if (code) {
+      return { country: code, where: parts.filter((_, j) => j !== i).join(", ") };
+    }
+  }
+
+  const city = CITY_COUNTRY[normal(parts[0] ?? "")];
+  return { country: city ?? "es", where: parts.join(", ") };
+}
+
 function plain(html: unknown): string {
   return String(html ?? "").replace(/<\/?[^>]+>/g, "");
 }

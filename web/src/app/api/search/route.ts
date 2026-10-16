@@ -5,6 +5,7 @@ import {
   isSearchCountry,
   jsearchJobs,
   jsearchQuery,
+  parsePlace,
   sourceFor,
 } from "@/lib/publicSearch";
 import type { NextRequest } from "next/server";
@@ -116,8 +117,14 @@ async function searchJsearch(what: string, where: string, country: string): Prom
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const what = (params.get("what") ?? "").trim().slice(0, 100);
-  const where = (params.get("where") ?? "").trim().slice(0, 60);
-  const country = (params.get("country") ?? "es").toLowerCase();
+  const place = (params.get("where") ?? "").trim().slice(0, 60);
+
+  // A country passed explicitly wins; otherwise it is read from the place, so
+  // that one box understands "Madrid", "Portugal" and "Lisbon, Portugal".
+  const explicit = params.get("country")?.toLowerCase();
+  const parsed = parsePlace(place);
+  const country = explicit || parsed.country;
+  const where = explicit ? place : parsed.where;
 
   if (!what) {
     return Response.json({ error: "Type what you are looking for." }, { status: 400 });
