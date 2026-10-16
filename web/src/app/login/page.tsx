@@ -59,7 +59,7 @@ export default function LoginPage() {
           <button
             onClick={signInWithGoogle}
             disabled={busy}
-            className="mt-10 inline-flex w-full cursor-pointer items-center justify-center gap-4 rounded-full bg-brand py-2 pr-8 pl-2 text-base font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-60 sm:w-auto"
+            className="mt-10 inline-flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-brand py-2 pr-6 pl-2 text-base font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-60 sm:w-auto"
           >
             <span className="grid size-11 place-items-center rounded-full bg-white">
               <svg className="h-6 w-6" viewBox="0 0 24 24" aria-hidden="true">
