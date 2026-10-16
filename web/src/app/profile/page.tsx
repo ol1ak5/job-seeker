@@ -29,7 +29,7 @@ export default async function ProfilePage() {
       <AppHeader />
 
       <section className="px-4 pt-14 pb-10 sm:px-6 sm:pt-20">
-        <PageIntro title="Your CV." subtitle="What every score is read against." />
+        <PageIntro title="Your CV." subtitle="Upload it once, update it any time." />
       </section>
 
       <div className="mx-auto max-w-3xl px-4 pb-20 sm:px-6">

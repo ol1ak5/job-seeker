@@ -76,3 +76,49 @@ export async function DELETE() {
   }
   return Response.json({ deleted: true });
 }
+
+/**
+ * Saving your correction of the text the agent reads.
+ *
+ * Sent as `{ text }`; `{ text: null }` goes back to the text generated from the
+ * CV. It is kept inside the profile itself, so uploading a new CV replaces it
+ * along with everything else read from the old one.
+ */
+export async function PATCH(request: NextRequest) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return Response.json({ error: "Sign in first." }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const text = body?.text;
+  if (text !== null && typeof text !== "string") {
+    return Response.json({ error: "Send the text to save." }, { status: 400 });
+  }
+  if (typeof text === "string" && text.length > 40_000) {
+    return Response.json({ error: "That text is too long for one CV." }, { status: 400 });
+  }
+
+  const { data: row, error: readError } = await supabase
+    .from("profiles")
+    .select("data")
+    .eq("name", "master")
+    .maybeSingle();
+  if (readError || !row) {
+    return Response.json({ error: "Upload a CV first." }, { status: 404 });
+  }
+
+  const data = { ...(row.data as Record<string, unknown>) };
+  if (text && text.trim()) data.edited_text = text.trim();
+  else delete data.edited_text;
+
+  const { error } = await supabase.from("profiles").update({ data }).eq("name", "master");
+  if (error) {
+    return Response.json({ error: `Could not save: ${error.message}` }, { status: 500 });
+  }
+  return Response.json({ profile: data });
+}

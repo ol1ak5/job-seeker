@@ -118,3 +118,21 @@ def test_reset_profile_returns_to_the_file():
     use_profile({"contact": {"name": "Someone Else"}, "headline": "", "sections": []})
     reset_profile()
     assert "contact" in load_profile("profile/example_profile.yaml")
+
+
+def test_your_corrected_text_is_what_the_model_reads():
+    """A correction made on the site replaces the generated text, on every track."""
+    tracks = load_tracks()
+    profile = load_profile("profile/example_profile.yaml")
+    profile["edited_text"] = "# Ana Garcia\n\n## Experience\n- Corrected by hand"
+    for track in tracks.values():
+        assert profile_to_text(profile, track) == "# Ana Garcia\n\n## Experience\n- Corrected by hand"
+
+
+def test_an_empty_correction_falls_back_to_the_generated_text():
+    tracks = load_tracks()
+    profile = load_profile("profile/example_profile.yaml")
+    generated = profile_to_text(profile, tracks["energy"])
+    profile["edited_text"] = "   "
+    assert profile_to_text(profile, tracks["energy"]) == generated
+

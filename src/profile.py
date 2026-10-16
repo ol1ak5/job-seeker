@@ -154,6 +154,16 @@ RENDERERS = {
 
 
 def profile_to_text(profile: dict, track: TrackConfig) -> str:
+    """The CV as the model reads it: for scoring, and as the source of a tailor.
+
+    Reading an uploaded CV can drop or merge things - a two-column PDF is the
+    usual culprit - so the site lets you correct the text this produces. When
+    you have, your version is used as it stands, for every track.
+    """
+    edited = profile.get("edited_text")
+    if isinstance(edited, str) and edited.strip():
+        return edited.strip()
+
     name = track.name
     out: list[str] = []
     contact = profile["contact"]
