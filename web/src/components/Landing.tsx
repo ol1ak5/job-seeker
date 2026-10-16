@@ -1,5 +1,6 @@
 import Logo from "@/components/Logo";
 import PublicSearch from "@/components/PublicSearch";
+import { searchCountries } from "@/lib/publicSearch";
 import Link from "next/link";
 
 const STEPS = [
@@ -40,8 +41,8 @@ const FEATURES = [
 // never named, so nobody mistakes the example for a real employer.
 const EXAMPLE_ROWS = [
   { title: "Energy Market Analyst", company: "Renewable energy company", place: "Madrid, ES", score: 88 },
-  { title: "AI Product Analyst", company: "AI startup", place: "Remote, EU", score: 74 },
-  { title: "Data Analyst, Trading", company: "Energy trading firm", place: "Barcelona, ES", score: 61 },
+  { title: "Power Trading Analyst", company: "Energy trading firm", place: "Remote, EU", score: 74 },
+  { title: "Grid Data Analyst", company: "Electricity utility", place: "Barcelona, ES", score: 61 },
 ];
 
 function scoreTone(score: number) {
@@ -138,7 +139,7 @@ export default function Landing() {
         </p>
 
         {/* Product frame */}
-        <div className="mx-auto mt-14 max-w-3xl rounded-2xl border border-line bg-surface p-2 shadow-[0_24px_60px_-34px_rgba(30,58,95,0.35)]">
+        <div className="mx-auto mt-14 max-w-4xl rounded-2xl border border-line bg-surface p-2 shadow-[0_24px_60px_-34px_rgba(30,58,95,0.35)]">
           <div className="overflow-hidden rounded-xl border border-line bg-surface text-left">
             <div className="flex items-center gap-1.5 border-b border-line px-4 py-3">
               <span className="size-2.5 rounded-full bg-line" />
@@ -180,7 +181,7 @@ export default function Landing() {
             lead="Search live vacancies, no account needed. Signing in adds the part that saves time: each one read against your CV and scored."
           />
           <div className="mt-10 rounded-2xl border border-line bg-surface p-5 sm:p-6">
-            <PublicSearch />
+            <PublicSearch countries={searchCountries()} />
           </div>
         </div>
       </section>

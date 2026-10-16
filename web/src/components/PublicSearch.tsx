@@ -1,7 +1,6 @@
 "use client";
 
-import type { DemoVacancy } from "@/app/api/search/route";
-import { COUNTRIES } from "@/lib/tracks";
+import type { DemoVacancy } from "@/lib/publicSearch";
 import { useState } from "react";
 
 function shortDate(value: string | null) {
@@ -18,7 +17,11 @@ function shortDate(value: string | null) {
  * are real and current - the reason to sign in is everything this list is
  * missing.
  */
-export default function PublicSearch() {
+export default function PublicSearch({
+  countries,
+}: {
+  countries: { code: string; name: string }[];
+}) {
   const [what, setWhat] = useState("");
   const [where, setWhere] = useState("");
   const [country, setCountry] = useState("es");
@@ -95,14 +98,14 @@ export default function PublicSearch() {
               className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand"
             />
             {/* Each job API searches one national market at a time, so the
-                country is picked here and the city above is free text. */}
+                country is picked here and the place beside it is free text. */}
             <select
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               aria-label="Country"
               className="max-w-[45%] cursor-pointer rounded-lg border border-line bg-surface px-2 py-2 text-sm text-ink-soft outline-none focus:border-brand"
             >
-              {COUNTRIES.map((c) => (
+              {countries.map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name}
                 </option>

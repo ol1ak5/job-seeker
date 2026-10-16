@@ -1,4 +1,12 @@
-import { COUNTRIES } from "@/lib/tracks";
+import {
+  type DemoVacancy,
+  fromAdzuna,
+  fromJsearch,
+  isSearchCountry,
+  jsearchJobs,
+  jsearchQuery,
+  sourceFor,
+} from "@/lib/publicSearch";
 import type { NextRequest } from "next/server";
 
 /**
@@ -9,32 +17,24 @@ import type { NextRequest } from "next/server";
  * database. It exists so that somebody opening the site sees it work before
  * being asked to sign in.
  *
- * It runs on the server, not in the browser, because the Adzuna credentials
- * must never reach the client. Note the missing NEXT_PUBLIC_ prefix: that is
- * the whole difference between a secret and a published string.
+ * It runs on the server, not in the browser, because the API credentials must
+ * never reach the client. Note the missing NEXT_PUBLIC_ prefix: that is the
+ * whole difference between a secret and a published string.
  */
 
-const BASE = "https://api.adzuna.com/v1/api/jobs";
+const ADZUNA = "https://api.adzuna.com/v1/api/jobs";
+const JSEARCH = "https://jsearch.p.rapidapi.com/search-v2";
+const JSEARCH_HOST = "jsearch.p.rapidapi.com";
 const RESULTS = 12;
 const MAX_AGE_DAYS = 30;
 
-export type DemoVacancy = {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  posted: string | null;
-  salary: string | null;
-  url: string;
-  snippet: string;
-};
-
 /**
- * Identical searches are answered from Vercel's cache rather than from Adzuna.
+ * Identical searches are answered from Vercel's cache rather than from the job
+ * board.
  *
- * The free API allowance is a few hundred calls a day for the whole site, and
- * repeated searches - a reload, two people trying the example query - would eat
- * it for no new information.
+ * The free API allowances are small for the whole site - JSearch's especially -
+ * and repeated searches (a reload, two people trying the same query) would eat
+ * them for no new information.
  */
 const CACHE_SECONDS = 60 * 60 * 6;
 
@@ -50,36 +50,14 @@ function credential(name: string): string {
   return (process.env[name] ?? "").trim().replace(/^['"]|['"]$/g, "");
 }
 
-function salaryOf(item: Record<string, unknown>): string | null {
-  const lo = item.salary_min as number | undefined;
-  const hi = item.salary_max as number | undefined;
-  if (lo == null && hi == null) return null;
-  const low = Math.round(lo ?? hi ?? 0);
-  const high = Math.round(hi ?? lo ?? 0);
-  return low === high ? `${low}` : `${low}-${high}`;
-}
+class NotConfigured extends Error {}
 
-export async function GET(request: NextRequest) {
-  const params = request.nextUrl.searchParams;
-  const what = (params.get("what") ?? "").trim().slice(0, 100);
-  const where = (params.get("where") ?? "").trim().slice(0, 60);
-  const country = (params.get("country") ?? "es").toLowerCase();
+type Found = { vacancies: DemoVacancy[]; broadened: boolean };
 
-  if (!what) {
-    return Response.json({ error: "Type what you are looking for." }, { status: 400 });
-  }
-  if (!COUNTRIES.some((c) => c.code === country)) {
-    return Response.json({ error: "Unsupported country." }, { status: 400 });
-  }
-
+async function searchAdzuna(what: string, where: string, country: string): Promise<Found> {
   const appId = credential("ADZUNA_APP_ID");
   const appKey = credential("ADZUNA_APP_KEY");
-  if (!appId || !appKey) {
-    return Response.json(
-      { error: "Search is not configured on this deployment." },
-      { status: 503 },
-    );
-  }
+  if (!appId || !appKey) throw new NotConfigured();
 
   /**
    * Adzuna's `what` requires every word to appear, so "energy market analyst"
@@ -88,10 +66,10 @@ export async function GET(request: NextRequest) {
    * matches any of the words, and the answer says it was broadened.
    */
   async function ask(mode: "what" | "what_or") {
-    const url = new URL(`${BASE}/${country}/search/1`);
+    const url = new URL(`${ADZUNA}/${country}/search/1`);
     url.search = new URLSearchParams({
-      app_id: appId!,
-      app_key: appKey!,
+      app_id: appId,
+      app_key: appKey,
       [mode]: what,
       where,
       max_days_old: String(MAX_AGE_DAYS),
@@ -104,37 +82,71 @@ export async function GET(request: NextRequest) {
     return (await response.json()) as { results?: Record<string, unknown>[] };
   }
 
-  let payload: { results?: Record<string, unknown>[] };
+  let payload = await ask("what");
   let broadened = false;
-  try {
-    payload = await ask("what");
-    if (!payload.results?.length && what.trim().includes(" ")) {
-      payload = await ask("what_or");
-      broadened = Boolean(payload.results?.length);
-    }
-  } catch (exc) {
-    const status = exc instanceof Error ? exc.message : "";
-    // 401 is never the visitor's fault: the deployment's credentials are wrong.
-    const error =
-      status === "401"
-        ? "Search is misconfigured on this deployment - the job board rejected its credentials."
-        : /^\d+$/.test(status)
-          ? `The job board answered ${status}. Try again shortly.`
-          : "Could not reach the job board.";
-    return Response.json({ error }, { status: 502 });
+  if (!payload.results?.length && what.includes(" ")) {
+    payload = await ask("what_or");
+    broadened = Boolean(payload.results?.length);
+  }
+  return { vacancies: (payload.results ?? []).map(fromAdzuna), broadened };
+}
+
+async function searchJsearch(what: string, where: string, country: string): Promise<Found> {
+  const key = credential("RAPIDAPI_KEY");
+  if (!key) throw new NotConfigured();
+
+  const url = new URL(JSEARCH);
+  url.search = new URLSearchParams({
+    query: jsearchQuery(what, where),
+    country,
+    page: "1",
+    num_pages: "1",
+    date_posted: "month",
+  }).toString();
+
+  const response = await fetch(url, {
+    headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": JSEARCH_HOST },
+    next: { revalidate: CACHE_SECONDS },
+  });
+  if (!response.ok) throw new Error(String(response.status));
+  const jobs = jsearchJobs(await response.json()).slice(0, RESULTS);
+  return { vacancies: jobs.map(fromJsearch), broadened: false };
+}
+
+export async function GET(request: NextRequest) {
+  const params = request.nextUrl.searchParams;
+  const what = (params.get("what") ?? "").trim().slice(0, 100);
+  const where = (params.get("where") ?? "").trim().slice(0, 60);
+  const country = (params.get("country") ?? "es").toLowerCase();
+
+  if (!what) {
+    return Response.json({ error: "Type what you are looking for." }, { status: 400 });
+  }
+  if (!isSearchCountry(country)) {
+    return Response.json({ error: "Unsupported country." }, { status: 400 });
   }
 
-  const vacancies: DemoVacancy[] = (payload.results ?? []).map((item, index) => ({
-    id: String(item.id ?? index),
-    title: String(item.title ?? "").replace(/<\/?[^>]+>/g, ""),
-    company: String((item.company as { display_name?: string })?.display_name || "Unknown"),
-    location: String((item.location as { display_name?: string })?.display_name || ""),
-    posted: item.created ? String(item.created).slice(0, 10) : null,
-    salary: salaryOf(item),
-    url: String(item.redirect_url ?? ""),
-    // Adzuna returns HTML fragments; the list shows plain text only.
-    snippet: String(item.description ?? "").replace(/<\/?[^>]+>/g, "").slice(0, 240),
-  }));
-
-  return Response.json({ vacancies, broadened });
+  const search = sourceFor(country) === "adzuna" ? searchAdzuna : searchJsearch;
+  try {
+    return Response.json(await search(what, where, country));
+  } catch (exc) {
+    if (exc instanceof NotConfigured) {
+      return Response.json(
+        { error: "Search for this country is not configured on this deployment." },
+        { status: 503 },
+      );
+    }
+    const status = exc instanceof Error ? exc.message : "";
+    // 401 and 403 are never the visitor's fault: the deployment's key is wrong.
+    // 429 is the free monthly quota running out.
+    const error =
+      status === "401" || status === "403"
+        ? "Search is misconfigured on this deployment - the job board rejected its credentials."
+        : status === "429"
+          ? "The job board's free allowance is used up for now. Try another country or come back later."
+          : /^\d+$/.test(status)
+            ? `The job board answered ${status}. Try again shortly.`
+            : "Could not reach the job board.";
+    return Response.json({ error }, { status: 502 });
+  }
 }
