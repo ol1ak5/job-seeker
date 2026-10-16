@@ -98,9 +98,12 @@ def run_search_job(client, job: dict) -> dict:
             "vacancy is scored against it.")
     use_profile(profile)
 
-    track = job.get("track") or sorted(tracks)[0]
-    if track not in tracks:
-        raise SystemExit(f"Unknown track '{track}' for this account.")
+    # A job that names a track searches that one; one that does not - the
+    # dashboard's single "Run the search" button - searches all of them.
+    wanted = [job["track"]] if job.get("track") else sorted(tracks)
+    for track in wanted:
+        if track not in tracks:
+            raise SystemExit(f"Unknown track '{track}' for this account.")
 
     payload = job.get("payload") or {}
     days = int(payload.get("days", 14))
@@ -111,12 +114,16 @@ def run_search_job(client, job: dict) -> dict:
                                  google_api_key=settings.google_api_key)
     # The report files land in the runner's temporary disk and die with it; the
     # database is the only output that outlives the job.
-    run_search(track, days, limit, make_scorer(llm),
-               out_dir=pathlib.Path("output"))
+    scorer = make_scorer(llm)
+    for track in wanted:
+        run_search(track, days, limit, scorer, out_dir=pathlib.Path("output"))
 
     found = (client.table("vacancies").select("id", count="exact")
-             .eq("user_id", user_id).eq("track", track).execute())
-    return {"track": track, "vacancies": found.count or 0}
+             .eq("user_id", user_id).in_("track", wanted).execute())
+    result = {"tracks": wanted, "vacancies": found.count or 0}
+    if len(wanted) == 1:
+        result["track"] = wanted[0]
+    return result
 
 
 def run_adapt_job(client, job: dict) -> dict:

@@ -142,6 +142,54 @@ def test_the_job_decides_whose_work_this_is(monkeypatch):
     assert seen == {"tracks": "somebody-else", "profile": "somebody-else"}
 
 
+def _ready_to_search(monkeypatch, searched):
+    """Everything a search job needs, with the search itself recorded instead."""
+    import src.config
+    import src.search_and_score
+    import src.settings
+    import src.storage
+    from src.config import TrackConfig
+
+    monkeypatch.setattr(src.config, "load_db_tracks", lambda *_: {
+        "energy": TrackConfig(name="energy"), "ai": TrackConfig(name="ai")})
+    monkeypatch.setattr(src.storage, "load_db_profile",
+                        lambda *_: {"contact": {"name": "Test"}})
+    monkeypatch.setattr(src.settings, "load_settings",
+                        lambda *_, **__: type("S", (), {"google_api_key": "test"})())
+    monkeypatch.setattr(src.search_and_score, "run_search",
+                        lambda track, *_, **__: searched.append(track))
+
+
+def test_a_job_without_a_track_searches_every_saved_search(monkeypatch):
+    """The dashboard has one button, so one job has to cover every search."""
+    searched = []
+    _ready_to_search(monkeypatch, searched)
+
+    result = run_search_job(FakeClient({}), job_row(track=None))
+
+    assert searched == ["ai", "energy"]
+    assert result["tracks"] == ["ai", "energy"]
+
+
+def test_a_job_with_a_track_searches_only_that_one(monkeypatch):
+    searched = []
+    _ready_to_search(monkeypatch, searched)
+
+    result = run_search_job(FakeClient({}), job_row(track="energy"))
+
+    assert searched == ["energy"]
+    assert result["track"] == "energy"
+
+
+def test_a_job_naming_an_unknown_track_searches_nothing(monkeypatch):
+    searched = []
+    _ready_to_search(monkeypatch, searched)
+
+    with pytest.raises(SystemExit, match="Unknown track"):
+        run_search_job(FakeClient({}), job_row(track="law"))
+    assert searched == []
+
+
 def test_main_marks_an_unknown_kind_failed(monkeypatch):
     """A job kind the engine has never heard of must not leave the row running."""
     client = FakeClient({"jobs": [job_row(kind="teleport")]})
