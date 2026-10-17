@@ -1,8 +1,10 @@
-# 🧭 Job Seeker
+# 🚀 Job Seeker
 
-An AI agent that finds the vacancies worth applying to and rewrites your CV for each one, in the employer's own words.
+An AI agent that finds the right job opportunities, rewrites your CV in the employer's language, and turns every application into your strongest pitch.
 
 ## 🔗 [Try it live](https://job-seeker-blush.vercel.app)
+
+![The opening screen](docs/screenshot-start.png)
 
 ## 🎯 The Problem
 
@@ -17,6 +19,7 @@ Job Seeker searches several job APIs at once, throws out everything that fails y
 | Feature | Description |
 |---|---|
 | **Search where the jobs are** | Uses Adzuna, JSearch (Google for Jobs), Tavily web search and company boards on Greenhouse, Lever and Ashby. A source with no key is skipped |
+| **Your own account** | Sign in with Google. Your CV, searches and vacancies are private to your account |
 | **Filter before you pay** | Seniority, job function, years of experience, location and a per-company cap are applied before the model is called |
 | **Score with reasons** | Gemini gives each vacancy 0-100, with what matches, what is missing and any hard blocker such as work authorisation |
 | **Tailor a CV to one vacancy** | The model re-orders, re-emphasises and re-words your real experience in the posting's language, without adding a single fact, metric or skill |
@@ -60,9 +63,11 @@ cp profile/example_profile.yaml profile/master_profile.yaml
 uv run jobseeker search-and-score --track energy
 uv run jobseeker adapt-cv --vacancy-id energy-0817-02
 uv run pytest -q
+
+cd web && npm install && npm run dev
 ```
 
-The website runs from `web/` with `npm install` and `npm run dev`. Setting up the database is described in [db/README.md](db/README.md).
+Database setup: [db/README.md](db/README.md).
 
 ## 🔑 API Keys
 
@@ -73,7 +78,7 @@ The website runs from `web/` with `npm install` and `npm run dev`. Setting up th
 | `RAPIDAPI_KEY` | JSearch: listings from Google for Jobs | Limited |
 | `TAVILY_API_KEY` | Web search for vacancies the APIs miss | About 1,000 searches a month |
 
-Company career boards need no key. List the companies you care about in `config/watchlist.yaml`.
+Company career boards need no key.
 
 ## 🧩 Built With
 
