@@ -1,70 +1,69 @@
-# 🎯 Job Seeker
+# 💼 Job Seeker
 
-### *Find the roles worth your time, and the words that win them* · *Apps for Your Life*
+An AI agent that finds the vacancies that fit you and tailors your CV to each one.
 
----
+### 🔗 **[Try it live](https://job-seeker-blush.vercel.app)**
 
 ## 🎯 The Problem
 
-Job hunting punishes you twice. First you scroll through hundreds of listings that
-look relevant and are not: the wrong seniority, the wrong country, a sales role
-wearing an engineer's title. Then, for the few that fit, you rewrite your CV by
-hand, guessing which words the recruiter is looking for and quietly hoping the
-keyword filter agrees with you.
+Job hunting punishes you twice. First you scroll through hundreds of listings that look relevant and are not: the wrong seniority, the wrong country, etc. Then, for the few that fit, you rewrite your CV by hand, guessing which words the recruiter is looking for and quietly hoping the keyword filter agrees with you.
 
 ## 💡 The Solution
 
-Job Seeker searches several job APIs at once, throws out everything that fails
-your own criteria **before** paying for an AI opinion, and scores what remains
-against your profile with reasons you can argue with. When a vacancy is worth it,
-it writes a CV tailored to that posting - mirroring the vacancy's vocabulary,
-never inventing a single fact - and walks you through every change so nothing
-reaches a recruiter without your approval.
+Job Seeker searches several job APIs at once, throws out everything that fails your own criteria before paying for an AI opinion, and scores what remains against your profile. It writes a CV tailored to that posting, mirroring the vacancy's vocabulary and never inventing a single fact.
 
 ## ✨ Core Features
 
 | Feature | Description |
 |---|---|
-| **Search where the jobs actually are** | Adzuna, JSearch (Google for Jobs), Tavily web search, and company boards on Greenhouse, Lever and Ashby - each optional, each degrading gracefully when a key is missing |
-| **Filter before you pay** | Seniority, job function, years of experience, location and a per-company cap are applied before the LLM is called; one run dropped 539 irrelevant vacancies and spent nothing on them |
-| **Score with reasons** | Gemini returns 0-100 plus what matches, what is missing, and hard blockers like work authorisation, so you can disagree with a verdict |
-| **Tailor a CV to one vacancy** | The model may re-order, re-emphasise and re-word your real experience to match the posting's language. It may never invent a fact, a metric or a skill |
-| **Approve every change** | Step through the diff against your master CV, accept or reject each edit, then produce the PDF |
-| **Bring any CV, any profession** | Import a .docx or .pdf and the schema adapts: sections, skills categories and career tracks are YAML, not code |
-| **Keep your data yours** | Your profile, CVs and results never leave your machine and are excluded from git by default |
+| **Search where the jobs are** | Adzuna, JSearch (Google for Jobs), Tavily web search and company boards on Greenhouse, Lever and Ashby. A source with no key is skipped |
+| **Filter before you pay** | Seniority, job function, years of experience, location and a per-company cap are applied before the model is called |
+| **Score with reasons** | Gemini gives each vacancy 0-100, with what matches, what is missing and any hard blocker such as work authorisation |
+| **Tailor a CV to one vacancy** | The model re-orders, re-emphasises and re-words your real experience in the posting's language. It never adds a fact, a metric or a skill |
+| **Correct what the agent reads** | Upload your CV once, then fix any section the reading got wrong |
+| **Track your applications** | One sheet with score, status, the date you applied, notes and columns of your own |
+
+## 🧠 How It Works
+
+```mermaid
+flowchart TD
+    You(["You: CV and search settings"]) --> Site["Next.js site on Vercel"]
+    Site <-->|"sign-in, CV, vacancies"| DB[("Supabase Postgres")]
+    Site -->|"Run the search / Tailor"| Jobs["jobs table"]
+    Jobs --> GH["GitHub Actions worker"]
+    GH --> Collect["Collect: Adzuna, JSearch, Tavily, company boards"]
+    Collect --> Filter["Dedupe and filter by your criteria"]
+    Filter --> Score["Score with Gemini"]
+    Score -->|"vacancies with reasons"| DB
+    GH -->|"tailor one vacancy"| Write["Write the CV with Gemini"]
+    Write -->|"tailored CV"| DB
+    DB --> Site
+```
+
+A search takes minutes, longer than a web request can wait, so the site writes a row to the `jobs` table and starts a GitHub Actions run that does the work in Python and writes the results back to Supabase.
+
+| Directory | Contents |
+|---|---|
+| `web/` | the Next.js site |
+| `src/` | the Python engine: sources, filters, scoring and CV writing |
+| `src/prompts/` | every prompt sent to the model, in full |
+| `config/` | career tracks, filters and the company watchlist |
+| `db/migrations/` | the Supabase schema, run in order |
+| `tests/` | the offline test suite |
 
 ## 🚀 Quick Start
 
 ```bash
-# Install dependencies
 uv sync --extra dev
-
-# Configure keys and profile
-cp .env.example .env                       # only GOOGLE_API_KEY is required
+cp .env.example .env              # only GOOGLE_API_KEY is required
 cp profile/example_profile.yaml profile/master_profile.yaml
-```
 
-Then run the loop:
-
-```bash
-uv run jobseeker search-and-score --track energy      # find, filter, score
-uv run jobseeker adapt-cv --vacancy-id energy-0817-02 # tailor the CV
-```
-
-Found a vacancy yourself? Score it without a search:
-
-```bash
-uv run jobseeker match --track ai --url https://example.com/job/123
-```
-
-### Testing
-
-```bash
-# Run all 97 tests offline (no API calls, no LLM calls)
+uv run jobseeker search-and-score --track energy
+uv run jobseeker adapt-cv --vacancy-id energy-0817-02
 uv run pytest -q
 ```
 
-The suite runs against a fictional example profile, so it passes on a fresh clone.
+The website runs from `web/` with `npm install` and `npm run dev`. Setting up the database is described in [db/README.md](db/README.md).
 
 ## 🔑 API Keys
 
@@ -72,53 +71,25 @@ The suite runs against a fictional example profile, so it passes on a fresh clon
 |---|---|---|
 | `GOOGLE_API_KEY` | scoring and CV writing (Gemini) | yes |
 | `ADZUNA_APP_ID` · `ADZUNA_APP_KEY` | keyword job search | ~1,000 calls/month |
-| `RAPIDAPI_KEY` | JSearch: LinkedIn and Indeed listings via Google for Jobs | limited |
+| `RAPIDAPI_KEY` | JSearch: listings from Google for Jobs | limited |
 | `TAVILY_API_KEY` | web search for vacancies the APIs miss | ~1,000 searches/month |
 
-Company career boards need no key at all - list the companies you care about in
-`config/watchlist.yaml`.
-
-## 🧠 How the Pipeline Works
-
-```
-collect  ->  dedupe  ->  select  ->  score  ->  write
-Adzuna,      duplicates,  title,       Gemini,      CSV + Markdown
-JSearch,     age,         seniority,   0-100 with   report per run
-Tavily,      already      location,    reasons
-ATS boards   seen         cap
-                          (loosened if
-                           too few match)
-```
-
-The pipeline is plain Python in `src/search_and_score.py`, one function per step.
-If the filters leave too few vacancies, they give up one keyword list at a time and
-select again from the same pool, so a strict track costs results, not a whole run.
-CV writing is a single model call, followed by the interactive review in the web app.
-
-| Directory | Contents |
-|---|---|
-| `src/sources/` | one adapter per job source |
-| `src/search_and_score.py` | the search pipeline, step by step |
-| `src/prompts/` | every prompt sent to the model, in full |
-| `config/` | career tracks, filters, company watchlist |
-| `profile/` | your profile (private) and a worked example |
-| `cv/master/` | your hand-written CVs, never modified by the tool |
-| `cv/tailored/` | generated CVs, one file per application |
+Company career boards need no key. List the companies you care about in `config/watchlist.yaml`.
 
 ## 🧩 Built With
 
-**Python 3.11** · **LangChain** · **Gemini API** · **pydantic** · **click** · **httpx** · **pytest** · **uv**
-
-## ⚠️ Honest Limits
-
-- **No scraping of LinkedIn, Indeed or Glassdoor.** Their APIs do not offer job
-  search to third parties and scraping them breaks their terms; JSearch reaches
-  the same listings legitimately through Google for Jobs.
-- **Coverage is uneven by market.** Check that a source really carries vacancies
-  for your country before relying on it - one live test found four relevant hits
-  in a whole national market.
-- **Scores are judgements, not verdicts.** They rank vacancies for your
-  attention. You still decide.
+| Stack | Used for |
+|---|---|
+| **Google Gemini** | Scores each vacancy against your profile and writes the tailored CV |
+| **LangChain** | Wraps the model calls in the Python engine |
+| **Adzuna · JSearch · Tavily** | Find the vacancies |
+| **Greenhouse · Lever · Ashby** | Read company career boards directly |
+| **Python** | Runs the search, the filters and the scoring |
+| **Next.js** | Renders the whole website |
+| **Tailwind CSS** | Styles the website |
+| **Supabase** | Stores accounts, CVs, searches and vacancies, with Google sign-in |
+| **GitHub Actions** | Runs each search and each CV in the background |
+| **Vercel** | Hosts the website |
 
 ## 📄 License
 
