@@ -4,6 +4,7 @@ import { ACCEPTED } from "@/lib/cvText";
 import type { Profile } from "@/lib/profileFromCv";
 import { currentSectionText } from "@/lib/profileText";
 import { useRef, useState } from "react";
+import Frame from "@/components/Frame";
 
 /**
  * The upload screen.
@@ -87,7 +88,7 @@ export default function ProfileUpload({ initial }: { initial: Profile | null }) 
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-line bg-surface p-5">
+      <Frame className="p-5">
         <h2 className="text-sm font-semibold text-ink">
           Submit your CV
         </h2>
@@ -141,10 +142,10 @@ export default function ProfileUpload({ initial }: { initial: Profile | null }) 
             Saved. Check below that nothing was lost.
           </p>
         )}
-      </section>
+      </Frame>
 
       {profile && (
-        <section className="rounded-lg border border-line bg-surface p-5">
+        <Frame className="p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="text-sm font-semibold text-ink">What the agent reads</h2>
             <button
@@ -239,7 +240,7 @@ export default function ProfileUpload({ initial }: { initial: Profile | null }) 
           <p className="mt-3 text-xs text-ink-faint">
             What the agent reads is your CV as saved here. Uploading a new CV replaces any corrections.
           </p>
-        </section>
+        </Frame>
       )}
     </div>
   );

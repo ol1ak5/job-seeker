@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { relativeTime } from "@/lib/time";
 import type { CustomColumn, Vacancy } from "@/lib/vacancies";
 import { useEffect, useMemo, useState } from "react";
+import Frame from "@/components/Frame";
 
 /**
  * The stage of an application is a fixed list, because the numbers above the
@@ -290,8 +291,7 @@ export default function VacancyTable({
       </div>
 
       {/* Framed like the example on the front page: a card inside a card. */}
-      <div className="rounded-2xl border border-line bg-surface p-2 shadow-[0_24px_60px_-34px_rgba(30,58,95,0.35)]">
-      <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+      <Frame className="overflow-x-auto">
         <table
           className="w-full table-fixed border-separate border-spacing-0 text-left text-sm"
           style={{ minWidth: `${minWidth}rem` }}
@@ -530,8 +530,7 @@ export default function VacancyTable({
             Nothing matches this filter.
           </p>
         )}
-      </div>
-      </div>
+      </Frame>
 
       {tip && (
         <div

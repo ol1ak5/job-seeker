@@ -6,6 +6,7 @@ import CvSource from "@/components/CvSource";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Frame from "@/components/Frame";
 
 type View = "document" | "source";
 
@@ -70,12 +71,12 @@ export default function CvReader({ cv }: { cv: Cv }) {
   });
 
   return (
-    <section className="rounded-lg border border-line bg-surface">
+    <Frame className="">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line-soft px-5 py-3">
         <div>
           <h2 className="text-sm font-medium text-ink">
             {cv.vacancies
-              ? `${cv.vacancies.title} — ${cv.vacancies.company}`
+              ? `${cv.vacancies.title} – ${cv.vacancies.company}`
               : cv.filename}
           </h2>
           <p className="mt-0.5 font-mono text-xs text-ink-faint">
@@ -163,6 +164,6 @@ export default function CvReader({ cv }: { cv: Cv }) {
           </div>
         )}
       </div>
-    </section>
+    </Frame>
   );
 }

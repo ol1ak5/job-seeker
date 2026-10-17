@@ -12,6 +12,7 @@ import {
 } from "@/lib/tracks";
 import { countryCode } from "@/lib/publicSearch";
 import { useState } from "react";
+import Frame from "@/components/Frame";
 
 type Draft = { id: string | null; label: string; data: TrackData };
 
@@ -198,7 +199,7 @@ export default function TrackForm({
         }}
         className="space-y-6"
       >
-        <section className="space-y-4 rounded-lg border border-line bg-surface p-5">
+        <Frame className="space-y-4 p-5">
           <div>
             <label htmlFor="label" className="block text-sm font-medium text-ink">
               What are you looking for?
@@ -255,9 +256,9 @@ export default function TrackForm({
             />
             Also keep remote roles, wherever they are based
           </label>
-        </section>
+        </Frame>
 
-        <section className="space-y-4 rounded-lg border border-line bg-surface p-5">
+        <Frame className="space-y-4 p-5">
           <h2 className="text-sm font-semibold text-ink">What counts as a match</h2>
 
           <TagInput
@@ -286,9 +287,9 @@ export default function TrackForm({
             placeholder="Type a word"
             onChange={(domain_include) => setFilters({ domain_include })}
           />
-        </section>
+        </Frame>
 
-        <section className="space-y-4 rounded-lg border border-line bg-surface p-5">
+        <Frame className="space-y-4 p-5">
           <h2 className="text-sm font-semibold text-ink">What to filter out</h2>
 
           <TagInput
@@ -355,9 +356,9 @@ export default function TrackForm({
               />
             </div>
           </div>
-        </section>
+        </Frame>
 
-        <section className="space-y-2 rounded-lg border border-line bg-surface p-5">
+        <Frame className="space-y-2 p-5">
           <label htmlFor="guidance" className="block text-sm font-medium text-ink">
             Notes for the scorer
           </label>
@@ -374,7 +375,7 @@ export default function TrackForm({
             placeholder="Describe the roles you want, what makes you a strong fit, and what should score low."
             className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm leading-relaxed text-ink outline-none focus:border-brand"
           />
-        </section>
+        </Frame>
 
         <div className="flex items-center gap-3">
           <button

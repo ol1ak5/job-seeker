@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Frame from "@/components/Frame";
 
 /**
  * "+ Add column": a name, and the table gains a column you type into.
@@ -64,47 +65,46 @@ export default function AddColumn({
       </button>
 
       {open && (
-        <form
-          onSubmit={submit}
-          className="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-line bg-surface p-3 shadow-[0_16px_40px_-20px_rgba(30,58,95,0.4)]"
-        >
-          <label htmlFor="new-column" className="block text-xs text-ink-faint">
-            Column name
-          </label>
-          <input
-            id="new-column"
-            autoFocus
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setError(null);
-            }}
-            maxLength={40}
-            placeholder="Write a name"
-            autoComplete="off"
-            data-1p-ignore
-            data-lpignore="true"
-            data-form-type="other"
-            className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint/70 focus:border-brand/50"
-          />
-          {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
-          <div className="mt-3 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-full px-3 py-1.5 text-sm text-ink-soft hover:text-ink"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={busy || !name.trim()}
-              className="cursor-pointer rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-50"
-            >
-              {busy ? "Adding..." : "Add"}
-            </button>
-          </div>
-        </form>
+        <Frame small outer="absolute right-0 z-20 mt-2 w-64">
+          <form onSubmit={submit} className="p-3">
+            <label htmlFor="new-column" className="block text-xs text-ink-faint">
+              Column name
+            </label>
+            <input
+              id="new-column"
+              autoFocus
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError(null);
+              }}
+              maxLength={40}
+              placeholder="Type a name"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
+              className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint/70 focus:border-brand/50"
+            />
+            {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="cursor-pointer rounded-full px-3 py-1.5 text-sm text-ink-soft hover:text-ink"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={busy || !name.trim()}
+                className="cursor-pointer rounded-full bg-brand px-4 py-1.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-50"
+              >
+                {busy ? "Adding..." : "Add"}
+              </button>
+            </div>
+          </form>
+        </Frame>
       )}
     </div>
   );

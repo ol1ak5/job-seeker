@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Frame from "@/components/Frame";
 
 /**
  * A vacancy the user found themselves.
@@ -81,143 +82,142 @@ export default function AddVacancy({
   }
 
   const field =
-    "mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand";
+    "mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-faint/70 focus:border-brand";
 
   return (
-    <form
-      onSubmit={save}
-      className="mt-6 space-y-4 rounded-2xl border border-line bg-surface p-6"
-    >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="v-title" className="block text-sm font-medium text-ink">
-            Job title
-          </label>
-          <input
-            id="v-title"
-            name="search-v-title"
-            autoComplete="off"
-            data-1p-ignore
-            data-lpignore="true"
-            data-form-type="other"
-            value={form.title}
-            onChange={(e) => set("title", e.target.value)}
-            placeholder="Energy Market Analyst"
-            className={field}
-          />
+    <Frame outer="mt-6">
+      <form onSubmit={save} className="space-y-4 p-6">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="v-title" className="block text-sm font-medium text-ink">
+              Job title
+            </label>
+            <input
+              id="v-title"
+              name="search-v-title"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
+              value={form.title}
+              onChange={(e) => set("title", e.target.value)}
+              placeholder="Type a job title"
+              className={field}
+            />
+          </div>
+          <div>
+            <label htmlFor="v-company" className="block text-sm font-medium text-ink">
+              Company
+            </label>
+            <input
+              id="v-company"
+              name="search-v-company"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
+              value={form.company}
+              onChange={(e) => set("company", e.target.value)}
+              placeholder="Type a company"
+              className={field}
+            />
+          </div>
+          <div>
+            <label htmlFor="v-location" className="block text-sm font-medium text-ink">
+              Location
+            </label>
+            <input
+              id="v-location"
+              name="search-v-location"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
+              value={form.location}
+              onChange={(e) => set("location", e.target.value)}
+              placeholder="Type a city or country"
+              className={field}
+            />
+          </div>
+          <div>
+            <label htmlFor="v-url" className="block text-sm font-medium text-ink">
+              Link
+            </label>
+            <input
+              id="v-url"
+              name="search-v-url"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
+              value={form.url}
+              onChange={(e) => set("url", e.target.value)}
+              placeholder="Paste the link"
+              className={field}
+            />
+          </div>
         </div>
-        <div>
-          <label htmlFor="v-company" className="block text-sm font-medium text-ink">
-            Company
-          </label>
-          <input
-            id="v-company"
-            name="search-v-company"
-            autoComplete="off"
-            data-1p-ignore
-            data-lpignore="true"
-            data-form-type="other"
-            value={form.company}
-            onChange={(e) => set("company", e.target.value)}
-            placeholder="Company name"
-            className={field}
-          />
-        </div>
-        <div>
-          <label htmlFor="v-location" className="block text-sm font-medium text-ink">
-            Location
-          </label>
-          <input
-            id="v-location"
-            name="search-v-location"
-            autoComplete="off"
-            data-1p-ignore
-            data-lpignore="true"
-            data-form-type="other"
-            value={form.location}
-            onChange={(e) => set("location", e.target.value)}
-            placeholder="Madrid, Spain"
-            className={field}
-          />
-        </div>
-        <div>
-          <label htmlFor="v-url" className="block text-sm font-medium text-ink">
-            Link
-          </label>
-          <input
-            id="v-url"
-            name="search-v-url"
-            autoComplete="off"
-            data-1p-ignore
-            data-lpignore="true"
-            data-form-type="other"
-            value={form.url}
-            onChange={(e) => set("url", e.target.value)}
-            placeholder="https://..."
-            className={field}
-          />
-        </div>
-      </div>
 
-      <div>
-        <label htmlFor="v-description" className="block text-sm font-medium text-ink">
-          The posting
-        </label>
-        <p className="mt-0.5 text-xs text-ink-faint">
-          Paste the whole advert. It is what the scorer will read once scoring
-          reaches this page.
-        </p>
-        <textarea
-          id="v-description"
-          rows={6}
-          value={form.description}
-          onChange={(e) => set("description", e.target.value)}
-          className={`${field} leading-relaxed`}
-        />
-      </div>
-
-      {tracks.length > 1 && (
         <div>
-          <label htmlFor="v-track" className="block text-sm font-medium text-ink">
-            Which search does it belong to
+          <label htmlFor="v-description" className="block text-sm font-medium text-ink">
+            The posting
           </label>
-          <select
-            id="v-track"
-            value={form.track}
-            onChange={(e) => set("track", e.target.value)}
-            className={`${field} cursor-pointer`}
+          <p className="mt-0.5 text-xs text-ink-faint">
+            Paste the whole advert. It is what the scorer will read once scoring
+            reaches this page.
+          </p>
+          <textarea
+            id="v-description"
+            rows={6}
+            value={form.description}
+            onChange={(e) => set("description", e.target.value)}
+            className={`${field} leading-relaxed`}
+          />
+        </div>
+
+        {tracks.length > 1 && (
+          <div>
+            <label htmlFor="v-track" className="block text-sm font-medium text-ink">
+              Which search does it belong to
+            </label>
+            <select
+              id="v-track"
+              value={form.track}
+              onChange={(e) => set("track", e.target.value)}
+              className={`${field} cursor-pointer`}
+            >
+              {tracks.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {error && (
+          <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            {error}
+          </p>
+        )}
+
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={busy}
+            className="cursor-pointer rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-50"
           >
-            {tracks.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            {busy ? "Saving..." : "Add to my list"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer text-sm text-ink-faint transition-colors duration-150 hover:text-ink"
+          >
+            Cancel
+          </button>
         </div>
-      )}
-
-      {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-          {error}
-        </p>
-      )}
-
-      <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={busy}
-          className="cursor-pointer rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-50"
-        >
-          {busy ? "Saving..." : "Add to my list"}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="cursor-pointer text-sm text-ink-faint transition-colors duration-150 hover:text-ink"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
+      </form>
+    </Frame>
   );
 }
