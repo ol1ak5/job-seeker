@@ -105,7 +105,7 @@ export default async function CvsPage({
 
         {vacancy && (
           <p className="mb-4 text-sm">
-            <Link href="/dashboard" className="text-ink-soft transition-colors duration-150 hover:text-brand">
+            <Link href="/" className="text-ink-soft transition-colors duration-150 hover:text-brand">
               ← Back to the vacancies
             </Link>
           </p>
