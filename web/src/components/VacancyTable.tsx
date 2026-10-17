@@ -6,7 +6,7 @@ import TailorButton from "@/components/TailorButton";
 import { createClient } from "@/lib/supabase/client";
 import { relativeTime } from "@/lib/time";
 import type { CustomColumn, Vacancy } from "@/lib/vacancies";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /**
  * The stage of an application is a fixed list, because the numbers above the
@@ -47,12 +47,12 @@ const COLUMNS: Column[] = [
 const CUSTOM_WIDTH_REM = 7.5;
 const TITLE_MIN_REM = 10.5;
 
+/** The same discs as the example on the front page: solid for a strong match. */
 function scoreTone(score: number | null) {
   if (score === null) return "text-ink-faint";
-  if (score >= 80) return "font-semibold text-brand";
-  if (score >= 60) return "font-medium text-ink";
-  if (score >= 40) return "text-amber-700";
-  return "text-ink-faint";
+  if (score >= 80) return "bg-brand text-white";
+  if (score >= 60) return "bg-brand/10 text-brand";
+  return "bg-line-soft text-ink-soft";
 }
 
 /** "12 Aug" reads faster in a column than "2026-08-12". */
@@ -114,6 +114,31 @@ export default function VacancyTable({
     Object.fromEntries(vacancies.map((v) => [v.id, { ...(first(v)?.extra ?? {}) }])),
   );
   const [savedExtra, setSavedExtra] = useState(extra);
+  const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null);
+
+  // A tooltip drawn at a fixed place on screen would drift once the page moves.
+  useEffect(() => {
+    if (!tip) return;
+    const hide = () => setTip(null);
+    window.addEventListener("scroll", hide, true);
+    return () => window.removeEventListener("scroll", hide, true);
+  }, [tip]);
+
+  /**
+   * Text cut off with an ellipsis, in any cell or header, is shown in full
+   * under it as soon as the pointer is on it; a note is shown whole, since the
+   * cell only says that there is one. It is drawn outside the table, which scrolls
+   * sideways and would clip anything hanging below a row.
+   */
+  function showFull(event: React.MouseEvent) {
+    const el = (event.target as HTMLElement).closest<HTMLElement>("[data-full]");
+    if (!el || (!el.hasAttribute("data-always") && el.scrollWidth <= el.clientWidth)) {
+      setTip(null);
+      return;
+    }
+    const box = el.getBoundingClientRect();
+    setTip({ text: el.dataset.full ?? "", x: box.left, y: box.bottom });
+  }
 
   const visible: Column[] = [
     ...COLUMNS,
@@ -236,7 +261,7 @@ export default function VacancyTable({
   };
 
   // Every row is the same height: one line per cell, nothing wraps.
-  const cell = "h-14 truncate px-3 first:pl-5 last:pr-5";
+  const cell = "h-[68px] truncate px-3 first:pl-5 last:pr-5";
 
   return (
     <section>
@@ -261,10 +286,14 @@ export default function VacancyTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
+      {/* Framed like the example on the front page: a card inside a card. */}
+      <div className="rounded-2xl border border-line bg-surface p-2 shadow-[0_24px_60px_-34px_rgba(30,58,95,0.35)]">
+      <div className="overflow-x-auto rounded-xl border border-line bg-surface">
         <table
           className="w-full table-fixed border-separate border-spacing-0 text-left text-sm"
           style={{ minWidth: `${minWidth}rem` }}
+          onMouseOver={showFull}
+          onMouseLeave={() => setTip(null)}
         >
           <colgroup>
             {visible.map((c) => (
@@ -272,12 +301,12 @@ export default function VacancyTable({
             ))}
           </colgroup>
           <thead>
-            <tr className="text-ink-soft [&>th]:h-12 [&>th]:border-b [&>th]:border-line [&>th]:bg-line-soft/70 [&>th]:font-normal">
+            <tr className="text-xs text-ink-faint [&>th]:h-11 [&>th]:border-b [&>th]:border-line [&>th]:font-normal">
               {visible.map((c) => (
-                <th key={c.key} className={`${cell} ${c.custom ? "group" : ""}`} title={c.custom ? c.label : undefined}>
+                <th key={c.key} className={`${cell} ${c.custom ? "group" : ""}`}>
                   {c.custom ? (
                     <span className="flex items-center justify-between gap-2">
-                      <span className="truncate">{c.label}</span>
+                      <span className="truncate" data-full={c.label}>{c.label}</span>
                       <button
                         onClick={() => removeColumn({ id: c.key, name: c.label })}
                         aria-label={`Delete the column ${c.label}`}
@@ -300,20 +329,31 @@ export default function VacancyTable({
               const stage = STATUSES.find((s) => s.value === status) ?? STATUSES[0];
               const isOpen = expanded === v.id;
               const toggle = () => setExpanded(isOpen ? null : v.id);
-              const line = index < rows.length - 1 || isOpen ? "[&>td]:border-b [&>td]:border-line" : "";
+              const line = index < rows.length - 1 || isOpen ? "[&>td]:border-b [&>td]:border-line-soft" : "";
 
               return [
                 <tr
                   key={v.id}
                   className={`align-middle transition-colors duration-150 hover:bg-line-soft/40 ${line}`}
                 >
-                  <td className={`${cell} font-mono ${scoreTone(v.score)}`}>{v.score ?? "—"}</td>
+                  <td className={cell}>
+                    {v.score === null ? (
+                      <span className="text-ink-faint">—</span>
+                    ) : (
+                      <span
+                        className={`grid size-10 place-items-center rounded-full font-mono text-sm font-medium ${scoreTone(v.score)}`}
+                      >
+                        {v.score}
+                      </span>
+                    )}
+                  </td>
 
-                  <td className={cell} title={v.title}>
+                  <td className={cell}>
                     <span className="flex items-center gap-1.5">
                       <button
                         onClick={toggle}
                         aria-expanded={isOpen}
+                        data-full={v.title}
                         className="min-w-0 cursor-pointer truncate text-left font-medium text-ink transition-colors duration-150 hover:text-brand"
                       >
                         {v.title}
@@ -333,10 +373,10 @@ export default function VacancyTable({
                     </span>
                   </td>
 
-                  <td className={`${cell} text-ink-soft`} title={v.company}>
+                  <td className={`${cell} text-ink-soft`} data-full={v.company}>
                     {v.company}
                   </td>
-                  <td className={`${cell} text-ink-soft`} title={v.location ?? undefined}>
+                  <td className={`${cell} text-ink-soft`} data-full={v.location ?? undefined}>
                     {v.location || "—"}
                   </td>
                   <td className={`${cell} text-ink-soft`}>{shortDate(v.posted)}</td>
@@ -371,10 +411,9 @@ export default function VacancyTable({
                       }}
                       disabled={!appliedTextReady}
                       title={
-                        appliedTextReady
-                          ? applied[v.id] || undefined
-                          : "Run db/migrations/0005_applied_text.sql to write here"
+                        appliedTextReady ? undefined : "Run db/migrations/0005_applied_text.sql to write here"
                       }
+                      data-full={applied[v.id] || undefined}
                       placeholder="Add date"
                       aria-label={`When and how you applied to ${v.title}`}
                       autoComplete="off"
@@ -388,7 +427,8 @@ export default function VacancyTable({
                   <td className={cell}>
                     <button
                       onClick={() => setEditingNote(v)}
-                      title={notes[v.id] || undefined}
+                      data-full={notes[v.id] || undefined}
+                      data-always
                       className={`max-w-full cursor-pointer truncate text-left transition-colors duration-150 hover:text-brand-soft ${
                         notes[v.id] ? "font-medium text-brand" : "text-ink-faint/70"
                       }`}
@@ -415,7 +455,7 @@ export default function VacancyTable({
                         onKeyDown={(e) => {
                           if (e.key === "Enter") e.currentTarget.blur();
                         }}
-                        title={extra[v.id]?.[c.id] || undefined}
+                        data-full={extra[v.id]?.[c.id] || undefined}
                         placeholder="Add"
                         aria-label={`${c.name} for ${v.title}`}
                         autoComplete="off"
@@ -431,7 +471,7 @@ export default function VacancyTable({
                 isOpen && (
                   <tr
                     key={`${v.id}-detail`}
-                    className={index < rows.length - 1 ? "[&>td]:border-b [&>td]:border-line" : ""}
+                    className={index < rows.length - 1 ? "[&>td]:border-b [&>td]:border-line-soft" : ""}
                   >
                     <td colSpan={visible.length} className="bg-line-soft/40 px-5 py-5">
                       <p className="mb-3 text-xs text-ink-faint">
@@ -482,6 +522,17 @@ export default function VacancyTable({
           </p>
         )}
       </div>
+      </div>
+
+      {tip && (
+        <div
+          role="tooltip"
+          style={{ left: tip.x - 12, top: tip.y + 2 }}
+          className="pointer-events-none fixed z-30 max-w-sm whitespace-pre-line rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-[0_12px_32px_-16px_rgba(30,58,95,0.35)]"
+        >
+          {tip.text}
+        </div>
+      )}
 
       {editingNote && (
         <NoteDialog

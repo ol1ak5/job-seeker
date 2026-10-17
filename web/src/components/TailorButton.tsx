@@ -61,13 +61,18 @@ export default function TailorButton({
     }, 4000);
   }
 
-  // Plain links sized for a table cell. A failure shows as the link's tooltip
-  // and colour rather than a line of text, so the row keeps its height.
-  const link = "cursor-pointer text-sm transition-colors duration-150 disabled:opacity-50";
+  // Small pills, like "Tailor CV" in the example on the front page. A failure
+  // shows as the tooltip and colour rather than a line of text, so the row
+  // keeps its height.
+  const pill =
+    "cursor-pointer rounded-full border px-3 py-1 text-xs transition-colors duration-150 disabled:opacity-50";
   return (
-    <span className="inline-flex items-center gap-3 whitespace-nowrap">
+    <span className="inline-flex items-center gap-2 whitespace-nowrap">
       {hasCv && (
-        <a href={`/cvs?vacancy=${vacancyId}`} className={`${link} font-medium text-brand hover:text-brand-soft`}>
+        <a
+          href={`/cvs?vacancy=${vacancyId}`}
+          className={`${pill} border-brand/20 bg-brand/10 font-medium text-brand hover:bg-brand/15`}
+        >
           Open
         </a>
       )}
@@ -75,7 +80,11 @@ export default function TailorButton({
         onClick={start}
         disabled={state === "working"}
         title={error ?? (hasCv ? "Write another CV for this vacancy" : "Write a CV for this vacancy")}
-        className={`${link} inline-flex items-center ${state === "failed" ? "text-red-700" : hasCv ? "text-ink-faint hover:text-brand" : "font-medium text-brand hover:text-brand-soft"}`}
+        className={
+          hasCv && state !== "failed"
+            ? "cursor-pointer text-xs text-ink-faint transition-colors duration-150 hover:text-brand disabled:opacity-50"
+            : `${pill} ${state === "failed" ? "border-red-200 text-red-700" : "border-line text-ink-soft hover:border-brand/40 hover:text-brand"}`
+        }
       >
         {state === "working" ? (
           "Writing..."
@@ -84,7 +93,7 @@ export default function TailorButton({
         ) : hasCv ? (
           "Redo"
         ) : (
-          "Tailor"
+          "Tailor CV"
         )}
       </button>
     </span>
