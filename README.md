@@ -1,8 +1,8 @@
-# 💼 Job Seeker
+# 🧭 Job Seeker
 
-An AI agent that finds the vacancies that fit you and tailors your CV to each one.
+An AI agent that finds the vacancies worth applying to and rewrites your CV for each one, in the employer's own words.
 
-### 🔗 **[Try it live](https://job-seeker-blush.vercel.app)**
+## 🔗 [Try it live](https://job-seeker-blush.vercel.app)
 
 ## 🎯 The Problem
 
@@ -16,11 +16,10 @@ Job Seeker searches several job APIs at once, throws out everything that fails y
 
 | Feature | Description |
 |---|---|
-| **Search where the jobs are** | Adzuna, JSearch (Google for Jobs), Tavily web search and company boards on Greenhouse, Lever and Ashby. A source with no key is skipped |
+| **Search where the jobs are** | Uses Adzuna, JSearch (Google for Jobs), Tavily web search and company boards on Greenhouse, Lever and Ashby. A source with no key is skipped |
 | **Filter before you pay** | Seniority, job function, years of experience, location and a per-company cap are applied before the model is called |
 | **Score with reasons** | Gemini gives each vacancy 0-100, with what matches, what is missing and any hard blocker such as work authorisation |
-| **Tailor a CV to one vacancy** | The model re-orders, re-emphasises and re-words your real experience in the posting's language. It never adds a fact, a metric or a skill |
-| **Correct what the agent reads** | Upload your CV once, then fix any section the reading got wrong |
+| **Tailor a CV to one vacancy** | The model re-orders, re-emphasises and re-words your real experience in the posting's language, without adding a single fact, metric or skill |
 | **Track your applications** | One sheet with score, status, the date you applied, notes and columns of your own |
 
 ## 🧠 How It Works
@@ -40,7 +39,7 @@ flowchart TD
     DB --> Site
 ```
 
-A search takes minutes, longer than a web request can wait, so the site writes a row to the `jobs` table and starts a GitHub Actions run that does the work in Python and writes the results back to Supabase.
+## 📁 Project Structure
 
 | Directory | Contents |
 |---|---|
@@ -69,10 +68,10 @@ The website runs from `web/` with `npm install` and `npm run dev`. Setting up th
 
 | Key | Powers | Free tier |
 |---|---|---|
-| `GOOGLE_API_KEY` | scoring and CV writing (Gemini) | yes |
-| `ADZUNA_APP_ID` · `ADZUNA_APP_KEY` | keyword job search | ~1,000 calls/month |
-| `RAPIDAPI_KEY` | JSearch: listings from Google for Jobs | limited |
-| `TAVILY_API_KEY` | web search for vacancies the APIs miss | ~1,000 searches/month |
+| `GOOGLE_API_KEY` | Scoring and CV writing (Gemini) | Yes |
+| `ADZUNA_APP_ID` · `ADZUNA_APP_KEY` | Keyword job search | About 1,000 calls a month |
+| `RAPIDAPI_KEY` | JSearch: listings from Google for Jobs | Limited |
+| `TAVILY_API_KEY` | Web search for vacancies the APIs miss | About 1,000 searches a month |
 
 Company career boards need no key. List the companies you care about in `config/watchlist.yaml`.
 
