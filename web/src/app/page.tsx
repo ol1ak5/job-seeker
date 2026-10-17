@@ -44,6 +44,9 @@ export default async function HomePage() {
       supabase
         .from("jobs")
         .select("id, status, error, result, created_at, finished_at")
+        // Only searches: a CV that failed belongs to its own row in the
+        // table, not under "Run the search".
+        .eq("kind", "search")
         .order("created_at", { ascending: false })
         .limit(1),
       supabase
