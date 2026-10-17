@@ -136,8 +136,11 @@ export default function VacancyTable({
       setTip(null);
       return;
     }
+    // Measured from the middle of the cell, not the text, so the box opens at
+    // the same height in every column, inputs included.
     const box = el.getBoundingClientRect();
-    setTip({ text: el.dataset.full ?? "", x: box.left, y: box.bottom });
+    const row = (el.closest("td, th") ?? el).getBoundingClientRect();
+    setTip({ text: el.dataset.full ?? "", x: box.left, y: row.top + row.height / 2 + 10 });
   }
 
   const visible: Column[] = [
@@ -373,11 +376,17 @@ export default function VacancyTable({
                     </span>
                   </td>
 
-                  <td className={`${cell} text-ink-soft`} data-full={v.company}>
-                    {v.company}
+                  {/* The text sits in its own line box, like the title beside it, so
+                      the full-text box opens at the same height in every column. */}
+                  <td className={`${cell} text-ink-soft`}>
+                    <span className="block truncate" data-full={v.company}>
+                      {v.company}
+                    </span>
                   </td>
-                  <td className={`${cell} text-ink-soft`} data-full={v.location ?? undefined}>
-                    {v.location || "—"}
+                  <td className={`${cell} text-ink-soft`}>
+                    <span className="block truncate" data-full={v.location ?? undefined}>
+                      {v.location || "—"}
+                    </span>
                   </td>
                   <td className={`${cell} text-ink-soft`}>{shortDate(v.posted)}</td>
 
