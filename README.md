@@ -2,7 +2,7 @@
 
 An AI agent that finds the right job opportunities, rewrites your CV in the employer's language, and turns every application into your strongest pitch.
 
-## 🔗 [Try it live](https://job-seeker-blush.vercel.app)
+## 🔗 [Try it live](https://your-own-job-seeker.vercel.app)
 
 ![The opening screen](docs/screenshot-start.png)
 
