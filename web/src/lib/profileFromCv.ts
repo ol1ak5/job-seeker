@@ -16,8 +16,8 @@ export type Profile = {
   contact: { name: string; details: string[] };
   headline: unknown;
   sections: { title: string; type: string; items: unknown[] }[];
-  /** Your correction of the text the agent reads; replaces it when set. */
-  edited_text?: string;
+  /** Your corrections, by section title; each replaces that section's text. */
+  section_edits?: Record<string, string>;
 };
 
 export class CvNotUnderstood extends Error {}

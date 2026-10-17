@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { agentText, generatedText } from "./profileText";
+import { agentText, currentSectionText, generatedText, sectionText } from "./profileText";
 
 const PROFILE = {
   contact: { name: "Ana Garcia", details: ["Madrid, Spain", "ana@example.com"] },
@@ -45,8 +45,14 @@ describe("the text the agent reads", () => {
     );
   });
 
-  it("uses your correction when there is one, and the generated text when it is blank", () => {
-    expect(agentText({ ...PROFILE, edited_text: "  My own version  " })).toBe("My own version");
-    expect(agentText({ ...PROFILE, edited_text: "   " })).toBe(generatedText(PROFILE));
+  it("puts a corrected section in place of the one read, and leaves the rest", () => {
+    const corrected = { ...PROFILE, section_edits: { Languages: "Spanish · English · French" } };
+    expect(agentText(corrected)).toBe(
+      generatedText(PROFILE).replace("Spanish · English", "Spanish · English · French"),
+    );
+    expect(currentSectionText(corrected, PROFILE.sections[2])).toBe("Spanish · English · French");
+    expect(currentSectionText({ ...PROFILE, section_edits: { Languages: "  " } }, PROFILE.sections[2])).toBe(
+      sectionText(PROFILE.sections[2]),
+    );
   });
 });

@@ -14,7 +14,8 @@ type ProfileData = {
   contact?: { name?: string; details?: unknown[] };
   headline?: unknown;
   sections?: Section[];
-  edited_text?: string;
+  /** Your corrections, by section title; each replaces that section's text. */
+  section_edits?: Record<string, string>;
 };
 
 function clean(text: unknown): string {
@@ -104,8 +105,24 @@ const RENDERERS: Record<string, (items: unknown[], out: string[]) => void> = {
   text: renderText,
 };
 
-/** The text the agent builds from the saved CV, before any correction. */
-export function generatedText(profile: ProfileData): string {
+/** One section's text as read from the CV, before any correction. */
+export function sectionText(section: Section): string {
+  const out: string[] = [];
+  (RENDERERS[section.type] ?? RENDERERS.text)(section.items ?? [], out);
+  return out.join("\n").trim();
+}
+
+/** A section as the agent reads it: your correction when there is one. */
+export function currentSectionText(profile: ProfileData, section: Section): string {
+  const edit = profile.section_edits?.[section.title];
+  return typeof edit === "string" && edit.trim() ? edit.trim() : sectionText(section);
+}
+
+/**
+ * The whole CV as the agent reads it, corrections included - the same text
+ * `profile_to_text` builds in the engine.
+ */
+export function agentText(profile: ProfileData): string {
   const out: string[] = [];
   out.push(`# ${profile.contact?.name ?? ""}`);
   const headline =
@@ -117,15 +134,18 @@ export function generatedText(profile: ProfileData): string {
   out.push(details.join(" · "));
 
   for (const section of profile.sections ?? []) {
-    const render = RENDERERS[section.type] ?? RENDERERS.text;
     out.push(`\n## ${section.title}`);
-    render(section.items ?? [], out);
+    const edit = profile.section_edits?.[section.title];
+    if (typeof edit === "string" && edit.trim()) {
+      out.push(edit.trim());
+      continue;
+    }
+    (RENDERERS[section.type] ?? RENDERERS.text)(section.items ?? [], out);
   }
   return out.join("\n");
 }
 
-/** What the agent reads now: your correction when there is one. */
-export function agentText(profile: ProfileData): string {
-  const edited = profile.edited_text;
-  return typeof edited === "string" && edited.trim() ? edited.trim() : generatedText(profile);
+/** The text read from the CV with no corrections, for checking the reading. */
+export function generatedText(profile: ProfileData): string {
+  return agentText({ ...profile, section_edits: undefined });
 }

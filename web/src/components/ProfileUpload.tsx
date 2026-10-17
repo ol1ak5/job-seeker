@@ -2,16 +2,16 @@
 
 import { ACCEPTED } from "@/lib/cvText";
 import type { Profile } from "@/lib/profileFromCv";
-import { agentText } from "@/lib/profileText";
+import { currentSectionText } from "@/lib/profileText";
 import { useRef, useState } from "react";
 
 /**
  * The upload screen.
  *
  * A model read the file, so what it saved is shown back straight away: name,
- * contact line and the sections it found, and - one click further - the full
- * text the agent reads. Reading a CV can drop or merge things, so that text can
- * be corrected here, and the correction is what the agent then uses.
+ * contact line and the sections it found. Reading a CV can drop or merge
+ * things, so any one section can be opened and corrected on its own, and the
+ * correction is what the agent uses.
  */
 export default function ProfileUpload({ initial }: { initial: Profile | null }) {
   const [profile, setProfile] = useState<Profile | null>(initial);
@@ -19,8 +19,7 @@ export default function ProfileUpload({ initial }: { initial: Profile | null }) 
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [showText, setShowText] = useState(false);
-  const [text, setText] = useState(() => (initial ? agentText(initial) : ""));
+  const [editing, setEditing] = useState<{ title: string; text: string } | null>(null);
   const [savingText, setSavingText] = useState(false);
   const [textStatus, setTextStatus] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -39,7 +38,7 @@ export default function ProfileUpload({ initial }: { initial: Profile | null }) 
         setError(data.error ?? "Upload failed.");
       } else {
         setProfile(data.profile);
-        setText(agentText(data.profile));
+        setEditing(null);
         setTextStatus(null);
         setJustSaved(true);
       }
@@ -50,22 +49,22 @@ export default function ProfileUpload({ initial }: { initial: Profile | null }) 
     if (input.current) input.current.value = "";
   }
 
-  async function saveText(value: string | null) {
+  async function saveSection(title: string, value: string | null) {
     setSavingText(true);
     setTextStatus(null);
     try {
       const response = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: value }),
+        body: JSON.stringify({ section: title, text: value }),
       });
       const data = await response.json();
       if (!response.ok) {
         setTextStatus(data.error ?? "Could not save.");
       } else {
         setProfile(data.profile);
-        setText(agentText(data.profile));
-        setTextStatus(value === null ? "Back to the text read from your CV." : "Saved. The agent reads this from now on.");
+        setEditing(null);
+        setTextStatus(value === null ? `${title}: back to what was read from your CV.` : `${title}: saved.`);
       }
     } catch {
       setTextStatus("Could not reach the server.");
@@ -147,14 +146,7 @@ export default function ProfileUpload({ initial }: { initial: Profile | null }) 
       {profile && (
         <section className="rounded-lg border border-line bg-surface p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-              What the agent reads
-              {profile.edited_text && (
-                <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
-                  Corrected by you
-                </span>
-              )}
-            </h2>
+            <h2 className="text-sm font-semibold text-ink">What the agent reads</h2>
             <button
               onClick={remove}
               disabled={busy}
@@ -171,80 +163,82 @@ export default function ProfileUpload({ initial }: { initial: Profile | null }) 
             {(profile.contact?.details ?? []).join(" · ") || "No contact details found"}
           </p>
 
-          {profile.sections.length > 0 ? (
-            <p className="mt-3 text-sm text-ink-soft">
-              <span className="text-ink-faint">Sections: </span>
-              {profile.sections.map((s) => s.title).join(" · ")}
-            </p>
-          ) : (
+          {profile.sections.length === 0 ? (
             <p className="mt-4 text-sm text-red-800">
               No sections were found. Try a .docx export instead.
             </p>
+          ) : (
+            <ul className="mt-5 divide-y divide-line border-y border-line">
+              {profile.sections.map((section) => {
+                const corrected = Boolean(profile.section_edits?.[section.title]?.trim());
+                const open = editing?.title === section.title;
+                return (
+                  <li key={section.title} className="py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2 text-sm text-ink">
+                        {section.title}
+                        {corrected && (
+                          <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
+                            Corrected
+                          </span>
+                        )}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setTextStatus(null);
+                          setEditing(open ? null : { title: section.title, text: currentSectionText(profile, section) });
+                        }}
+                        aria-expanded={open}
+                        className="cursor-pointer text-sm text-ink-soft transition-colors duration-150 hover:text-brand"
+                      >
+                        {open ? "Close" : "Correct"}
+                      </button>
+                    </div>
+
+                    {open && editing && (
+                      <div className="mt-3">
+                        <textarea
+                          value={editing.text}
+                          onChange={(e) => setEditing({ ...editing, text: e.target.value })}
+                          rows={Math.min(16, Math.max(5, editing.text.split("\n").length + 1))}
+                          spellCheck={false}
+                          aria-label={`${section.title}, as the agent reads it`}
+                          className="w-full rounded-xl border border-line bg-surface px-4 py-3 font-mono text-[13px] leading-relaxed text-ink outline-none focus:border-brand/50"
+                        />
+                        <div className="mt-2 flex flex-wrap items-center gap-3">
+                          <button
+                            onClick={() => saveSection(section.title, editing.text)}
+                            disabled={savingText || editing.text.trim() === currentSectionText(profile, section)}
+                            className="cursor-pointer rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-50"
+                          >
+                            {savingText ? "Saving..." : "Save"}
+                          </button>
+                          {corrected && (
+                            <button
+                              onClick={() => saveSection(section.title, null)}
+                              disabled={savingText}
+                              className="cursor-pointer text-sm text-ink-soft transition-colors duration-150 hover:text-red-700"
+                            >
+                              Restore the original
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
           )}
 
-          <button
-            onClick={() => setShowText((open) => !open)}
-            aria-expanded={showText}
-            className="mt-4 cursor-pointer text-sm font-medium text-brand transition-colors duration-150 hover:text-brand-soft"
-          >
-            {showText ? "Hide the full text" : "Show and correct the full text"}
-          </button>
-
-          {showText && (
-            <div className="mt-3">
-              <p className="text-xs leading-relaxed text-ink-faint">
-                This is exactly what the agent reads when it scores a vacancy or
-                tailors your CV. If something was lost or read wrongly, fix it
-                here. Uploading a new CV replaces your corrections.
-              </p>
-              <textarea
-                value={text}
-                onChange={(e) => {
-                  setText(e.target.value);
-                  setTextStatus(null);
-                }}
-                rows={20}
-                spellCheck={false}
-                aria-label="The text the agent reads"
-                className="mt-3 w-full rounded-xl border border-line bg-surface px-4 py-3 font-mono text-[13px] leading-relaxed text-ink outline-none focus:border-brand/50"
-              />
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => saveText(text)}
-                  disabled={savingText || text.trim() === agentText(profile)}
-                  className="cursor-pointer rounded-full bg-brand px-5 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft disabled:opacity-50"
-                >
-                  {savingText ? "Saving..." : "Save corrections"}
-                </button>
-                {profile.edited_text && (
-                  <button
-                    onClick={() => {
-                      if (confirm("Discard your corrections and go back to the text read from your CV?")) {
-                        saveText(null);
-                      }
-                    }}
-                    disabled={savingText}
-                    className="cursor-pointer text-sm text-ink-soft transition-colors duration-150 hover:text-red-700"
-                  >
-                    Restore the original
-                  </button>
-                )}
-                {text !== agentText(profile) && !savingText && (
-                  <button
-                    onClick={() => setText(agentText(profile))}
-                    className="cursor-pointer text-sm text-ink-faint transition-colors duration-150 hover:text-ink"
-                  >
-                    Undo changes
-                  </button>
-                )}
-                {textStatus && (
-                  <span role="status" className="text-sm text-ink-soft">
-                    {textStatus}
-                  </span>
-                )}
-              </div>
-            </div>
+          {textStatus && (
+            <p role="status" className="mt-3 text-sm text-ink-soft">
+              {textStatus}
+            </p>
           )}
+          <p className="mt-3 text-xs text-ink-faint">
+            What the agent reads is your CV as saved here. Uploading a new CV replaces any corrections.
+          </p>
         </section>
       )}
     </div>

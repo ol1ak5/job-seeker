@@ -78,11 +78,11 @@ export async function DELETE() {
 }
 
 /**
- * Saving your correction of the text the agent reads.
+ * Saving your correction of one section of the text the agent reads.
  *
- * Sent as `{ text }`; `{ text: null }` goes back to the text generated from the
- * CV. It is kept inside the profile itself, so uploading a new CV replaces it
- * along with everything else read from the old one.
+ * Sent as `{ section, text }`, the section named by its title; `text: null`
+ * goes back to what was read from the CV. Corrections are kept inside the
+ * profile, so uploading a new CV replaces them with everything else.
  */
 export async function PATCH(request: NextRequest) {
   const supabase = await createClient();
@@ -95,12 +95,13 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
+  const section = body?.section;
   const text = body?.text;
-  if (text !== null && typeof text !== "string") {
-    return Response.json({ error: "Send the text to save." }, { status: 400 });
+  if (typeof section !== "string" || (text !== null && typeof text !== "string")) {
+    return Response.json({ error: "Send the section and its text." }, { status: 400 });
   }
-  if (typeof text === "string" && text.length > 40_000) {
-    return Response.json({ error: "That text is too long for one CV." }, { status: 400 });
+  if (typeof text === "string" && text.length > 20_000) {
+    return Response.json({ error: "That section is too long." }, { status: 400 });
   }
 
   const { data: row, error: readError } = await supabase
@@ -113,8 +114,15 @@ export async function PATCH(request: NextRequest) {
   }
 
   const data = { ...(row.data as Record<string, unknown>) };
-  if (text && text.trim()) data.edited_text = text.trim();
-  else delete data.edited_text;
+  const sections = (data.sections as { title: string }[] | undefined) ?? [];
+  if (!sections.some((s) => s.title === section)) {
+    return Response.json({ error: "That section is not in your CV." }, { status: 404 });
+  }
+
+  const edits = { ...((data.section_edits as Record<string, string> | undefined) ?? {}) };
+  if (text && text.trim()) edits[section] = text.trim();
+  else delete edits[section];
+  data.section_edits = edits;
 
   const { error } = await supabase.from("profiles").update({ data }).eq("name", "master");
   if (error) {

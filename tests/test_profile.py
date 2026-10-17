@@ -120,19 +120,20 @@ def test_reset_profile_returns_to_the_file():
     assert "contact" in load_profile("profile/example_profile.yaml")
 
 
-def test_your_corrected_text_is_what_the_model_reads():
-    """A correction made on the site replaces the generated text, on every track."""
-    tracks = load_tracks()
-    profile = load_profile("profile/example_profile.yaml")
-    profile["edited_text"] = "# Ana Garcia\n\n## Experience\n- Corrected by hand"
-    for track in tracks.values():
-        assert profile_to_text(profile, track) == "# Ana Garcia\n\n## Experience\n- Corrected by hand"
+def test_a_corrected_section_replaces_only_that_section():
+    """A correction made on the site stands in for one section; the rest render as usual."""
+    profile = load_profile(EXAMPLE_PROFILE)
+    first, second = profile["sections"][0]["title"], profile["sections"][1]["title"]
+    untouched = profile_to_text(profile, TRACKS["energy"])
+    profile["section_edits"] = {first: "- Corrected by hand"}
+    text = profile_to_text(profile, TRACKS["energy"])
+
+    assert f"## {first}\n- Corrected by hand" in text
+    assert untouched.split(f"## {second}")[1] == text.split(f"## {second}")[1]
 
 
-def test_an_empty_correction_falls_back_to_the_generated_text():
-    tracks = load_tracks()
-    profile = load_profile("profile/example_profile.yaml")
-    generated = profile_to_text(profile, tracks["energy"])
-    profile["edited_text"] = "   "
-    assert profile_to_text(profile, tracks["energy"]) == generated
-
+def test_a_blank_correction_leaves_the_section_as_read():
+    profile = load_profile(EXAMPLE_PROFILE)
+    untouched = profile_to_text(profile, TRACKS["energy"])
+    profile["section_edits"] = {profile["sections"][0]["title"]: "   "}
+    assert profile_to_text(profile, TRACKS["energy"]) == untouched

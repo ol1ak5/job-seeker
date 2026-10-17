@@ -157,14 +157,12 @@ def profile_to_text(profile: dict, track: TrackConfig) -> str:
     """The CV as the model reads it: for scoring, and as the source of a tailor.
 
     Reading an uploaded CV can drop or merge things - a two-column PDF is the
-    usual culprit - so the site lets you correct the text this produces. When
-    you have, your version is used as it stands, for every track.
+    usual culprit - so the site lets you correct a section at a time. A
+    corrected section is used as you wrote it, under its own heading; the
+    others are rendered from the profile as usual.
     """
-    edited = profile.get("edited_text")
-    if isinstance(edited, str) and edited.strip():
-        return edited.strip()
-
     name = track.name
+    edits = profile.get("section_edits") or {}
     out: list[str] = []
     contact = profile["contact"]
     out.append(f"# {contact['name']}")
@@ -176,12 +174,16 @@ def profile_to_text(profile: dict, track: TrackConfig) -> str:
     for section in profile.get("sections", []):
         if not _visible(section, name):
             continue
+        out.append(f"\n## {section['title']}")
+        edit = edits.get(section["title"])
+        if isinstance(edit, str) and edit.strip():
+            out.append(edit.strip())
+            continue
         stype = section.get("type", "list")
         if stype not in RENDERERS:
             raise SystemExit(
                 f"Unknown section type '{stype}' in section "
                 f"'{section.get('title')}'. Known types: {', '.join(sorted(RENDERERS))}.")
-        out.append(f"\n## {section['title']}")
         RENDERERS[stype](section.get("items", []), name, out)
 
     return "\n".join(out)
