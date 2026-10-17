@@ -200,11 +200,12 @@ function Change({
       {/* Under the change, not over it, and always visible.
           Floating the controls in the corner covered the end of the first line,
           and hiding them until hover meant the one thing you came here to do
-          was the one thing you could not see. */}
-      <div className="mt-1.5 flex overflow-hidden rounded-md border border-line bg-surface">
+          was the one thing you could not see. Three buttons of one width, in a
+          box only as wide as they are. */}
+      <div className="mt-1.5 inline-flex overflow-hidden rounded-md border border-line bg-surface">
         <button
           onClick={() => onDecide("accept")}
-          className={`cursor-pointer px-2.5 py-1 text-xs whitespace-nowrap transition-colors duration-150 ${
+          className={`cursor-pointer w-24 py-1 text-center text-xs whitespace-nowrap transition-colors duration-150 ${
             decision === "accept"
               ? "bg-emerald-100 font-medium text-emerald-900"
               : "text-ink-soft hover:bg-emerald-50 hover:text-emerald-800"
@@ -214,7 +215,7 @@ function Change({
         </button>
         <button
           onClick={() => onDecide("keep")}
-          className={`cursor-pointer border-l border-line px-2.5 py-1 text-xs whitespace-nowrap transition-colors duration-150 ${
+          className={`cursor-pointer border-l border-line w-24 py-1 text-center text-xs whitespace-nowrap transition-colors duration-150 ${
             kept
               ? "bg-red-100 font-medium text-red-900"
               : "text-ink-soft hover:bg-red-50 hover:text-red-800"
@@ -224,7 +225,7 @@ function Change({
         </button>
         <button
           onClick={open}
-          className={`cursor-pointer border-l border-line px-2.5 py-1 text-xs whitespace-nowrap transition-colors duration-150 ${
+          className={`cursor-pointer border-l border-line w-24 py-1 text-center text-xs whitespace-nowrap transition-colors duration-150 ${
             edited !== null
               ? "bg-brand/10 font-medium text-brand"
               : "text-ink-soft hover:bg-brand/5 hover:text-brand"

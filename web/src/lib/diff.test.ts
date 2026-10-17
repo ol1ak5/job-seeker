@@ -189,3 +189,19 @@ describe("buildSegments", () => {
     expect(buildSegments(BEFORE, BEFORE).every((s) => s.kind === "same")).toBe(true);
   });
 });
+
+describe("lines that differ only in dashes or spacing", () => {
+  const mine = "### Analyst | Acme\n*Madrid, Spain* *Sept 2024 \u2013 Present*\n\n- Built models";
+  const model = "### Analyst | Acme\n*Madrid, Spain* *Sept 2024 - Present*\n\n- Built  forecasts";
+
+  it("are not a change to decide", () => {
+    const hunks = buildHunks(mine, model);
+    expect(hunks).toHaveLength(1);
+    expect(hunks[0].before).toEqual(["- Built models"]);
+  });
+
+  it("keep your own wording of the line", () => {
+    expect(applyDecisions(mine, model, {})).toContain("Sept 2024 \u2013 Present");
+  });
+});
+

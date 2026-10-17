@@ -31,6 +31,20 @@ function normalise(text: string): string[] {
   return text.replace(/[ \t]+$/gm, "").split("\n");
 }
 
+/**
+ * Two lines that differ only in the kind of dash or in spacing say the same
+ * thing. "Sept 2024 – Present" against "Sept 2024 - Present" is not a change
+ * anybody wants to rule on, so it counts as unchanged and your own line is
+ * kept.
+ */
+function canonical(line: string): string {
+  return line.replace(/[\u2013\u2014]/g, "-").replace(/\s+/g, " ").trim();
+}
+
+function sameLine(a: string, b: string): boolean {
+  return a === b || canonical(a) === canonical(b);
+}
+
 function lcs<T>(before: T[], after: T[], same: (a: T, b: T) => boolean): number[][] {
   const table: number[][] = Array.from({ length: before.length + 1 }, () =>
     new Array(after.length + 1).fill(0),
@@ -87,13 +101,13 @@ export function inlineDiff(
 function operations(before: string[], after: string[]): Op[] {
   const rows = before.length;
   const cols = after.length;
-  const table = lcs(before, after, (x, y) => x === y);
+  const table = lcs(before, after, sameLine);
 
   const ops: Op[] = [];
   let i = 0;
   let j = 0;
   while (i < rows && j < cols) {
-    if (before[i] === after[j]) {
+    if (sameLine(before[i], after[j])) {
       ops.push({ kind: "same", line: before[i] });
       i++;
       j++;

@@ -83,14 +83,18 @@ def test_run_adapt_cv_accepts_profile_path(tmp_path):
     assert out.exists()
 
 
-def test_prompt_requires_name_heading_and_plain_hyphens():
+def test_prompt_requires_name_heading_and_keeps_the_profiles_own_lines():
     msgs = ADAPT_PROMPT.format_messages(
         profile="P", track="energy", section_order="S",
         title="T", company="C", description="D")
     joined = " ".join(m.content for m in msgs).lower()
     assert "full name from the profile" in joined
-    assert "never use em dashes" in joined
     assert "never the type of work" in joined
+    # dates and places are copied as written, not re-punctuated
+    assert "character for character" in joined and "dashes included" in joined
+    # a bullet with nothing to mirror is left alone, skills keep their order
+    assert "word for word" in joined
+    assert "never reorder items" in joined
 
 
 def test_cv_falls_back_to_the_scoring_model_when_the_first_one_fails(monkeypatch):
