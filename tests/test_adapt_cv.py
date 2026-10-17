@@ -91,3 +91,34 @@ def test_prompt_requires_name_heading_and_plain_hyphens():
     assert "full name from the profile" in joined
     assert "never use em dashes" in joined
     assert "never the type of work" in joined
+
+
+def test_cv_falls_back_to_the_scoring_model_when_the_first_one_fails(monkeypatch):
+    import src.adapt_cv as adapt
+    from src.config import load_tracks
+
+    tried = []
+
+    class Model:
+        def __init__(self, model, google_api_key):
+            self.model = model
+
+        def invoke(self, messages):
+            tried.append(self.model)
+            if self.model == adapt.CV_MODELS[0]:
+                raise RuntimeError("429 RESOURCE_EXHAUSTED")
+            return AIMessage(content="# Alex Rivera\\nFrom the fallback")
+
+    import langchain_google_genai
+    monkeypatch.setattr(langchain_google_genai, "ChatGoogleGenerativeAI", Model)
+    monkeypatch.setenv("GOOGLE_API_KEY", "test")
+
+    cfg = next(iter(load_tracks().values()))
+    vacancy = Vacancy(title="Analyst", company="Acme", location="", url="u",
+                      source="manual", description="D")
+    profile = {"contact": {"name": "Alex Rivera", "details": []},
+               "headline": {"default": "Analyst"}, "sections": []}
+    out = adapt.adapt_cv_markdown(vacancy, cfg, profile)
+
+    assert tried == list(adapt.CV_MODELS)
+    assert "From the fallback" in out

@@ -1,6 +1,7 @@
 import datetime
 import pathlib
 import re
+import sys
 
 from src.config import load_tracks
 from src.llm_text import message_text
@@ -36,14 +37,6 @@ def adapt_cv_markdown(vacancy, cfg, profile: dict, llm=None) -> str:
     site and the command line then produce the same document from the same
     prompt, instead of two versions drifting apart.
     """
-    if llm is None:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-
-        from src.settings import load_settings
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-pro-latest",
-            google_api_key=load_settings(required=("GOOGLE_API_KEY",)).google_api_key)
-
     messages = ADAPT_PROMPT.format_messages(
         profile=profile_to_text(profile, cfg),
         track=cfg.name,
@@ -52,7 +45,31 @@ def adapt_cv_markdown(vacancy, cfg, profile: dict, llm=None) -> str:
         company=vacancy.company,
         description=vacancy.description[:12000],
     )
-    return message_text(llm.invoke(messages))
+    if llm is not None:
+        return message_text(llm.invoke(messages))
+    return message_text(_invoke_with_fallback(messages))
+
+
+# The CV is the one piece of writing worth the stronger model, but the free
+# tier often has no quota left for it (or none at all), and a quota error
+# should cost a little quality, not the whole CV. The scoring model is the
+# fallback, since that one is known to work for this key.
+CV_MODELS = ("gemini-pro-latest", "gemini-flash-latest")
+
+
+def _invoke_with_fallback(messages):
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
+    from src.settings import load_settings
+    key = load_settings(required=("GOOGLE_API_KEY",)).google_api_key
+    for i, model in enumerate(CV_MODELS):
+        try:
+            return ChatGoogleGenerativeAI(model=model, google_api_key=key).invoke(messages)
+        except Exception as exc:
+            if i == len(CV_MODELS) - 1:
+                raise
+            print(f"{model} failed ({type(exc).__name__}: {str(exc)[:200]}), "
+                  f"trying {CV_MODELS[i + 1]}", file=sys.stderr)
 
 
 def run_adapt_cv(vacancy_id: str, llm=None,

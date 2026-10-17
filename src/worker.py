@@ -196,6 +196,9 @@ def main(argv: list[str]) -> int:
         finish(client, job_id, "failed", str(exc))
         return 1
     except Exception:
+        # Printed as well as stored, so the Actions log shows what went wrong
+        # without a trip to the database.
+        traceback.print_exc()
         finish(client, job_id, "failed", traceback.format_exc())
         return 1
 
