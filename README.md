@@ -18,7 +18,7 @@ Job Seeker searches several job APIs at once, throws out everything that fails y
 
 | Feature | Description |
 |---|---|
-| **Search where the jobs are** | Uses Adzuna, JSearch (Google for Jobs), Tavily web search and company boards on Greenhouse, Lever and Ashby. A source with no key is skipped |
+| **Search where the jobs are** | Uses Adzuna, JSearch (Google for Jobs), Tavily web search and company boards on Greenhouse, Lever and Ashby |
 | **Your own account** | Sign in with Google. Your CV, searches and vacancies are private to your account |
 | **Filter before you pay** | Seniority, job function, years of experience, location and a per-company cap are applied before the model is called |
 | **Score with reasons** | Gemini gives each vacancy 0-100, with what matches, what is missing and any hard blocker such as work authorisation |
