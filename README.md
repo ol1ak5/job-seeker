@@ -22,14 +22,26 @@ flowchart LR
 
 ## Project Structure
 
-| Directory | Contents |
-|---|---|
-| `web/` | the Next.js site |
-| `src/` | the Python engine: sources, filters, scoring and CV writing |
-| `src/prompts/` | every prompt sent to the model, in full |
-| `config/` | career tracks, filters and the company watchlist |
-| `db/migrations/` | the Supabase schema, run in order |
-| `tests/` | the offline test suite |
+```
+job-seeker/
+├── web/                     # the Next.js site
+│   └── src/
+│       ├── app/             # pages and API routes
+│       ├── components/      # dashboard, search, CV views
+│       └── lib/             # Supabase client and helpers
+├── src/                     # the Python engine
+│   ├── sources/             # Adzuna, JSearch, Tavily, company boards
+│   ├── prompts/             # every prompt sent to the model, in full
+│   ├── filters.py           # seniority, function, location, company cap
+│   ├── dedupe.py            # drops repeated vacancies
+│   ├── scoring.py           # scores each vacancy with Gemini
+│   ├── adapt_cv.py          # writes the tailored CV
+│   └── worker.py            # runs a search or a CV from the jobs table
+├── config/                  # career tracks, filters, company watchlist
+├── db/migrations/           # the Supabase schema, run in order
+├── tests/                   # the offline test suite
+└── .github/workflows/       # the GitHub Actions worker
+```
 
 ## Quick Start
 
