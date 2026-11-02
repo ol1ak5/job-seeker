@@ -1,31 +1,12 @@
-# 🚀 Job Seeker
+# Job Seeker
 
-An AI agent that finds the right job opportunities, rewrites your CV in the employer's language, and turns every application into your strongest pitch.
+An AI agent that finds the right job opportunities, rewrites your CV in the employer's language, and turns every application into your strongest pitch. Open [Job Seeker](https://your-own-job-seeker.vercel.app), sign in with Google and start your first search. Your data stays private to your account.
 
-## 🔗 [Try it live](https://your-own-job-seeker.vercel.app)
+## Why It Matters
 
-![The opening screen](docs/screenshot-start.png)
+Job hunting means hours of scrolling through listings that look right and are not, and then rewriting your CV for each one that does. Job Seeker does it for you. It searches several job APIs at once and keeps only the vacancies that match your experience and your preferences. For each one, it writes a CV tailored to that posting to raise your ATS match score without inventing a single fact.
 
-## 🎯 The Problem
-
-Job hunting punishes you twice. First you scroll through hundreds of listings that look relevant and are not: the wrong seniority, the wrong country, etc. Then, for the few that fit, you rewrite your CV by hand, guessing which words the recruiter is looking for and quietly hoping the keyword filter agrees with you.
-
-## 💡 The Solution
-
-Job Seeker searches several job APIs at once, throws out everything that fails your own criteria before paying for an AI opinion, and scores what remains against your profile. It writes a CV tailored to that posting, mirroring the vacancy's vocabulary and never inventing a single fact.
-
-## ✨ Core Features
-
-| Feature | Description |
-|---|---|
-| **Search where the jobs are** | Uses Adzuna, JSearch (Google for Jobs), Tavily web search and company boards on Greenhouse, Lever and Ashby |
-| **Your own account** | Sign in with Google. Your CV, searches and vacancies are private to your account |
-| **Filter before you pay** | Seniority, job function, years of experience, location and a per-company cap are applied before the model is called |
-| **Score with reasons** | Gemini gives each vacancy 0-100, with what matches, what is missing and any hard blocker such as work authorisation |
-| **Tailor a CV to one vacancy** | The model re-orders, re-emphasises and re-words your real experience in the posting's language, without adding a single fact, metric or skill |
-| **Track your applications** | One sheet with score, status, the date you applied, notes and columns of your own |
-
-## 🧠 How It Works
+## How It Works
 
 ```mermaid
 flowchart TD
@@ -42,7 +23,7 @@ flowchart TD
     DB --> Site
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 | Directory | Contents |
 |---|---|
@@ -53,7 +34,7 @@ flowchart TD
 | `db/migrations/` | the Supabase schema, run in order |
 | `tests/` | the offline test suite |
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 uv sync --extra dev
@@ -69,7 +50,7 @@ cd web && npm install && npm run dev
 
 Database setup: [db/README.md](db/README.md).
 
-## 🔑 API Keys
+## API Keys
 
 | Key | Powers | Free tier |
 |---|---|---|
@@ -79,21 +60,6 @@ Database setup: [db/README.md](db/README.md).
 | `TAVILY_API_KEY` | Web search for vacancies the APIs miss | About 1,000 searches a month |
 
 Company career boards need no key.
-
-## 🧩 Built With
-
-| Stack | Used for |
-|---|---|
-| **Google Gemini** | Scores each vacancy against your profile and writes the tailored CV |
-| **LangChain** | Wraps the model calls in the Python engine |
-| **Adzuna · JSearch · Tavily** | Find the vacancies |
-| **Greenhouse · Lever · Ashby** | Read company career boards directly |
-| **Python** | Runs the search, the filters and the scoring |
-| **Next.js** | Renders the whole website |
-| **Tailwind CSS** | Styles the website |
-| **Supabase** | Stores accounts, CVs, searches and vacancies, with Google sign-in |
-| **GitHub Actions** | Runs each search and each CV in the background |
-| **Vercel** | Hosts the website |
 
 ## 📄 License
 
