@@ -16,6 +16,25 @@ def test_dedupe_in_run_normalizes():
     assert len(out) == 2
 
 
+def test_dedupe_in_run_merges_language_copies_and_keeps_the_plain_one():
+    out = dedupe_in_run([
+        vac("M&A Analyst (Icelandic Speaker)", "FeverUp"),
+        vac("M&A Analyst", "FeverUp"),
+        vac("M&A Analyst - Fluent German", "FeverUp"),
+        vac("M&A Analyst (Remote)", "FeverUp"),
+    ])
+    assert [v.title for v in out] == ["M&A Analyst", "M&A Analyst (Remote)"]
+
+
+def test_filter_seen_ignores_language_notes(tmp_path):
+    with open(tmp_path / "2026-08-14_ai.csv", "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["id", "title", "company"])
+        w.writeheader()
+        w.writerow({"id": "ai-0814-01", "title": "AI Engineer", "company": "Acme"})
+    out = filter_seen([vac("AI Engineer [Dutch speaking]", "Acme")], tmp_path)
+    assert out == []
+
+
 def test_filter_by_age_keeps_unknown_and_recent():
     recent = vac(posted=datetime.date(2026, 8, 10))
     old = vac(title="Old", posted=datetime.date(2026, 7, 1))

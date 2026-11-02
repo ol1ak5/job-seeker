@@ -1,23 +1,33 @@
 import csv
 import datetime
 import pathlib
+import re
 
 from src.models import Vacancy
 
+# Employers post one role several times, once per language they also want:
+# "Analyst" and "Analyst (Icelandic Speaker)". The note is dropped from the key
+# so the copies count as one vacancy.
+_LANGUAGE_WORDS = r"speaker|speaking|speaks|fluent|native|language"
+_LANGUAGE_NOTE = re.compile(
+    rf"\s*[(\[][^)\]]*\b(?:{_LANGUAGE_WORDS})\b[^)\]]*[)\]]"
+    rf"|\s+[-–|]\s+[^-–|]*\b(?:{_LANGUAGE_WORDS})\b[^-–|]*$",
+    re.IGNORECASE)
+
 
 def _key(title: str, company: str) -> tuple[str, str]:
-    return title.strip().lower(), company.strip().lower()
+    title = " ".join(_LANGUAGE_NOTE.sub("", title).split())
+    return title.lower(), company.strip().lower()
 
 
 def dedupe_in_run(vacancies: list[Vacancy]) -> list[Vacancy]:
-    seen: set[tuple[str, str]] = set()
-    out = []
+    kept: dict[tuple[str, str], Vacancy] = {}
     for v in vacancies:
         k = _key(v.title, v.company)
-        if k not in seen:
-            seen.add(k)
-            out.append(v)
-    return out
+        # Of the language copies, keep the one without the extra requirement.
+        if k not in kept or len(v.title.strip()) < len(kept[k].title.strip()):
+            kept[k] = v
+    return list(kept.values())
 
 
 def filter_by_age(vacancies: list[Vacancy], days: int,
