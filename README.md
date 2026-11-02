@@ -58,7 +58,7 @@ Database setup: [db/README.md](db/README.md).
 
 Company career boards need no key.
 
-## 📄 License
+## License
 
 Copyright © 2026 Olga Aksenova.
 
