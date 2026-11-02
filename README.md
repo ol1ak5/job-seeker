@@ -10,17 +10,14 @@ Job hunting means hours of scrolling through listings that look right and are no
 
 ```mermaid
 flowchart LR
-    You(["You: CV and search settings"]) --> Site["Next.js site on Vercel"]
-    Site <-->|"sign-in, CV, vacancies"| DB[("Supabase Postgres")]
-    Site -->|"Run the search / Tailor"| Jobs["jobs table"]
-    Jobs --> GH["GitHub Actions worker"]
-    GH --> Collect["Collect: Adzuna, JSearch, Tavily, company boards"]
-    Collect --> Filter["Dedupe and filter by your criteria"]
-    Filter --> Score["Score with Gemini"]
-    Score -->|"vacancies with reasons"| DB
-    GH -->|"tailor one vacancy"| Write["Write the CV with Gemini"]
-    Write -->|"tailored CV"| DB
-    DB --> Site
+    You(["You"]) --> Site["Website"]
+    Site <-->|"CV, vacancies"| DB[("Supabase")]
+    Site -->|"search / tailor"| Worker["Worker"]
+    Worker --> Find["Collect and filter"]
+    Find --> Score["Score with Gemini"]
+    Score --> DB
+    Worker --> Write["Write CV with Gemini"]
+    Write --> DB
 ```
 
 ## Project Structure
