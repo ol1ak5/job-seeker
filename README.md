@@ -9,7 +9,7 @@ Job hunting means hours of scrolling through listings that look right and are no
 ## How It Works
 
 ```mermaid
-flowchart TD
+flowchart LR
     You(["You: CV and search settings"]) --> Site["Next.js site on Vercel"]
     Site <-->|"sign-in, CV, vacancies"| DB[("Supabase Postgres")]
     Site -->|"Run the search / Tailor"| Jobs["jobs table"]
@@ -52,12 +52,12 @@ Database setup: [db/README.md](db/README.md).
 
 ## API Keys
 
-| Key | Powers | Free tier |
-|---|---|---|
-| `GOOGLE_API_KEY` | Scoring and CV writing (Gemini) | Yes |
-| `ADZUNA_APP_ID` · `ADZUNA_APP_KEY` | Keyword job search | About 1,000 calls a month |
-| `RAPIDAPI_KEY` | JSearch: listings from Google for Jobs | Limited |
-| `TAVILY_API_KEY` | Web search for vacancies the APIs miss | About 1,000 searches a month |
+| Key | Powers |
+|---|---|
+| `GOOGLE_API_KEY` | Scoring and CV writing (Gemini) |
+| `ADZUNA_APP_ID` · `ADZUNA_APP_KEY` | Keyword job search |
+| `RAPIDAPI_KEY` | JSearch: listings from Google for Jobs |
+| `TAVILY_API_KEY` | Web search for vacancies the APIs miss |
 
 Company career boards need no key.
 
