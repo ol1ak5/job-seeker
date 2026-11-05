@@ -20,6 +20,33 @@ flowchart LR
     Write --> DB
 ```
 
+## Quick Start
+
+```bash
+uv sync --extra dev
+cp .env.example .env              # only GOOGLE_API_KEY is required
+cp profile/example_profile.yaml profile/master_profile.yaml
+
+uv run jobseeker search-and-score --track energy
+uv run jobseeker adapt-cv --vacancy-id energy-0817-02
+uv run pytest -q
+
+cd web && npm install && npm run dev
+```
+
+Database setup: [db/README.md](db/README.md).
+
+### Configure your API keys
+
+| Key | Powers |
+|---|---|
+| `GOOGLE_API_KEY` | Scoring and CV writing (Gemini) |
+| `ADZUNA_APP_ID` · `ADZUNA_APP_KEY` | Keyword job search |
+| `RAPIDAPI_KEY` | JSearch: listings from Google for Jobs |
+| `TAVILY_API_KEY` | Web search for vacancies the APIs miss |
+
+Company career boards need no key.
+
 ## Project Structure
 
 ```
@@ -42,33 +69,6 @@ job-seeker/
 ├── tests/                   # the offline test suite
 └── .github/workflows/       # the GitHub Actions worker
 ```
-
-## Quick Start
-
-```bash
-uv sync --extra dev
-cp .env.example .env              # only GOOGLE_API_KEY is required
-cp profile/example_profile.yaml profile/master_profile.yaml
-
-uv run jobseeker search-and-score --track energy
-uv run jobseeker adapt-cv --vacancy-id energy-0817-02
-uv run pytest -q
-
-cd web && npm install && npm run dev
-```
-
-Database setup: [db/README.md](db/README.md).
-
-## API Keys
-
-| Key | Powers |
-|---|---|
-| `GOOGLE_API_KEY` | Scoring and CV writing (Gemini) |
-| `ADZUNA_APP_ID` · `ADZUNA_APP_KEY` | Keyword job search |
-| `RAPIDAPI_KEY` | JSearch: listings from Google for Jobs |
-| `TAVILY_API_KEY` | Web search for vacancies the APIs miss |
-
-Company career boards need no key.
 
 ## License
 
