@@ -6,7 +6,7 @@ that owns it?
 
 import pytest
 
-from src.worker import claim, finish, main, run_search_job
+from src.worker import claim, finish, main, remember_saved, run_search_job
 
 
 class FakeTable:
@@ -34,6 +34,10 @@ class FakeTable:
     def limit(self, _):
         return self
 
+    def range(self, start, end):
+        self.window = (start, end)
+        return self
+
     def execute(self):
         self.store["calls"].append((self.name, self.payload, dict(self.filters)))
         rows = [r for r in self.store["rows"].get(self.name, [])
@@ -41,6 +45,8 @@ class FakeTable:
         if self.payload:
             for row in rows:
                 row.update(self.payload)
+        if getattr(self, "window", None):
+            rows = rows[self.window[0]:self.window[1] + 1]
 
         class Result:
             data = rows
@@ -148,6 +154,7 @@ def _ready_to_search(monkeypatch, searched):
     import src.search_and_score
     import src.settings
     import src.storage
+    import src.worker
     from src.config import TrackConfig
 
     monkeypatch.setattr(src.config, "load_db_tracks", lambda *_: {
@@ -158,6 +165,26 @@ def _ready_to_search(monkeypatch, searched):
                         lambda *_, **__: type("S", (), {"google_api_key": "test"})())
     monkeypatch.setattr(src.search_and_score, "run_search",
                         lambda track, *_, **__: searched.append(track))
+    monkeypatch.setattr(src.worker, "remember_saved", lambda *_: 0)
+
+
+def test_saved_vacancies_count_as_seen_on_an_empty_runner(tmp_path):
+    """A runner's disk is empty, so the database has to say what was found before."""
+    from src.dedupe import filter_seen
+    from src.models import Vacancy
+
+    client = FakeClient({"vacancies": [
+        {"user_id": "user-1", "title": "Energy Analyst", "company": "Modo"},
+        {"user_id": "somebody-else", "title": "Grid Analyst", "company": "Dexter"},
+    ]})
+    assert remember_saved(client, "user-1", tmp_path / "runs") == 1
+
+    def vac(title, company):
+        return Vacancy(title=title, company=company, url="u", source="s")
+
+    fresh = filter_seen([vac("Energy Analyst", "Modo"), vac("Grid Analyst", "Dexter")],
+                        tmp_path / "runs")
+    assert [v.title for v in fresh] == ["Grid Analyst"]
 
 
 def test_a_job_without_a_track_searches_every_saved_search(monkeypatch):

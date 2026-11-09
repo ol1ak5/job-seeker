@@ -68,6 +68,32 @@ def _now() -> str:
     return datetime.datetime.now(datetime.UTC).isoformat()
 
 
+def remember_saved(client, user_id: str, runs_dir) -> int:
+    """Write the account's saved vacancies where the search looks for old runs.
+
+    The search skips what earlier runs found by reading their CSV files, but a
+    runner starts with an empty disk, so without this every search would score
+    the same vacancies again: paying for it, and filling the limit with them.
+    Hidden vacancies are included, so hiding one keeps it from coming back.
+    """
+    import csv
+
+    rows, page = [], 1000
+    while True:
+        batch = (client.table("vacancies").select("title, company")
+                 .eq("user_id", user_id)
+                 .range(len(rows), len(rows) + page - 1).execute().data or [])
+        rows += batch
+        if len(batch) < page:
+            break
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    with open(runs_dir / "saved.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=["title", "company"])
+        w.writeheader()
+        w.writerows({"title": r["title"], "company": r["company"]} for r in rows)
+    return len(rows)
+
+
 def run_search_job(client, job: dict) -> dict:
     """A full search for the account that asked for it."""
     import pathlib
@@ -115,8 +141,10 @@ def run_search_job(client, job: dict) -> dict:
     # The report files land in the runner's temporary disk and die with it; the
     # database is the only output that outlives the job.
     scorer = make_scorer(llm)
+    out_dir = pathlib.Path("output")
+    remember_saved(client, user_id, out_dir / "runs")
     for track in wanted:
-        run_search(track, days, limit, scorer, out_dir=pathlib.Path("output"))
+        run_search(track, days, limit, scorer, out_dir=out_dir)
 
     found = (client.table("vacancies").select("id", count="exact")
              .eq("user_id", user_id).in_("track", wanted).execute())
