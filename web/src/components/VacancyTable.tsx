@@ -348,6 +348,14 @@ export default function VacancyTable({
               {viewingRemoved ? "Back to the list" : `Removed (${removedCount})`}
             </button>
           )}
+          {viewingRemoved && (
+            <button
+              onClick={() => markRemoved(pool.map((v) => v.id), false)}
+              className="cursor-pointer whitespace-nowrap text-brand transition-colors duration-150 hover:text-brand-soft"
+            >
+              Restore all
+            </button>
+          )}
           {!viewingRemoved && clearable && (
             <button
               onClick={clearList}
@@ -619,7 +627,10 @@ export default function VacancyTable({
 
         {rows.length === 0 && (
           <p className="px-4 py-8 text-center text-sm text-ink-faint">
-            Nothing matches this filter.
+            {/* Empty because everything was removed, not because of a filter. */}
+            {pool.length === 0
+              ? "You cleared the list. Run the search for new vacancies, or restore the removed ones under Removed."
+              : "Nothing matches this filter."}
           </p>
         )}
       </Frame>
