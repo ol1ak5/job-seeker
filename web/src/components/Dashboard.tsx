@@ -9,6 +9,8 @@ import Link from "next/link";
 export type DashboardProps = {
   userId: string;
   tracks: string[];
+  /** Whether a CV has been uploaded; the preview leaves it out. */
+  hasCv?: boolean;
   vacancies: Vacancy[];
   stats: { total: number; strong: number; applied: number; inProcess: number };
   latestJob: Job | null;
@@ -31,6 +33,7 @@ export type DashboardProps = {
 export default function Dashboard({
   userId,
   tracks,
+  hasCv = true,
   vacancies,
   stats,
   latestJob,
@@ -52,7 +55,7 @@ export default function Dashboard({
             </p>
           </>
         ) : (
-          <DashboardToolbar userId={userId} tracks={tracks} latestJob={latestJob}>
+          <DashboardToolbar userId={userId} tracks={tracks} hasCv={hasCv} latestJob={latestJob}>
             <h1 className="text-3xl font-semibold tracking-tight text-ink">Vacancies</h1>
             <div className="mt-2">
               <StatLine {...stats} />
@@ -65,13 +68,14 @@ export default function Dashboard({
             <div className="rounded-2xl border border-dashed border-line p-12 text-center">
               <p className="font-medium text-ink">No vacancies yet</p>
               <p className="mt-1 text-sm text-ink-soft">
-                Describe what you are looking for, then run the search.
+                Upload your CV, describe what you are looking for, then run the search.
               </p>
+              {/* One step at a time: the CV first, since the search needs it. */}
               <Link
-                href="/settings"
+                href={hasCv ? "/settings" : "/profile"}
                 className="mt-5 inline-flex rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-brand-soft"
               >
-                Set up a search →
+                {hasCv ? "Set up a search →" : "Upload your CV →"}
               </Link>
             </div>
           )}

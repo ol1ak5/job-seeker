@@ -12,11 +12,13 @@ import { useState } from "react";
 export default function DashboardToolbar({
   userId,
   tracks,
+  hasCv,
   latestJob,
   children,
 }: {
   userId: string;
   tracks: string[];
+  hasCv: boolean;
   latestJob: Job | null;
   /** The title and the numbers. */
   children: React.ReactNode;
@@ -27,7 +29,15 @@ export default function DashboardToolbar({
     <div>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>{children}</div>
-        <SearchButton ready={tracks.length > 0} initialJob={latestJob}>
+        <SearchButton
+          ready={tracks.length > 0 && hasCv}
+          hint={
+            !hasCv
+              ? "Upload your CV first: every vacancy is scored against it."
+              : "Set up a search first."
+          }
+          initialJob={latestJob}
+        >
           <button
             onClick={() => setAdding((open) => !open)}
             aria-expanded={adding}

@@ -37,7 +37,7 @@ export default async function HomePage() {
       .select(`*, applications(${["status", "applied_at", "notes", ...fields].join(", ")}), cvs(id)`)
       .order("score", { ascending: false, nullsFirst: false });
 
-  const [full, { data: trackRows }, { data: jobRows }, columnsResult] =
+  const [full, { data: trackRows }, { data: jobRows }, columnsResult, { count: cvCount }] =
     await Promise.all([
       loadVacancies(["applied_text", "extra"]),
       supabase.from("tracks").select("name").order("name"),
@@ -54,6 +54,8 @@ export default async function HomePage() {
         .select("id, name")
         .order("position")
         .order("created_at"),
+      // Every vacancy is scored against the CV, so a search without one fails.
+      supabase.from("profiles").select("name", { count: "exact", head: true }),
     ]);
 
   let result = full;
@@ -85,12 +87,14 @@ export default async function HomePage() {
   const tracks = (trackRows ?? []).map((t) => t.name as string);
   const latestJob = (jobRows?.[0] as Job) ?? null;
 
+  // Counted over the list as you see it: what you removed is not in it.
+  const listed = vacancies.filter((v) => !v.hidden_at);
   const stats = {
-    total: vacancies.length,
-    strong: vacancies.filter((v) => (v.score ?? 0) >= 80).length,
-    applied: vacancies.filter((v) => statusOf(v) === "applied").length,
+    total: listed.length,
+    strong: listed.filter((v) => (v.score ?? 0) >= 80).length,
+    applied: listed.filter((v) => statusOf(v) === "applied").length,
     // Past the application and still alive: talking to them, or an offer.
-    inProcess: vacancies.filter((v) => ["interview", "offer"].includes(statusOf(v)))
+    inProcess: listed.filter((v) => ["interview", "offer"].includes(statusOf(v)))
       .length,
   };
 
@@ -98,6 +102,7 @@ export default async function HomePage() {
     <Dashboard
       userId={user.id}
       tracks={tracks}
+      hasCv={(cvCount ?? 0) > 0}
       vacancies={vacancies}
       stats={stats}
       latestJob={latestJob}

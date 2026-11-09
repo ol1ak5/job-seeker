@@ -5,7 +5,8 @@ import NoteDialog from "@/components/NoteDialog";
 import TailorButton from "@/components/TailorButton";
 import { createClient } from "@/lib/supabase/client";
 import { relativeTime } from "@/lib/time";
-import type { CustomColumn, Vacancy } from "@/lib/vacancies";
+import { ACTIVE_STATUSES, type CustomColumn, type Vacancy } from "@/lib/vacancies";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Frame from "@/components/Frame";
 
@@ -116,6 +117,12 @@ export default function VacancyTable({
   );
   const [savedExtra, setSavedExtra] = useState(extra);
   const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [removed, setRemoved] = useState(() =>
+    Object.fromEntries(vacancies.map((v) => [v.id, Boolean(v.hidden_at)])),
+  );
+  const [showRemoved, setShowRemoved] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const router = useRouter();
 
   // A tooltip drawn at a fixed place on screen would drift once the page moves.
   useEffect(() => {
@@ -180,6 +187,48 @@ export default function VacancyTable({
     save(vacancyId, { extra: next });
   }
 
+  /**
+   * Removing a vacancy only marks it: deleted, the next search would find it
+   * again and put it back. Marked, the search skips it, and it can be restored.
+   * The numbers above the table are counted on the server, hence the refresh.
+   */
+  async function markRemoved(ids: string[], value: boolean) {
+    const before = removed;
+    setRemoved((prev) => ({ ...prev, ...Object.fromEntries(ids.map((id) => [id, value])) }));
+    const supabase = createClient();
+    const hidden_at = value ? new Date().toISOString() : null;
+    // In batches, because the ids travel in the request URL.
+    for (let i = 0; i < ids.length; i += 100) {
+      const { error } = await supabase
+        .from("vacancies")
+        .update({ hidden_at })
+        .in("id", ids.slice(i, i + 100));
+      if (error) {
+        setRemoved(before);
+        setRemoveError(
+          error.code === "42703" || error.code === "PGRST204"
+            ? "Run db/migrations/0007_hidden_vacancies.sql to remove vacancies."
+            : "Could not save that. Try again.",
+        );
+        return;
+      }
+    }
+    setRemoveError(null);
+    router.refresh();
+  }
+
+  function clearList() {
+    const ids = vacancies
+      .filter((v) => !removed[v.id] && !ACTIVE_STATUSES.includes(statuses[v.id]))
+      .map((v) => v.id);
+    if (!ids.length) return;
+    const message =
+      `Remove ${ids.length} ${ids.length === 1 ? "vacancy" : "vacancies"} from the list? ` +
+      "The ones you applied to stay. Removed vacancies do not come back in new " +
+      "searches, and you can restore them under Removed.";
+    if (window.confirm(message)) markRemoved(ids, true);
+  }
+
   // Only the columns being changed are sent, so a status change never wipes
   // a note and a note never resets the status.
   async function save(vacancyId: string, fields: Record<string, unknown>) {
@@ -219,8 +268,17 @@ export default function VacancyTable({
     save(vacancyId, { notes: value });
   }
 
+  const removedCount = vacancies.filter((v) => removed[v.id]).length;
+  // Restoring the last one leads back to the list on its own.
+  const viewingRemoved = showRemoved && removedCount > 0;
+  const pool = useMemo(
+    () => vacancies.filter((v) => Boolean(removed[v.id]) === viewingRemoved),
+    [vacancies, removed, viewingRemoved],
+  );
+  const clearable = pool.some((v) => !ACTIVE_STATUSES.includes(statuses[v.id]));
+
   const rows = useMemo(() => {
-    const filtered = vacancies.filter(
+    const filtered = pool.filter(
       (v) => !(hideClosed && ["rejected", "declined"].includes(statuses[v.id])),
     );
     const value = (v: Vacancy): number | string | null =>
@@ -233,8 +291,8 @@ export default function VacancyTable({
       const order = x < y ? -1 : x > y ? 1 : 0;
       return sort.dir === "desc" ? -order : order;
     });
-  }, [vacancies, hideClosed, statuses, sort, appliedAt]);
-  const hidden = vacancies.length - rows.length;
+  }, [pool, hideClosed, statuses, sort, appliedAt]);
+  const hidden = pool.length - rows.length;
 
   const header = (key: string, label: string) => {
     const by = SORTABLE[key];
@@ -280,7 +338,24 @@ export default function VacancyTable({
           Hide rejected and skipped
         </label>
         {hidden > 0 && <span className="whitespace-nowrap text-ink-faint">{hidden} hidden</span>}
+        {removeError && <span className="text-red-700">{removeError}</span>}
         <div className="ml-auto flex items-center gap-5">
+          {removedCount > 0 && (
+            <button
+              onClick={() => setShowRemoved(!viewingRemoved)}
+              className="cursor-pointer whitespace-nowrap transition-colors duration-150 hover:text-brand"
+            >
+              {viewingRemoved ? "Back to the list" : `Removed (${removedCount})`}
+            </button>
+          )}
+          {!viewingRemoved && clearable && (
+            <button
+              onClick={clearList}
+              className="cursor-pointer whitespace-nowrap transition-colors duration-150 hover:text-red-700"
+            >
+              Clear list
+            </button>
+          )}
           {lastSearchAt && (
             <span className="whitespace-nowrap text-ink-faint">
               Last search ran {relativeTime(lastSearchAt)}
@@ -337,7 +412,7 @@ export default function VacancyTable({
               return [
                 <tr
                   key={v.id}
-                  className={`align-middle transition-colors duration-150 hover:bg-line-soft/40 ${line}`}
+                  className={`group align-middle transition-colors duration-150 hover:bg-line-soft/40 ${line}`}
                 >
                   <td className={cell}>
                     {v.score === null ? (
@@ -373,6 +448,23 @@ export default function VacancyTable({
                           <path d="M6 3h7v7M13 3L6.5 9.5M11 9v4H3V5h4" strokeLinecap="round" />
                         </svg>
                       </a>
+                      {viewingRemoved ? (
+                        <button
+                          onClick={() => markRemoved([v.id], false)}
+                          className="ml-auto shrink-0 cursor-pointer text-xs text-brand transition-colors duration-150 hover:text-brand-soft"
+                        >
+                          Restore
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => markRemoved([v.id], true)}
+                          aria-label={`Remove ${v.title} from the list`}
+                          title="Remove from the list"
+                          className="ml-auto shrink-0 cursor-pointer text-ink-faint opacity-0 transition-opacity duration-150 group-hover:opacity-100 hover:text-red-700 focus-visible:opacity-100"
+                        >
+                          ×
+                        </button>
+                      )}
                     </span>
                   </td>
 

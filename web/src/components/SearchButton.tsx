@@ -31,11 +31,14 @@ const WORDS: Record<Job["status"], string> = {
  */
 export default function SearchButton({
   ready,
+  hint = "Set up a search first, and upload your CV.",
   initialJob,
   children,
 }: {
-  /** Whether the account has a saved search to run. */
+  /** Whether the account has a CV and a saved search to run. */
   ready: boolean;
+  /** What is missing while it is not ready. */
+  hint?: string;
   initialJob: Job | null;
   /** Further actions shown beside the button, such as adding a vacancy. */
   children?: React.ReactNode;
@@ -106,7 +109,7 @@ export default function SearchButton({
       )}
 
       {!busy && !ready && (
-        <p className="text-xs text-ink-faint">Set up a search first, and upload your CV.</p>
+        <p className="text-xs text-ink-faint">{hint}</p>
       )}
 
       {job?.status === "failed" && job.error && (

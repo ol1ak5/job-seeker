@@ -34,11 +34,16 @@ export type Vacancy = {
       }[]
     | null;
   cvs: { id: string }[] | null;
+  /** Set when you removed it from the list; absent before migration 0007. */
+  hidden_at?: string | null;
 };
 
 export function statusOf(vacancy: Vacancy): string {
   return vacancy.applications?.[0]?.status ?? "interested";
 }
+
+/** Stages that mean you acted on a vacancy, so clearing the list keeps it. */
+export const ACTIVE_STATUSES = ["applied", "interview", "offer"];
 
 /** A column you added to the table yourself. */
 export type CustomColumn = { id: string; name: string };
