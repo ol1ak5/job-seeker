@@ -73,7 +73,7 @@ export default function LoginPage() {
           </button>
 
           {error && (
-            <p className="mt-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <p className="mt-6 text-sm text-red-700">
               {error}
             </p>
           )}

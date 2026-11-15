@@ -50,7 +50,7 @@ export default function Dashboard({
         {error ? (
           <>
             <h1 className="text-3xl font-semibold tracking-tight text-ink">Vacancies</h1>
-            <p className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <p className="mt-6 text-sm text-red-700">
               Could not load vacancies: {error}
             </p>
           </>

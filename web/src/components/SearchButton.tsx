@@ -103,7 +103,7 @@ export default function SearchButton({
       </div>
 
       {busy && (
-        <p className="max-w-sm text-xs text-ink-soft sm:text-right" role="status">
+        <p className="max-w-sm text-xs text-brand sm:text-right" role="status">
           {WORDS[job!.status]}...
         </p>
       )}
@@ -113,13 +113,13 @@ export default function SearchButton({
       )}
 
       {job?.status === "failed" && job.error && (
-        <p className="max-w-sm rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <p className="max-w-sm text-xs text-red-700 sm:text-right">
           {job.error.split("\n").slice(-3).join(" ").slice(0, 300)}
         </p>
       )}
 
       {error && (
-        <p className="max-w-sm rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <p className="max-w-sm text-xs text-red-700 sm:text-right">
           {error}
         </p>
       )}

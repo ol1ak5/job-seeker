@@ -73,7 +73,7 @@ export default async function CvsPage({
 
       <div className="mx-auto max-w-4xl px-4 pb-20 sm:px-6">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="text-sm text-red-700">
             {/* 42703 is Postgres for "no such column": the code expects a
                 migration the database has not been given yet. Saying that is
                 far more use than repeating the column name. */}
