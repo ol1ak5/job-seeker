@@ -94,6 +94,56 @@ def remember_saved(client, user_id: str, runs_dir) -> int:
     return len(rows)
 
 
+def score_unscored(client, user_id: str, tracks: dict, wanted: list[str],
+                   scorer, notes: list[str]) -> int:
+    """Score what an earlier search saved without a score, before anything new.
+
+    A search that runs out of Gemini's daily quota keeps the rest of what it
+    found unscored. Those rows are already known, so no later search would
+    find them again: they are scored here, first, while the quota is fresh.
+    """
+    from src import gemini
+    from src.models import Vacancy
+    from src.profile import load_profile, profile_to_text
+    from src.scoring import score_with_retry
+
+    rows = (client.table("vacancies")
+            .select("id, track, title, company, location, description")
+            .eq("user_id", user_id).is_("score", "null").is_("hidden_at", "null")
+            .in_("track", wanted).execute().data or [])
+    if not rows:
+        return 0
+    print(f"Scoring {len(rows)} saved without a score", flush=True)
+    profile_texts: dict[str, str] = {}
+    done = 0
+    for row in rows:
+        cfg = tracks.get(row["track"])
+        if cfg is None:
+            continue
+        if row["track"] not in profile_texts:
+            profile_texts[row["track"]] = profile_to_text(load_profile(), cfg)
+        vacancy = Vacancy(title=row["title"], company=row["company"],
+                          location=row["location"] or "", url="", source="",
+                          description=row["description"] or "")
+        try:
+            result = score_with_retry(scorer, profile_texts[row["track"]],
+                                      cfg.scoring_guidance, vacancy)
+        except gemini.QuotaExhausted:
+            if gemini.QUOTA_NOTE not in notes:
+                notes.append(gemini.QUOTA_NOTE)
+            break
+        if result is None:
+            continue
+        (client.table("vacancies").update({
+            "score": result.score, "verdict": result.verdict,
+            "matching_points": result.matching_points,
+            "gaps": result.gaps, "flags": result.flags,
+        }).eq("id", row["id"]).eq("user_id", user_id).execute())
+        done += 1
+    print(f"Scored {done} of {len(rows)} saved without a score", flush=True)
+    return done
+
+
 def run_search_job(client, job: dict) -> dict:
     """A full search for the account that asked for it."""
     import pathlib
@@ -147,10 +197,9 @@ def run_search_job(client, job: dict) -> dict:
     remember_saved(client, user_id, out_dir / "runs")
     # What the person should hear about, shown under the search button.
     notes: list[str] = []
+    score_unscored(client, user_id, tracks, wanted, scorer, notes)
     for track in wanted:
         run_search(track, days, limit, scorer, out_dir=out_dir, notes=notes)
-        if any(n.startswith("Gemini's daily limit") for n in notes):
-            break                        # the next search could score nothing
 
     found = (client.table("vacancies").select("id", count="exact")
              .eq("user_id", user_id).in_("track", wanted).execute())

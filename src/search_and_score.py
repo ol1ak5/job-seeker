@@ -123,11 +123,13 @@ def select_with_loosening(pool: list[Vacancy], cfg: TrackConfig, track: str,
 def score(vacancies: list[Vacancy], cfg: TrackConfig, scorer,
           profile_path: str, errors: list[str] | None = None,
           notes: list[str] | None = None) -> list[ScoredVacancy]:
-    """Score each vacancy, returning only the ones that got a score.
+    """Score each vacancy, returning the ones to save.
 
-    A vacancy without one is not saved. Saved, it would count as seen and no
-    later search would score it; left out, the next search tries again. For
-    the same reason the work stops at once when Gemini's quota is spent.
+    A vacancy whose scoring failed is left out: saved, it would count as seen
+    and never be scored, while left out the next search simply tries again.
+    Once Gemini's daily quota is spent the rest are kept without a score, so
+    the search still shows what it found, and the next search scores them
+    first (see src.worker.score_unscored).
 
     `notes` collects what the person who asked for the search should be told.
     """
@@ -139,13 +141,13 @@ def score(vacancies: list[Vacancy], cfg: TrackConfig, scorer,
         try:
             result = score_with_retry(scorer, profile_text, cfg.scoring_guidance, v)
         except gemini.QuotaExhausted as exc:
-            log(f"Gemini quota reached after {len(scored)} of {len(vacancies)} vacancies: {exc}")
+            rest = vacancies[i - 1:]
+            log(f"Gemini quota reached: {len(rest)} saved without a score ({exc})")
             if errors is not None:
                 errors.append(f"gemini: quota reached ({exc})")
-            if notes is not None:
-                notes.append(
-                    f"Gemini's daily limit ran out after {len(scored)} of "
-                    f"{len(vacancies)} vacancies. Run the search again tomorrow.")
+            if notes is not None and gemini.QUOTA_NOTE not in notes:
+                notes.append(gemini.QUOTA_NOTE)
+            scored.extend(ScoredVacancy(vacancy=u, score=None) for u in rest)
             break
         log(f"Scored {i}/{len(vacancies)} in {time.monotonic() - started:.0f} s: "
             f"{result.score if result else 'no score'} - {v.title[:60]} at {v.company[:40]}")
@@ -158,9 +160,8 @@ def score(vacancies: list[Vacancy], cfg: TrackConfig, scorer,
         if result and note and note not in result.flags:
             result.flags.insert(0, note)
         scored.append(ScoredVacancy(vacancy=v, score=result))
-    if failed and notes is not None:
-        notes.append(f"{failed} {'vacancy' if failed == 1 else 'vacancies'} could not "
-                     f"be scored and will be tried again next search.")
+    if failed:
+        log(f"{failed} could not be scored and are left for the next search")
     return scored
 
 

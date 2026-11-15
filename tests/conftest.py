@@ -25,3 +25,11 @@ def isolate_from_real_dotenv(monkeypatch, request):
     for var in ("SUPABASE_URL", "SUPABASE_ANON_KEY",
                 "SUPABASE_EMAIL", "SUPABASE_PASSWORD"):
         monkeypatch.delenv(var, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def fresh_gemini_quota(monkeypatch):
+    """A spent Gemini quota is remembered for the rest of a run; each test is a new run."""
+    from src import gemini
+
+    monkeypatch.setattr(gemini, "spent", False)

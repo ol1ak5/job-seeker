@@ -451,7 +451,8 @@ export default function VacancyTable({
                 >
                   <td className={cell}>
                     {v.score === null ? (
-                      <span className="text-ink-faint">—</span>
+                      // Saved while Gemini's quota was spent; the next search scores it.
+                      <span className="text-ink-faint" title="Not rated yet">n.r.</span>
                     ) : (
                       <span
                         className={`grid size-10 place-items-center rounded-full font-mono text-sm font-medium ${scoreTone(v.score)}`}
@@ -471,9 +472,6 @@ export default function VacancyTable({
                       >
                         {v.title}
                       </button>
-                      {isNew(v) && (
-                        <span className="shrink-0 text-xs font-medium text-accent">New</span>
-                      )}
                       <a
                         href={v.url}
                         target="_blank"

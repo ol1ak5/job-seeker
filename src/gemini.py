@@ -17,12 +17,18 @@ import time
 
 ATTEMPTS = 4
 
+# Shown to the person when the quota ran out during their search.
+QUOTA_NOTE = "Gemini's daily limit ran out."
+
 
 class QuotaExhausted(Exception):
     """Gemini will not answer again today, or the account has no credit."""
 
 
 _last_call = 0.0
+# Once Gemini has refused for the day, every later call fails at once rather
+# than spending a request to hear the same answer.
+spent = False
 
 
 def _min_interval() -> float:
@@ -48,7 +54,9 @@ def _retry_delay(text: str) -> float | None:
 
 def call(fn, *args, **kwargs):
     """Run one model call: spaced from the last, retried on a per-minute limit."""
-    global _last_call
+    global _last_call, spent
+    if spent:
+        raise QuotaExhausted("already refused earlier in this run")
     for attempt in range(ATTEMPTS):
         wait = _last_call + _min_interval() - time.monotonic()
         if wait > 0:
@@ -61,6 +69,7 @@ def call(fn, *args, **kwargs):
             if not _is_rate_limit(text):
                 raise
             if _is_final(text):
+                spent = True
                 raise QuotaExhausted(text[:300]) from exc
             if attempt == ATTEMPTS - 1:
                 raise

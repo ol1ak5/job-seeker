@@ -34,6 +34,10 @@ class FakeTable:
     def limit(self, _):
         return self
 
+    def is_(self, column, value):
+        self.filters[column] = None if value == "null" else value
+        return self
+
     def range(self, start, end):
         self.window = (start, end)
         return self
@@ -41,7 +45,8 @@ class FakeTable:
     def execute(self):
         self.store["calls"].append((self.name, self.payload, dict(self.filters)))
         rows = [r for r in self.store["rows"].get(self.name, [])
-                if all(r.get(k) == v for k, v in self.filters.items())]
+                if all(r.get(k) in v if isinstance(v, list) else r.get(k) == v
+                       for k, v in self.filters.items())]
         if self.payload:
             for row in rows:
                 row.update(self.payload)
@@ -290,11 +295,36 @@ def test_a_warning_from_the_search_reaches_the_result(monkeypatch):
 
     def out_of_quota(track, *_, notes=None, **__):
         searched.append(track)
-        notes.append("Gemini's daily limit ran out after 3 of 21 vacancies. "
-                     "Run the search again tomorrow.")
+        if "Gemini's daily limit ran out." not in notes:
+            notes.append("Gemini's daily limit ran out.")
 
     monkeypatch.setattr(src.search_and_score, "run_search", out_of_quota)
     result = run_search_job(FakeClient({}), job_row(track=None))
 
-    assert searched == ["ai"]            # the second search is not started
-    assert result["warning"].startswith("Gemini's daily limit")
+    # Every search still runs: what it finds is saved, scored or not.
+    assert searched == ["ai", "energy"]
+    assert result["warning"] == "Gemini's daily limit ran out."
+
+
+def test_vacancies_saved_without_a_score_are_scored_first(monkeypatch):
+    import src.profile
+    import src.scoring
+    from src.config import TrackConfig
+    from src.models import Score
+    from src.worker import score_unscored
+
+    monkeypatch.setattr(src.profile, "load_profile", lambda *_: {})
+    monkeypatch.setattr(src.profile, "profile_to_text", lambda *_: "")
+    monkeypatch.setattr(src.scoring, "score_with_retry", lambda *_: Score(
+        score=70, verdict="worth_applying", matching_points=[], gaps=[], flags=[]))
+    unscored = {"id": "v1", "user_id": "user-1", "track": "energy", "score": None,
+                "hidden_at": None, "title": "Analyst", "company": "Modo",
+                "location": "", "description": ""}
+    others = {**unscored, "id": "v2", "user_id": "somebody-else"}
+    client = FakeClient({"vacancies": [unscored, others]})
+
+    done = score_unscored(client, "user-1", {"energy": TrackConfig(name="energy")},
+                          ["energy"], scorer=None, notes=[])
+
+    assert done == 1
+    assert unscored["score"] == 70 and others["score"] is None

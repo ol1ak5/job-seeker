@@ -160,7 +160,7 @@ def test_a_vacancy_without_a_score_is_not_kept(monkeypatch):
     kept = search_and_score.score(vacs, TrackConfig(name="energy"), None, "p", notes=notes)
 
     assert [s.vacancy.title for s in kept] == ["Good"]
-    assert notes == ["1 vacancy could not be scored and will be tried again next search."]
+    assert notes == []
 
 
 def test_a_spent_quota_stops_scoring_and_says_so(monkeypatch):
@@ -179,6 +179,6 @@ def test_a_spent_quota_stops_scoring_and_says_so(monkeypatch):
 
     kept = search_and_score.score(vacs, TrackConfig(name="energy"), None, "p", notes=notes)
 
-    assert kept == []
-    assert notes == ["Gemini's daily limit ran out after 0 of 2 vacancies. "
-                     "Run the search again tomorrow."]
+    # Kept without a score, so the search still shows what it found.
+    assert [(s.vacancy.title, s.score) for s in kept] == [("A", None), ("B", None)]
+    assert notes == ["Gemini's daily limit ran out."]
