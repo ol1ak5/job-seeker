@@ -15,8 +15,8 @@ export type Job = {
 const POLL_MS = 5000;
 
 const WORDS: Record<Job["status"], string> = {
-  queued: "Waking the engine up",
-  running: "Reading the job boards and scoring what it finds",
+  queued: "Starting the search",
+  running: "Reading the job boards",
   done: "Finished",
   failed: "Failed",
 };
@@ -104,7 +104,7 @@ export default function SearchButton({
 
       {busy && (
         <p className="max-w-sm text-xs text-ink-soft sm:text-right" role="status">
-          {WORDS[job!.status]}. This takes a few minutes - you can leave the page.
+          {WORDS[job!.status]}...
         </p>
       )}
 

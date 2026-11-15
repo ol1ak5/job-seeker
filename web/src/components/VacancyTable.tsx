@@ -84,6 +84,7 @@ export default function VacancyTable({
   userId,
   appliedTextReady = true,
   lastSearchAt = null,
+  newSince = null,
   customColumns = [],
   customColumnsReady = true,
 }: {
@@ -95,6 +96,11 @@ export default function VacancyTable({
   customColumnsReady?: boolean;
   /** When the last search finished, shown at the right of the filter line. */
   lastSearchAt?: string | null;
+  /**
+   * When the last finished search started. A search saves only vacancies it
+   * has not seen before, so anything saved after this came from that search.
+   */
+  newSince?: string | null;
 }) {
   const first = (v: Vacancy) => v.applications?.[0];
   const initial = (pick: (v: Vacancy) => string) =>
@@ -109,6 +115,7 @@ export default function VacancyTable({
   const [editingNote, setEditingNote] = useState<Vacancy | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [hideClosed, setHideClosed] = useState(false);
+  const [onlyNew, setOnlyNew] = useState(false);
   const [appliedAt, setAppliedAt] = useState(() => initial((v) => first(v)?.applied_at ?? ""));
   const [sort, setSort] = useState<Sort>({ key: "score", dir: "desc" });
   const [columns, setColumns] = useState<CustomColumn[]>(customColumns);
@@ -276,10 +283,16 @@ export default function VacancyTable({
     [vacancies, removed, viewingRemoved],
   );
   const clearable = pool.some((v) => !ACTIVE_STATUSES.includes(statuses[v.id]));
+  const isNew = (v: Vacancy) =>
+    Boolean(newSince && v.created_at && new Date(v.created_at) >= new Date(newSince));
+  const newCount = pool.filter(isNew).length;
+  const filterNew = onlyNew && newCount > 0;
 
   const rows = useMemo(() => {
     const filtered = pool.filter(
-      (v) => !(hideClosed && ["rejected", "declined"].includes(statuses[v.id])),
+      (v) =>
+        !(hideClosed && ["rejected", "declined"].includes(statuses[v.id])) &&
+        (!filterNew || isNew(v)),
     );
     const value = (v: Vacancy): number | string | null =>
       sort.key === "score" ? v.score : sort.key === "posted" ? v.posted : appliedAt[v.id] || null;
@@ -291,7 +304,9 @@ export default function VacancyTable({
       const order = x < y ? -1 : x > y ? 1 : 0;
       return sort.dir === "desc" ? -order : order;
     });
-  }, [pool, hideClosed, statuses, sort, appliedAt]);
+    // isNew reads only newSince, which is listed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pool, hideClosed, filterNew, newSince, statuses, sort, appliedAt]);
   const hidden = pool.length - rows.length;
 
   const header = (key: string, label: string) => {
@@ -337,6 +352,17 @@ export default function VacancyTable({
           />
           Hide rejected and skipped
         </label>
+        {newCount > 0 && (
+          <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={onlyNew}
+              onChange={(e) => setOnlyNew(e.target.checked)}
+              className="h-4 w-4 cursor-pointer accent-brand"
+            />
+            Only new ({newCount})
+          </label>
+        )}
         {hidden > 0 && <span className="whitespace-nowrap text-ink-faint">{hidden} hidden</span>}
         {removeError && <span className="text-red-700">{removeError}</span>}
         <div className="ml-auto flex items-center gap-5">
@@ -444,6 +470,9 @@ export default function VacancyTable({
                       >
                         {v.title}
                       </button>
+                      {isNew(v) && (
+                        <span className="shrink-0 text-xs font-medium text-accent">New</span>
+                      )}
                       <a
                         href={v.url}
                         target="_blank"

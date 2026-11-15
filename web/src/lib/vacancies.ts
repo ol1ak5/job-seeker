@@ -34,6 +34,8 @@ export type Vacancy = {
       }[]
     | null;
   cvs: { id: string }[] | null;
+  /** When the search first saved it. */
+  created_at?: string;
   /** Set when you removed it from the list; absent before migration 0007. */
   hidden_at?: string | null;
 };

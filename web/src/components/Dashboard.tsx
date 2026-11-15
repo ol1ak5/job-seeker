@@ -87,6 +87,7 @@ export default function Dashboard({
               customColumns={customColumns}
               customColumnsReady={customColumnsReady}
               lastSearchAt={latestJob?.status === "done" ? latestJob.finished_at : null}
+              newSince={latestJob?.status === "done" ? latestJob.created_at : null}
             />}
         </div>
       </div>
