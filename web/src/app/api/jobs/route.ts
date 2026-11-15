@@ -1,3 +1,4 @@
+import { settle, staleSince } from "@/lib/jobs";
 import { createClient } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
 
@@ -109,6 +110,8 @@ export async function POST(request: NextRequest) {
     .select("id")
     .eq("kind", kind)
     .in("status", ["queued", "running"])
+    // One the runner never closed is not running: see lib/jobs.
+    .gte("created_at", staleSince())
     .limit(1);
 
   if (pending?.length) {
@@ -175,7 +178,7 @@ export async function GET() {
 
   const jobs = data ?? [];
   return Response.json({
-    job: jobs.find((j) => j.kind === "search") ?? null,
-    adapt: jobs.find((j) => j.kind === "adapt") ?? null,
+    job: settle(jobs.find((j) => j.kind === "search") ?? null),
+    adapt: settle(jobs.find((j) => j.kind === "adapt") ?? null),
   });
 }

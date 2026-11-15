@@ -32,7 +32,12 @@ jobs:
       - run: uv sync
 
       - name: Perform the job
+        # Shorter than the job's own limit, so the step below still gets to run.
+        timeout-minutes: 17
         env:
+          PYTHONUNBUFFERED: "1"
+          # The free tier allows a few requests a minute: see src/gemini.py.
+          GEMINI_MIN_INTERVAL: "6"
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
@@ -41,3 +46,10 @@ jobs:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
         run: uv run python -m src.worker "${{ inputs.job_id }}"
+
+      - name: Record a job that did not finish
+        if: failure() || cancelled()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: uv run python -m src.worker --fail "${{ inputs.job_id }}"

@@ -1,6 +1,7 @@
 import Dashboard from "@/components/Dashboard";
 import Landing from "@/components/Landing";
 import type { Job } from "@/components/SearchButton";
+import { settle } from "@/lib/jobs";
 import { createClient } from "@/lib/supabase/server";
 import { isSessionError } from "@/lib/supabase/session";
 import { statusOf, type Vacancy } from "@/lib/vacancies";
@@ -85,7 +86,7 @@ export default async function HomePage() {
   // The select string is built at runtime, so its row type cannot be inferred.
   const vacancies = (data ?? []) as unknown as Vacancy[];
   const tracks = (trackRows ?? []).map((t) => t.name as string);
-  const latestJob = (jobRows?.[0] as Job) ?? null;
+  const latestJob = settle((jobRows?.[0] as Job) ?? null);
 
   // Counted over the list as you see it: what you removed is not in it.
   const listed = vacancies.filter((v) => !v.hidden_at);

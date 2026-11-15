@@ -265,3 +265,19 @@ def test_adapt_explains_a_track_that_was_deleted(monkeypatch):
          "description": "d"}]})
     with pytest.raises(SystemExit, match="no longer exists"):
         run_adapt_job(client, job_row(kind="adapt", payload={"vacancy_id": "v1"}))
+
+
+def test_a_job_the_runner_stopped_is_marked_failed():
+    from src.worker import fail_unfinished
+
+    client = FakeClient({"jobs": [job_row(status="running")]})
+    assert fail_unfinished(client, "job-1") is True
+    assert client.store["rows"]["jobs"][0]["status"] == "failed"
+
+
+def test_a_finished_job_is_left_alone():
+    from src.worker import fail_unfinished
+
+    client = FakeClient({"jobs": [job_row(status="done")]})
+    assert fail_unfinished(client, "job-1") is False
+    assert client.store["rows"]["jobs"][0]["status"] == "done"

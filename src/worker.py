@@ -136,8 +136,10 @@ def run_search_job(client, job: dict) -> dict:
     limit = int(payload.get("limit", 30))
 
     settings = load_settings()
+    # No hidden retries: src.gemini paces the calls and says when it waits.
     llm = ChatGoogleGenerativeAI(model="gemini-flash-latest",
-                                 google_api_key=settings.google_api_key)
+                                 google_api_key=settings.google_api_key,
+                                 timeout=60, max_retries=0)
     # The report files land in the runner's temporary disk and die with it; the
     # database is the only output that outlives the job.
     scorer = make_scorer(llm)
@@ -203,8 +205,29 @@ def run_adapt_job(client, job: dict) -> dict:
 
 HANDLERS = {"search": run_search_job, "adapt": run_adapt_job}
 
+CUT_OFF = ("The search ran out of time and was stopped before it finished. "
+           "Run it again; vacancies already saved are skipped.")
+
+
+def fail_unfinished(client, job_id: str) -> bool:
+    """Close a job the runner stopped, so the site does not wait on it forever.
+
+    A runner that hits its time limit kills the worker before it can record
+    anything, which would leave the row "running" and block the next search.
+    A job that already finished, either way, is left as it is.
+    """
+    rows = client.table("jobs").select("status").eq("id", job_id).execute().data or []
+    if not rows or rows[0]["status"] not in ("queued", "running"):
+        return False
+    finish(client, job_id, "failed", CUT_OFF)
+    return True
+
 
 def main(argv: list[str]) -> int:
+    if len(argv) == 3 and argv[1] == "--fail":
+        closed = fail_unfinished(service_client(), argv[2])
+        print(f"Job {argv[2]} {'marked failed' if closed else 'already finished'}")
+        return 0
     if len(argv) != 2:
         print("usage: python -m src.worker <job_id>", file=sys.stderr)
         return 2
