@@ -613,7 +613,7 @@ export default function VacancyTable({
                   >
                     <td colSpan={visible.length} className="bg-line-soft/40 px-5 py-5">
                       <p className="mb-3 text-xs text-ink-faint">
-                        How your CV compares with this vacancy · found via {v.source}
+                        How your CV compares with this vacancy. Found via {v.source}
                       </p>
                       <div className="grid gap-x-10 gap-y-3 text-sm text-ink-soft sm:grid-cols-3">
                         <ul className="space-y-1">
