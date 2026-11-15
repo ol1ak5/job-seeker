@@ -140,3 +140,45 @@ def test_loosening_stops_rather_than_looping_forever(tmp_path, monkeypatch):
         [], _strict_track(), "t", 30, datetime.date(2026, 8, 15), tmp_path)
     assert chosen == []
     assert levels == list(range(len(RELAXATIONS) + 1))
+
+
+GOOD = Score(score=80, verdict="strong_match", matching_points=[], gaps=[], flags=[])
+
+
+def test_a_vacancy_without_a_score_is_not_kept(monkeypatch):
+    from src import search_and_score
+    from src.config import TrackConfig
+    from src.models import Vacancy
+
+    monkeypatch.setattr(search_and_score, "load_profile", lambda *_: {})
+    monkeypatch.setattr(search_and_score, "profile_to_text", lambda *_: "")
+    monkeypatch.setattr(search_and_score, "score_with_retry",
+                        lambda _s, _p, _g, v: None if v.title == "Broken" else GOOD)
+    vacs = [Vacancy(title=t, company="C", url=t, source="s") for t in ("Good", "Broken")]
+    notes: list[str] = []
+
+    kept = search_and_score.score(vacs, TrackConfig(name="energy"), None, "p", notes=notes)
+
+    assert [s.vacancy.title for s in kept] == ["Good"]
+    assert notes == ["1 vacancy could not be scored and will be tried again next search."]
+
+
+def test_a_spent_quota_stops_scoring_and_says_so(monkeypatch):
+    from src import gemini, search_and_score
+    from src.config import TrackConfig
+    from src.models import Vacancy
+
+    def refuse(*_):
+        raise gemini.QuotaExhausted("per day")
+
+    monkeypatch.setattr(search_and_score, "load_profile", lambda *_: {})
+    monkeypatch.setattr(search_and_score, "profile_to_text", lambda *_: "")
+    monkeypatch.setattr(search_and_score, "score_with_retry", refuse)
+    vacs = [Vacancy(title=t, company="C", url=t, source="s") for t in ("A", "B")]
+    notes: list[str] = []
+
+    kept = search_and_score.score(vacs, TrackConfig(name="energy"), None, "p", notes=notes)
+
+    assert kept == []
+    assert notes == ["Gemini's daily limit ran out after 0 of 2 vacancies. "
+                     "Run the search again tomorrow."]

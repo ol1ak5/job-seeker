@@ -281,3 +281,20 @@ def test_a_finished_job_is_left_alone():
     client = FakeClient({"jobs": [job_row(status="done")]})
     assert fail_unfinished(client, "job-1") is False
     assert client.store["rows"]["jobs"][0]["status"] == "done"
+
+
+def test_a_warning_from_the_search_reaches_the_result(monkeypatch):
+    import src.search_and_score
+    searched = []
+    _ready_to_search(monkeypatch, searched)
+
+    def out_of_quota(track, *_, notes=None, **__):
+        searched.append(track)
+        notes.append("Gemini's daily limit ran out after 3 of 21 vacancies. "
+                     "Run the search again tomorrow.")
+
+    monkeypatch.setattr(src.search_and_score, "run_search", out_of_quota)
+    result = run_search_job(FakeClient({}), job_row(track=None))
+
+    assert searched == ["ai"]            # the second search is not started
+    assert result["warning"].startswith("Gemini's daily limit")

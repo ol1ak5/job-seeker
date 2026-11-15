@@ -145,14 +145,20 @@ def run_search_job(client, job: dict) -> dict:
     scorer = make_scorer(llm)
     out_dir = pathlib.Path("output")
     remember_saved(client, user_id, out_dir / "runs")
+    # What the person should hear about, shown under the search button.
+    notes: list[str] = []
     for track in wanted:
-        run_search(track, days, limit, scorer, out_dir=out_dir)
+        run_search(track, days, limit, scorer, out_dir=out_dir, notes=notes)
+        if any(n.startswith("Gemini's daily limit") for n in notes):
+            break                        # the next search could score nothing
 
     found = (client.table("vacancies").select("id", count="exact")
              .eq("user_id", user_id).in_("track", wanted).execute())
     result = {"tracks": wanted, "vacancies": found.count or 0}
     if len(wanted) == 1:
         result["track"] = wanted[0]
+    if notes:
+        result["warning"] = " ".join(notes)
     return result
 
 

@@ -7,7 +7,13 @@ export type Job = {
   id: string;
   status: "queued" | "running" | "done" | "failed";
   error: string | null;
-  result: { track?: string; tracks?: string[]; vacancies?: number } | null;
+  result: {
+    track?: string;
+    tracks?: string[];
+    vacancies?: number;
+    /** Something the search could not finish, such as Gemini's daily limit. */
+    warning?: string;
+  } | null;
   created_at: string;
   finished_at: string | null;
 };
@@ -110,6 +116,10 @@ export default function SearchButton({
 
       {!busy && !ready && (
         <p className="text-xs text-ink-faint">{hint}</p>
+      )}
+
+      {job?.status === "done" && job.result?.warning && (
+        <p className="max-w-sm text-xs text-red-700 sm:text-right">{job.result.warning}</p>
       )}
 
       {job?.status === "failed" && job.error && (

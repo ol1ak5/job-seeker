@@ -30,6 +30,7 @@ def score_with_retry(scorer: Scorer, profile_text: str, guidance: str,
             return gemini.call(scorer, profile_text, guidance, vacancy)
         except gemini.QuotaExhausted:
             raise
-        except Exception:
+        except Exception as exc:
+            print(f"Scoring {vacancy.title[:60]} failed: {str(exc)[:200]}", flush=True)
             continue
     return None

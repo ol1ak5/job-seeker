@@ -121,33 +121,46 @@ def select_with_loosening(pool: list[Vacancy], cfg: TrackConfig, track: str,
 
 
 def score(vacancies: list[Vacancy], cfg: TrackConfig, scorer,
-          profile_path: str, errors: list[str] | None = None) -> list[ScoredVacancy]:
-    """Score each vacancy; stop early, keeping what is done, if Gemini is out.
+          profile_path: str, errors: list[str] | None = None,
+          notes: list[str] | None = None) -> list[ScoredVacancy]:
+    """Score each vacancy, returning only the ones that got a score.
 
-    The vacancies left unscored are not returned, so they are not saved and
-    the next search can still score them.
+    A vacancy without one is not saved. Saved, it would count as seen and no
+    later search would score it; left out, the next search tries again. For
+    the same reason the work stops at once when Gemini's quota is spent.
+
+    `notes` collects what the person who asked for the search should be told.
     """
     profile_text = profile_to_text(load_profile(profile_path), cfg)
     scored = []
+    failed = 0
     for i, v in enumerate(vacancies, start=1):
         started = time.monotonic()
         try:
             result = score_with_retry(scorer, profile_text, cfg.scoring_guidance, v)
         except gemini.QuotaExhausted as exc:
-            message = (f"Gemini quota reached after {len(scored)} of "
-                       f"{len(vacancies)} vacancies: {exc}")
-            log(message)
+            log(f"Gemini quota reached after {len(scored)} of {len(vacancies)} vacancies: {exc}")
             if errors is not None:
-                errors.append(message)
+                errors.append(f"gemini: quota reached ({exc})")
+            if notes is not None:
+                notes.append(
+                    f"Gemini's daily limit ran out after {len(scored)} of "
+                    f"{len(vacancies)} vacancies. Run the search again tomorrow.")
             break
         log(f"Scored {i}/{len(vacancies)} in {time.monotonic() - started:.0f} s: "
             f"{result.score if result else 'no score'} - {v.title[:60]} at {v.company[:40]}")
+        if result is None:
+            failed += 1
+            continue
         # A paperwork warning the model may not have thought to raise. It goes
         # first because it decides whether the rest is worth reading.
         note = authorisation_note(v, cfg.filters)
         if result and note and note not in result.flags:
             result.flags.insert(0, note)
         scored.append(ScoredVacancy(vacancy=v, score=result))
+    if failed and notes is not None:
+        notes.append(f"{failed} {'vacancy' if failed == 1 else 'vacancies'} could not "
+                     f"be scored and will be tried again next search.")
     return scored
 
 
@@ -167,7 +180,8 @@ def write_output(scored: list[ScoredVacancy], track: str, days: int, limit: int,
 def run_search(track: str, days: int, limit: int, scorer,
                out_dir: pathlib.Path = pathlib.Path("output"),
                today: datetime.date | None = None,
-               client=None, profile_path: str = "profile/master_profile.yaml") -> pathlib.Path:
+               client=None, profile_path: str = "profile/master_profile.yaml",
+               notes: list[str] | None = None) -> pathlib.Path:
     today = today or datetime.date.today()
     errors: list[str] = []
     cfg = load_tracks()[track]
@@ -179,7 +193,7 @@ def run_search(track: str, days: int, limit: int, scorer,
         f"old postings and ones already saved")
     selected, dropped = select_with_loosening(pool, cfg, track, limit, today, out_dir)
     log(f"{len(selected)} pass the filters and will be scored")
-    scored = score(selected, cfg, scorer, profile_path, errors)
+    scored = score(selected, cfg, scorer, profile_path, errors, notes)
     path = write_output(scored, track, days, limit, today, out_dir, errors, dropped)
     log(f"Search '{track}': {len(scored)} saved")
     return path
