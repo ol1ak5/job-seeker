@@ -364,17 +364,21 @@ export default function VacancyTable({
             Only new ({newCount})
           </label>
         )}
+        {/* A filter like the others: ticked, the list shows what you removed. */}
+        {removedCount > 0 && (
+          <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={viewingRemoved}
+              onChange={(e) => setShowRemoved(e.target.checked)}
+              className="h-4 w-4 cursor-pointer accent-brand"
+            />
+            Removed ({removedCount})
+          </label>
+        )}
         {hidden > 0 && <span className="whitespace-nowrap text-ink-faint">{hidden} hidden</span>}
         {removeError && <span className="text-red-700">{removeError}</span>}
         <div className="ml-auto flex items-center gap-5">
-          {removedCount > 0 && (
-            <button
-              onClick={() => setShowRemoved(!viewingRemoved)}
-              className="cursor-pointer whitespace-nowrap transition-colors duration-150 hover:text-brand"
-            >
-              {viewingRemoved ? "Back to the list" : `Removed (${removedCount})`}
-            </button>
-          )}
           {viewingRemoved && (
             <button
               onClick={() => markRemoved(pool.map((v) => v.id), false)}
