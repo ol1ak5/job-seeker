@@ -39,7 +39,8 @@ const COLUMNS: Column[] = [
   { key: "title", label: "Vacancy" },
   { key: "company", label: "Company", width: 8.5 },
   { key: "location", label: "Location", width: 8.5 },
-  { key: "posted", label: "Posted", width: 6.5 },
+  // When the search found it: job boards leave the posting date out too often.
+  { key: "found", label: "Found", width: 6.5 },
   { key: "status", label: "Status", width: 7.5 },
   { key: "applied", label: "Applied", width: 7.5 },
   { key: "notes", label: "Notes", width: 6 },
@@ -66,16 +67,16 @@ function shortDate(value: string | null) {
 }
 
 /**
- * Score, posting date and application date each sort both ways: a click on the
+ * Score, date found and application date each sort both ways: a click on the
  * column sorts it highest or newest first, a second click reverses it. Rows
  * with nothing in that column always go to the bottom. The application date is
  * the one recorded when the status first became Applied, not the free text.
  */
-type SortKey = "score" | "posted" | "applied";
+type SortKey = "score" | "found" | "applied";
 type Sort = { key: SortKey; dir: "desc" | "asc" };
 const SORTABLE: Partial<Record<string, SortKey>> = {
   score: "score",
-  posted: "posted",
+  found: "found",
   applied: "applied",
 };
 
@@ -295,7 +296,7 @@ export default function VacancyTable({
         (!filterNew || isNew(v)),
     );
     const value = (v: Vacancy): number | string | null =>
-      sort.key === "score" ? v.score : sort.key === "posted" ? v.posted : appliedAt[v.id] || null;
+      sort.key === "score" ? v.score : sort.key === "found" ? v.created_at ?? null : appliedAt[v.id] || null;
     return filtered.sort((a, b) => {
       const x = value(a);
       const y = value(b);
@@ -517,7 +518,7 @@ export default function VacancyTable({
                       {v.location || "—"}
                     </span>
                   </td>
-                  <td className={`${cell} text-ink-soft`}>{shortDate(v.posted)}</td>
+                  <td className={`${cell} text-ink-soft`}>{shortDate(v.created_at ?? null)}</td>
 
                   <td className={cell}>
                     <label className={`relative inline-flex items-center ${stage.tone}`}>
@@ -614,6 +615,7 @@ export default function VacancyTable({
                     <td colSpan={visible.length} className="bg-line-soft/40 px-5 py-5">
                       <p className="mb-3 text-xs text-ink-faint">
                         How your CV compares with this vacancy. Found via {v.source}
+                        {v.posted && `, posted ${shortDate(v.posted)}`}
                       </p>
                       <div className="grid gap-x-10 gap-y-3 text-sm text-ink-soft sm:grid-cols-3">
                         <ul className="space-y-1">
