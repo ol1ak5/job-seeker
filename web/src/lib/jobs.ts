@@ -9,8 +9,7 @@
  */
 export const STALE_MINUTES = 25;
 
-export const STALE_ERROR =
-  "The search stopped without finishing. Run it again; vacancies already saved are skipped.";
+export const STALE_ERROR = "The search stopped without finishing. Run it again.";
 
 type JobLike = { status: string; created_at: string; error: string | null };
 

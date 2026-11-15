@@ -205,8 +205,7 @@ def run_adapt_job(client, job: dict) -> dict:
 
 HANDLERS = {"search": run_search_job, "adapt": run_adapt_job}
 
-CUT_OFF = ("The search ran out of time and was stopped before it finished. "
-           "Run it again; vacancies already saved are skipped.")
+CUT_OFF = "The search stopped without finishing. Run it again."
 
 
 def fail_unfinished(client, job_id: str) -> bool:
