@@ -3,6 +3,7 @@ import re
 
 import httpx
 
+from src import gemini
 from src.config import TrackConfig
 from src.llm_text import message_text
 from src.models import Vacancy
@@ -52,7 +53,7 @@ def extract_vacancies(pages: list[dict], llm) -> list[Vacancy]:
     for page in pages:
         messages = EXTRACT_JOBS_PROMPT.format_messages(
             url=page["url"], title=page["title"], content=page["content"])
-        reply = llm.invoke(messages)
+        reply = gemini.call(llm.invoke, messages)
         for item in _parse_jobs(message_text(reply)):
             if not isinstance(item, dict) or not item.get("title"):
                 continue

@@ -1,5 +1,6 @@
 from typing import Callable
 
+from src import gemini
 from src.models import Score, Vacancy
 from src.prompts.scoring import SCORING_PROMPT
 
@@ -26,7 +27,9 @@ def score_with_retry(scorer: Scorer, profile_text: str, guidance: str,
                      vacancy: Vacancy) -> Score | None:
     for _ in range(2):
         try:
-            return scorer(profile_text, guidance, vacancy)
+            return gemini.call(scorer, profile_text, guidance, vacancy)
+        except gemini.QuotaExhausted:
+            raise
         except Exception:
             continue
     return None

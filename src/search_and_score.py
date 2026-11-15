@@ -9,6 +9,7 @@ keyword list and the same pool is selected again.
 
 import datetime
 import pathlib
+import time
 
 from src.config import TrackConfig, load_tracks, load_watchlist
 from src.dedupe import assign_ids, dedupe_in_run, filter_by_age, filter_seen
@@ -16,6 +17,7 @@ from src.filters import (RELAXATIONS, apply_filters,
                          authorisation_note, relax)
 from src.models import ScoredVacancy, Vacancy
 from src.profile import load_profile, profile_to_text
+from src import gemini
 from src.scoring import score_with_retry
 from src.settings import load_settings
 from src.sources.adzuna import search_adzuna
@@ -23,38 +25,44 @@ from src.sources.ats_boards import fetch_board
 from src.writers import cache_vacancy, write_csv, write_md
 
 
+def log(message: str) -> None:
+    """A progress line. Flushed, so a runner's log shows it as it happens."""
+    print(message, flush=True)
+
+
 def _collect_vacancies(track: str, days: int, limit: int, client,
                        errors: list[str]) -> list[Vacancy]:
     cfg = load_tracks()[track]
     settings = load_settings()
     out: list[Vacancy] = []
-    try:
-        out += search_adzuna(cfg, settings, days, limit, client)
-    except Exception as exc:
-        errors.append(f"adzuna: {exc}")
+
+    def gather(source: str, fetch) -> None:
+        started = time.monotonic()
+        try:
+            found = fetch()
+        except Exception as exc:
+            errors.append(f"{source}: {exc}")
+            log(f"{source}: failed after {time.monotonic() - started:.0f} s ({str(exc)[:150]})")
+            return
+        out.extend(found)
+        log(f"{source}: {len(found)} found in {time.monotonic() - started:.0f} s")
+
+    gather("adzuna", lambda: search_adzuna(cfg, settings, days, limit, client))
     for entry in load_watchlist():
         if track not in entry.tracks:
             continue
-        try:
-            out += fetch_board(entry, client)
-        except Exception as exc:
-            errors.append(f"{entry.ats}/{entry.company}: {exc}")
+        gather(f"{entry.ats}/{entry.company}", lambda entry=entry: fetch_board(entry, client))
     if settings.rapidapi_key:
-        try:
-            from src.sources.jsearch import search_jsearch
-            out += search_jsearch(cfg, settings.rapidapi_key, days, limit, client)
-        except Exception as exc:
-            errors.append(f"jsearch: {exc}")
+        from src.sources.jsearch import search_jsearch
+        gather("jsearch", lambda: search_jsearch(cfg, settings.rapidapi_key, days, limit, client))
     if settings.tavily_api_key:
-        try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
+        from langchain_google_genai import ChatGoogleGenerativeAI
 
-            from src.sources.tavily_search import collect as collect_tavily
-            extractor = ChatGoogleGenerativeAI(
-                model="gemini-flash-latest", google_api_key=settings.google_api_key)
-            out += collect_tavily(cfg, settings.tavily_api_key, extractor, client)
-        except Exception as exc:
-            errors.append(f"tavily: {exc}")
+        from src.sources.tavily_search import collect as collect_tavily
+        extractor = ChatGoogleGenerativeAI(
+            model="gemini-flash-latest", google_api_key=settings.google_api_key,
+            timeout=60, max_retries=0)
+        gather("tavily", lambda: collect_tavily(cfg, settings.tavily_api_key, extractor, client))
     return out
 
 
@@ -113,11 +121,27 @@ def select_with_loosening(pool: list[Vacancy], cfg: TrackConfig, track: str,
 
 
 def score(vacancies: list[Vacancy], cfg: TrackConfig, scorer,
-          profile_path: str) -> list[ScoredVacancy]:
+          profile_path: str, errors: list[str] | None = None) -> list[ScoredVacancy]:
+    """Score each vacancy; stop early, keeping what is done, if Gemini is out.
+
+    The vacancies left unscored are not returned, so they are not saved and
+    the next search can still score them.
+    """
     profile_text = profile_to_text(load_profile(profile_path), cfg)
     scored = []
-    for v in vacancies:
-        result = score_with_retry(scorer, profile_text, cfg.scoring_guidance, v)
+    for i, v in enumerate(vacancies, start=1):
+        started = time.monotonic()
+        try:
+            result = score_with_retry(scorer, profile_text, cfg.scoring_guidance, v)
+        except gemini.QuotaExhausted as exc:
+            message = (f"Gemini quota reached after {len(scored)} of "
+                       f"{len(vacancies)} vacancies: {exc}")
+            log(message)
+            if errors is not None:
+                errors.append(message)
+            break
+        log(f"Scored {i}/{len(vacancies)} in {time.monotonic() - started:.0f} s: "
+            f"{result.score if result else 'no score'} - {v.title[:60]} at {v.company[:40]}")
         # A paperwork warning the model may not have thought to raise. It goes
         # first because it decides whether the rest is worth reading.
         note = authorisation_note(v, cfg.filters)
@@ -148,8 +172,14 @@ def run_search(track: str, days: int, limit: int, scorer,
     errors: list[str] = []
     cfg = load_tracks()[track]
 
+    log(f"Search '{track}': collecting")
     found = _collect_vacancies(track, days, limit, client, errors)
     pool = dedupe(found, days, today, out_dir)
+    log(f"{len(found)} found, {len(pool)} new after removing duplicates, "
+        f"old postings and ones already saved")
     selected, dropped = select_with_loosening(pool, cfg, track, limit, today, out_dir)
-    scored = score(selected, cfg, scorer, profile_path)
-    return write_output(scored, track, days, limit, today, out_dir, errors, dropped)
+    log(f"{len(selected)} pass the filters and will be scored")
+    scored = score(selected, cfg, scorer, profile_path, errors)
+    path = write_output(scored, track, days, limit, today, out_dir, errors, dropped)
+    log(f"Search '{track}': {len(scored)} saved")
+    return path
